@@ -2,12 +2,14 @@ import os
 from uuid import uuid4
 
 from flask import (
+    abort,
     Blueprint,
     current_app,
     flash,
     redirect,
     render_template,
     request,
+    send_from_directory,
     url_for,
 )
 from flask_login import login_required
@@ -32,6 +34,19 @@ def _allowed_file(filename: str) -> bool:
 def list_announcements():
     announcements = get_use_cases().list_announcements.execute()
     return render_template("announcements/list.html", announcements=announcements)
+
+
+@announcements_bp.route("/files/<path:filename>", methods=["GET"])
+@login_required
+def download_announcement_pdf(filename: str):
+    safe_name = secure_filename(filename)
+    if safe_name != filename or not _allowed_file(safe_name):
+        abort(404)
+    return send_from_directory(
+        current_app.config["UPLOAD_FOLDER"],
+        safe_name,
+        as_attachment=True,
+    )
 
 
 @announcements_bp.route("/new", methods=["GET", "POST"])

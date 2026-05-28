@@ -435,10 +435,18 @@ hr {
     border: 1px dashed var(--line);
     border-radius: 8px;
     background: var(--surface-muted);
+    color: var(--text);
+    text-decoration: none;
 }
 
 .announcement-attachment i {
     color: var(--brand);
+}
+
+.announcement-attachment:hover {
+    color: var(--text);
+    text-decoration: none;
+    border-color: var(--brand-strong);
 }
 
 @media (max-width: 992px) {

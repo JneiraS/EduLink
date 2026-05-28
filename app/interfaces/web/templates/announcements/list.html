@@ -18,10 +18,11 @@
             <h2 class="announcement-title h6 mb-1">{{ a.title }}</h2>
             <p class="announcement-content mb-2">{{ a.content }}</p>
             {% if a.pdf_filename %}
-            <div class="announcement-attachment">
+            {% set display_pdf_name = a.pdf_filename.split('_', 1)[1] if '_' in a.pdf_filename else a.pdf_filename %}
+            <a class="announcement-attachment" href="/announcements/files/{{ a.pdf_filename }}" download>
                 <i class="bi bi-file-earmark-pdf" aria-hidden="true"></i>
-                <small>PDF: {{ a.pdf_filename }}</small>
-            </div>
+                <small>{{ display_pdf_name }}</small>
+            </a>
             {% endif %}
         </article>
         {% endfor %}
