@@ -21,6 +21,13 @@ from app.interfaces.web.routes.utils import current_actor, get_use_cases
 announcements_bp = Blueprint("announcements", __name__, url_prefix="/announcements")
 
 
+def _uploads_dir() -> str:
+    # Resolve uploads path from project root so it stays stable regardless of launch cwd.
+    return os.path.abspath(
+        os.path.join(current_app.root_path, "..", current_app.config["UPLOAD_FOLDER"])
+    )
+
+
 def _allowed_file(filename: str) -> bool:
     return (
         "." in filename
@@ -42,11 +49,7 @@ def download_announcement_pdf(filename: str):
     safe_name = secure_filename(filename)
     if safe_name != filename or not _allowed_file(safe_name):
         abort(404)
-    return send_from_directory(
-        current_app.config["UPLOAD_FOLDER"],
-        safe_name,
-        as_attachment=True,
-    )
+    return send_from_directory(_uploads_dir(), safe_name, as_attachment=True)
 
 
 @announcements_bp.route("/new", methods=["GET", "POST"])
@@ -65,7 +68,7 @@ def create_announcement():
 
             original = secure_filename(upload.filename)
             pdf_filename = f"{uuid4().hex}_{original}"
-            upload.save(os.path.join(current_app.config["UPLOAD_FOLDER"], pdf_filename))
+            upload.save(os.path.join(_uploads_dir(), pdf_filename))
 
         try:
             get_use_cases().create_announcement.execute(

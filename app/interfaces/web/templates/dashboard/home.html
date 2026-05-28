@@ -5,7 +5,7 @@
     <div class="col-md-8">
         <div class="card shadow-sm h-100">
             <div class="card-body">
-                <h1 class="h4">{{ data.role_message }}</h1>
+                <h1 class="h4">{{ role_message }}</h1>
                 <p class="text-muted mb-0">Plateforme de communication scolaire centralisee.</p>
             </div>
         </div>
@@ -33,9 +33,18 @@
         <div class="card shadow-sm">
             <div class="card-body">
                 <h2 class="h6">Activite recente</h2>
-                {% if data.latest_announcements or data.notifications %}
-                <ul class="list-group list-group-flush" id="notifications-list">
-                    {% for item in data.latest_announcements %}
+                {% set notification_channel_links = notification_channel_links|default({}) %}
+                {% set notification_channel_links_by_content = notification_channel_links_by_content|default({}) %}
+                {% set ns = namespace(has_non_announcement_notifications=false) %}
+                {% for n in notifications %}
+                {% if 'Nouvelle annonce' not in (n.content or '') %}
+                {% set ns.has_non_announcement_notifications = true %}
+                {% endif %}
+                {% endfor %}
+                {% if latest_announcements or ns.has_non_announcement_notifications %}
+                <ul class="list-group list-group-flush" id="notifications-list"
+                    data-channel-links='{{ channel_links_by_name|default({})|tojson }}'>
+                    {% for item in latest_announcements %}
                     <li class="list-group-item px-0">
                         <div class="d-flex justify-content-between align-items-start gap-2">
                             <div>
@@ -48,18 +57,27 @@
                         </div>
                     </li>
                     {% endfor %}
-                    {% for n in data.notifications[:5] %}
+                    {% for n in notifications[:5] %}
+                    {% if 'Nouvelle annonce' not in (n.content or '') %}
                     <li class="list-group-item px-0 {% if not n.is_read %}fw-semibold{% endif %}">
+                        {% set channel_id = notification_channel_links.get(n.id) or
+                        notification_channel_links_by_content.get(n.content) %}
                         <div class="d-flex justify-content-between align-items-start gap-2">
                             <div>
                                 <span class="badge text-bg-light border me-2">Notification</span>
+                                {% if channel_id %}
+                                <a href="{{ url_for('messages.channel_detail', channel_id=channel_id) }}">{{ n.content
+                                    }}</a>
+                                {% else %}
                                 {{ n.content }}
+                                {% endif %}
                             </div>
                             <small class="text-muted fw-semibold">{{ n.created_at.strftime('%d/%m/%Y %H:%M') if
                                 n.created_at else ''
                                 }}</small>
                         </div>
                     </li>
+                    {% endif %}
                     {% endfor %}
                 </ul>
                 {% else %}

@@ -3,7 +3,7 @@ from flask_login import current_user, login_required
 
 from app.domain.entities.user import UserRole
 from app.domain.errors import AuthorizationError, NotFoundError, ValidationError
-from app.infrastructure.database.models import UserModel
+from app.infrastructure.database.models import ChannelModel, UserModel
 from app.interfaces.web.routes.utils import current_actor, get_use_cases
 
 messages_bp = Blueprint("messages", __name__, url_prefix="/messages")
@@ -77,9 +77,37 @@ def channel_detail(channel_id: int):
         channel_messages = get_use_cases().list_channel_messages.execute(
             actor, channel_id=channel_id
         )
+        user_channels = get_use_cases().list_user_channels.execute(actor)
         channel_members = get_use_cases().list_channel_members.execute(
             actor, channel_id=channel_id
         )
+        channel_name = None
+
+        # Prefer canonical name from DB for reliable display.
+        channel_row = ChannelModel.query.filter_by(id=channel_id).first()
+        if channel_row and channel_row.name:
+            channel_name = str(channel_row.name).strip()
+
+        for channel in user_channels:
+            if channel_name:
+                break
+            current_id = (
+                channel.get("id")
+                if isinstance(channel, dict)
+                else getattr(channel, "id", None)
+            )
+            if current_id != channel_id:
+                continue
+            raw_channel_name = (
+                channel.get("name")
+                if isinstance(channel, dict)
+                else getattr(channel, "name", None)
+            )
+            channel_name = str(raw_channel_name or "").strip()
+            break
+        if not channel_name:
+            channel_name = f"Canal #{channel_id}"
+
         member_names = {}
         for member in channel_members:
             member_names[member.id] = member.full_name
@@ -133,6 +161,7 @@ def channel_detail(channel_id: int):
     return render_template(
         "messages/channel_detail.html",
         channel_id=channel_id,
+        channel_name=channel_name,
         messages=messages_view,
         members=channel_members,
         available_users=available_users,

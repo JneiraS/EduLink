@@ -8,9 +8,38 @@ socket.on("notification", (payload) => {
     const list = document.getElementById("notifications-list");
     if (!list) return;
 
+    const channelLinksRaw = list.dataset.channelLinks || "{}";
+    let channelLinksByName = {};
+    try {
+        channelLinksByName = JSON.parse(channelLinksRaw);
+    } catch (error) {
+        channelLinksByName = {};
+    }
+
+    const messagePrefix = "Nouveau message dans le canal ";
+    const content = payload.content || "";
+    const channelName = content.startsWith(messagePrefix)
+        ? content.slice(messagePrefix.length).trim().replace(/[ .!?:;]+$/, "")
+        : "";
+    const channelId = channelLinksByName[channelName];
+
     const item = document.createElement("li");
     item.className = "list-group-item fw-semibold";
-    item.textContent = payload.content;
+
+    const badge = document.createElement("span");
+    badge.className = "badge text-bg-light border me-2";
+    badge.textContent = "Notification";
+    item.appendChild(badge);
+
+    if (channelId) {
+        const link = document.createElement("a");
+        link.href = `/messages/channels/${channelId}`;
+        link.textContent = content;
+        item.appendChild(link);
+    } else {
+        item.appendChild(document.createTextNode(content));
+    }
+
     list.prepend(item);
 });
 

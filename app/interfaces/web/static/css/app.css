@@ -33,6 +33,7 @@
     --check-bg: #ffffff;
     --badge-bg: #eef3fa;
     --badge-border: #d4deec;
+    --badge-text: #1e2432;
     --list-bg: rgba(255, 255, 255, 0.82);
     --list-hover-bg: #eef3fb;
     --alert-bg: #f3f6fb;
@@ -80,6 +81,7 @@ html[data-theme="dark"] {
     --check-bg: #2a2d3d;
     --badge-bg: #34384b;
     --badge-border: #4c516d;
+    --badge-text: #f8f8f2;
     --list-bg: rgba(49, 53, 70, 0.82);
     --list-hover-bg: #383c51;
     --alert-bg: #303447;
@@ -203,7 +205,7 @@ a:hover {
 .badge.text-bg-light {
     background: var(--badge-bg) !important;
     border-color: var(--badge-border) !important;
-    color: var(--text);
+    color: var(--badge-text) !important;
     font-weight: 600;
 }
 
