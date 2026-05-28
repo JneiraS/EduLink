@@ -16,7 +16,7 @@ class SQLAlchemyUserRepository(UserRepositoryPort):
             )
             db.session.add(model)
         else:
-            model = UserModel.query.get(user.id)
+            model = db.session.get(UserModel, user.id)
             model.full_name = user.full_name
             model.email = user.email
             model.role = user.role.value
@@ -31,7 +31,7 @@ class SQLAlchemyUserRepository(UserRepositoryPort):
         return self._to_entity(model) if model else None
 
     def find_by_id(self, user_id: int) -> User | None:
-        model = UserModel.query.get(user_id)
+        model = db.session.get(UserModel, user_id)
         return self._to_entity(model) if model else None
 
     def list_users(self) -> list[User]:

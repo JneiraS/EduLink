@@ -1,4 +1,6 @@
-from datetime import datetime
+from datetime import datetime, timezone
+
+UTC_ZONE = getattr(datetime, "UTC", timezone.utc)
 
 from app.application.use_cases.message_use_cases import SendMessage
 from app.domain.entities.channel import Channel
@@ -11,7 +13,7 @@ class InMemoryMessageRepo:
 
     def save(self, message):
         message.id = len(self.items) + 1
-        message.created_at = datetime.utcnow()
+        message.created_at = datetime.now(UTC_ZONE)
         self.items.append(message)
         return message
 
@@ -52,7 +54,7 @@ class InMemoryNotificationRepo:
 
     def save(self, notification):
         notification.id = len(self.items) + 1
-        notification.created_at = datetime.utcnow()
+        notification.created_at = datetime.now(UTC_ZONE)
         self.items.append(notification)
         return notification
 

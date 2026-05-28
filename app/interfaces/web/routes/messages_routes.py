@@ -4,10 +4,17 @@ from flask_login import current_user, login_required
 from app.domain.entities.user import UserRole
 from app.domain.errors import AuthorizationError, NotFoundError, ValidationError
 from app.infrastructure.database.models import ChannelModel, UserModel
+from app.interfaces.web.routes.presentation import (
+    build_member_name_index,
+    build_messages_view,
+    parse_member_ids,
+    resolve_channel_name,
+)
 from app.interfaces.web.routes.utils import current_actor, get_use_cases
 
 messages_bp = Blueprint("messages", __name__, url_prefix="/messages")
 MESSAGES_CHANNELS = "messages.channels"
+CHANNEL_DETAIL = "messages.channel_detail"
 
 
 @messages_bp.route("/channels", methods=["GET", "POST"])
@@ -15,10 +22,7 @@ MESSAGES_CHANNELS = "messages.channels"
 def channels():
     if request.method == "POST":
         name = request.form.get("name", "")
-        raw_members = request.form.getlist("members") + request.form.getlist(
-            "members[]"
-        )
-        member_ids = sorted({int(x) for x in raw_members if x.isdigit()})
+        member_ids = parse_member_ids(request.form)
 
         try:
             get_use_cases().create_channel.execute(
@@ -48,10 +52,7 @@ def channel_detail(channel_id: int):
         action = request.form.get("action", "send_message")
 
         if action == "add_members":
-            raw_members = request.form.getlist("members") + request.form.getlist(
-                "members[]"
-            )
-            member_ids = sorted({int(x) for x in raw_members if x.isdigit()})
+            member_ids = parse_member_ids(request.form)
 
             try:
                 get_use_cases().add_channel_members.execute(
@@ -61,14 +62,14 @@ def channel_detail(channel_id: int):
             except (ValidationError, AuthorizationError, NotFoundError) as exc:
                 flash(str(exc), "danger")
 
-            return redirect(url_for("messages.channel_detail", channel_id=channel_id))
+            return redirect(url_for(CHANNEL_DETAIL, channel_id=channel_id))
 
         content = request.form.get("content", "")
         try:
             get_use_cases().send_message.execute(
                 actor, channel_id=channel_id, content=content
             )
-            return redirect(url_for("messages.channel_detail", channel_id=channel_id))
+            return redirect(url_for(CHANNEL_DETAIL, channel_id=channel_id))
         except (ValidationError, AuthorizationError, NotFoundError) as exc:
             flash(str(exc), "danger")
             return redirect(url_for(MESSAGES_CHANNELS))
@@ -81,72 +82,20 @@ def channel_detail(channel_id: int):
         channel_members = get_use_cases().list_channel_members.execute(
             actor, channel_id=channel_id
         )
-        channel_name = None
-
-        # Prefer canonical name from DB for reliable display.
         channel_row = ChannelModel.query.filter_by(id=channel_id).first()
-        if channel_row and channel_row.name:
-            channel_name = str(channel_row.name).strip()
-
-        for channel in user_channels:
-            if channel_name:
-                break
-            current_id = (
-                channel.get("id")
-                if isinstance(channel, dict)
-                else getattr(channel, "id", None)
-            )
-            if current_id != channel_id:
-                continue
-            raw_channel_name = (
-                channel.get("name")
-                if isinstance(channel, dict)
-                else getattr(channel, "name", None)
-            )
-            channel_name = str(raw_channel_name or "").strip()
-            break
-        if not channel_name:
-            channel_name = f"Canal #{channel_id}"
-
-        member_names = {}
-        for member in channel_members:
-            member_names[member.id] = member.full_name
-            member_names[str(member.id)] = member.full_name
-
-        # Resolve names for historical messages even if sender is no longer listed as channel member.
-        sender_ids = {m.sender_id for m in channel_messages}
-        if sender_ids:
-            known_users = UserModel.query.filter(UserModel.id.in_(sender_ids)).all()
-            for user in known_users:
-                member_names[user.id] = user.full_name
-                member_names[str(user.id)] = user.full_name
-
-        messages_view = []
-        for message in channel_messages:
-            sender_key = message.sender_id
-            try:
-                sender_key_int = int(sender_key)
-            except (TypeError, ValueError):
-                sender_key_int = None
-
-            sender_name = (
-                member_names.get(sender_key)
-                or member_names.get(str(sender_key))
-                or (
-                    member_names.get(sender_key_int)
-                    if sender_key_int is not None
-                    else None
-                )
-                or f"Utilisateur {sender_key}"
-            )
-
-            messages_view.append(
-                {
-                    "sender_name": sender_name,
-                    "created_at": message.created_at,
-                    "content": message.content,
-                }
-            )
+        channel_name = resolve_channel_name(
+            channel_id,
+            user_channels,
+            db_channel_name=channel_row.name if channel_row else None,
+        )
+        member_names = build_member_name_index(
+            channel_members,
+            channel_messages,
+            users_lookup=lambda sender_ids: UserModel.query.filter(
+                UserModel.id.in_(sender_ids)
+            ).all(),
+        )
+        messages_view = build_messages_view(channel_messages, member_names)
 
         current_member_ids = {member.id for member in channel_members}
         all_users = UserModel.query.order_by(UserModel.full_name.asc()).all()

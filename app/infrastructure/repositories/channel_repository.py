@@ -47,7 +47,7 @@ class SQLAlchemyChannelRepository(ChannelRepositoryPort):
         return db.session.execute(stmt).first() is not None
 
     def find_by_id(self, channel_id: int) -> Channel | None:
-        row = ChannelModel.query.get(channel_id)
+        row = db.session.get(ChannelModel, channel_id)
         if not row:
             return None
         return Channel(id=row.id, name=row.name, created_by=row.created_by)

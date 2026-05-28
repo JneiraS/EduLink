@@ -159,7 +159,7 @@ def create_app(testing: bool = False):
 
 @login_manager.user_loader
 def load_user(user_id: str):
-    return UserModel.query.get(int(user_id))
+    return db.session.get(UserModel, int(user_id))
 
 
 def _seed_initial_admin() -> None:
