@@ -51,3 +51,10 @@ class SQLAlchemyChannelRepository(ChannelRepositoryPort):
         if not row:
             return None
         return Channel(id=row.id, name=row.name, created_by=row.created_by)
+
+    def list_member_ids(self, channel_id: int) -> list[int]:
+        stmt = select(channel_members.c.user_id).where(
+            channel_members.c.channel_id == channel_id
+        )
+        rows = db.session.execute(stmt).all()
+        return [row[0] for row in rows]

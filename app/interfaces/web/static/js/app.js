@@ -19,3 +19,92 @@ socket.on("channel_message", () => {
         window.location.reload();
     }
 });
+
+function urlBase64ToUint8Array(base64String) {
+    const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+    const base64 = (base64String + padding)
+        .replace(/-/g, "+")
+        .replace(/_/g, "/");
+    const rawData = window.atob(base64);
+    const outputArray = new Uint8Array(rawData.length);
+
+    for (let i = 0; i < rawData.length; i += 1) {
+        outputArray[i] = rawData.charCodeAt(i);
+    }
+
+    return outputArray;
+}
+
+async function initPushNotifications() {
+    const isAuthenticated = document.body.dataset.authenticated === "1";
+    if (!isAuthenticated) {
+        return;
+    }
+
+    if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
+        return;
+    }
+
+    const enableButton = document.getElementById("enable-push-btn");
+    if (!enableButton) {
+        return;
+    }
+
+    const showStatus = (text, className, disabled = true) => {
+        enableButton.textContent = text;
+        enableButton.className = `btn btn-sm me-2 ${className}`;
+        enableButton.disabled = disabled;
+        enableButton.classList.remove("d-none");
+    };
+
+    const response = await fetch("/push/public-key", { credentials: "same-origin" });
+    if (!response.ok) {
+        showStatus("Push indisponible", "btn-outline-warning", true);
+        return;
+    }
+
+    const data = await response.json();
+    const publicKey = data.publicKey;
+    if (!publicKey) {
+        showStatus("Push non configure", "btn-outline-warning", true);
+        return;
+    }
+
+    const registration = await navigator.serviceWorker.register("/service-worker.js");
+    const existingSubscription = await registration.pushManager.getSubscription();
+    if (existingSubscription) {
+        showStatus("Push mobile active", "btn-success", true);
+        return;
+    }
+
+    showStatus("Activer push mobile", "btn-warning", false);
+    enableButton.addEventListener("click", async () => {
+        const permission = await Notification.requestPermission();
+        if (permission !== "granted") {
+            showStatus("Permission refusee", "btn-outline-danger", true);
+            return;
+        }
+
+        const subscription = await registration.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: urlBase64ToUint8Array(publicKey),
+        });
+
+        const csrfToken = document.querySelector("meta[name='csrf-token']")?.content || "";
+        await fetch("/push/subscribe", {
+            method: "POST",
+            credentials: "same-origin",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": csrfToken,
+            },
+            body: JSON.stringify(subscription),
+        });
+
+        showStatus("Push mobile active", "btn-success", true);
+    });
+}
+
+initPushNotifications().catch((error) => {
+    console.error("Push init failed", error);
+});
