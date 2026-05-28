@@ -5,7 +5,7 @@ from app.application.use_cases.announcement_use_cases import (
     ListAnnouncements,
 )
 from app.application.use_cases.auth_use_cases import LoginUser, RegisterUser
-from app.application.use_cases.channel_use_cases import CreateChannel
+from app.application.use_cases.channel_use_cases import AddChannelMembers, CreateChannel
 from app.application.use_cases.dashboard_use_case import GetDashboard
 from app.application.use_cases.message_use_cases import (
     ListChannelMessages,
@@ -37,3 +37,4 @@ class UseCaseContainer:
     subscribe_push_notifications: SubscribePushNotifications
     unsubscribe_push_notifications: UnsubscribePushNotifications
     create_channel: CreateChannel
+    add_channel_members: AddChannelMembers

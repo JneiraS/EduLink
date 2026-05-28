@@ -24,6 +24,7 @@
             <div class="card-body">
                 <form method="post">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="action" value="send_message">
                     <div class="mb-3">
                         <label class="form-label" for="content">Votre message</label>
                         <textarea class="form-control" id="content" name="content" rows="3" required></textarea>
@@ -54,6 +55,34 @@
                 </div>
             </div>
         </div>
+
+        {% if can_manage_members and (current_user.role|string|upper in ['ADMIN', 'TEACHER']) %}
+        <div class="card shadow-sm mt-3">
+            <div class="card-body">
+                <h2 class="h6">Ajouter des membres</h2>
+                {% if available_users %}
+                <form method="post">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="action" value="add_members">
+                    <div class="border rounded p-2 mb-3" id="members">
+                        {% for user in available_users %}
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="members" value="{{ user.id }}"
+                                id="member_add_{{ user.id }}">
+                            <label class="form-check-label" for="member_add_{{ user.id }}">
+                                {{ user.full_name }} ({{ user.role|capitalize }})
+                            </label>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <button class="btn btn-outline-primary" type="submit">Ajouter</button>
+                </form>
+                {% else %}
+                <p class="text-muted mb-0">Tous les utilisateurs sont deja membres.</p>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
     </div>
 </div>
 {% endblock %}

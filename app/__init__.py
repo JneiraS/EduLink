@@ -13,7 +13,7 @@ from app.application.use_cases.announcement_use_cases import (
     ListAnnouncements,
 )
 from app.application.use_cases.auth_use_cases import LoginUser, RegisterUser
-from app.application.use_cases.channel_use_cases import CreateChannel
+from app.application.use_cases.channel_use_cases import AddChannelMembers, CreateChannel
 from app.application.use_cases.dashboard_use_case import GetDashboard
 from app.application.use_cases.message_use_cases import (
     ListChannelMessages,
@@ -146,6 +146,10 @@ def create_app(testing: bool = False):
             push_subscriptions=push_subscriptions_repo
         ),
         create_channel=CreateChannel(channels=channels_repo),
+        add_channel_members=AddChannelMembers(
+            channels=channels_repo,
+            users=users_repo,
+        ),
     )
 
     register_socket_handlers(socketio)
