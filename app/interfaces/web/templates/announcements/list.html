@@ -13,7 +13,7 @@
         <article class="border-bottom pb-3 mb-3">
             <h2 class="h6 mb-1">{{ a.title }}</h2>
             <p class="mb-2">{{ a.content }}</p>
-            <small class="text-muted">{{ a.created_at }}</small>
+            <small class="text-muted">{{ a.created_at.strftime('%d/%m/%Y') if a.created_at else '' }}</small>
             {% if a.pdf_filename %}
             <div><small>PDF: {{ a.pdf_filename }}</small></div>
             {% endif %}

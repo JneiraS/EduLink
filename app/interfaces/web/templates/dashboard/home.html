@@ -38,7 +38,8 @@
                     {% for item in data.latest_announcements %}
                     <li class="list-group-item px-0">
                         <strong>{{ item.title }}</strong><br>
-                        <small class="text-muted">{{ item.created_at }}</small>
+                        <small class="text-muted">{{ item.created_at.strftime('%d/%m/%Y') if item.created_at else ''
+                            }}</small>
                     </li>
                     {% endfor %}
                 </ul>

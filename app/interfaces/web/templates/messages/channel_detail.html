@@ -9,8 +9,7 @@
                 {% for m in messages %}
                 <div class="mb-2 pb-2 border-bottom">
                     <strong>{{ m.sender_name }}</strong>
-                    <small class="text-muted">{{ (m.created_at|string)|replace('T', ' ')|truncate(16, True, '')
-                        }}</small>
+                    <small class="text-muted">{{ m.created_at.strftime('%d/%m/%Y') if m.created_at else '' }}</small>
                     <div>{{ m.content }}</div>
                 </div>
                 {% endfor %}

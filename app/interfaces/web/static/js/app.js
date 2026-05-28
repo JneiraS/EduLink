@@ -35,6 +35,42 @@ function urlBase64ToUint8Array(base64String) {
     return outputArray;
 }
 
+function initThemeToggle() {
+    const root = document.documentElement;
+    const themeButton = document.getElementById("theme-toggle-btn");
+    const themeColorMeta = document.querySelector("meta[name='theme-color']");
+    if (!themeButton) {
+        return;
+    }
+
+    const applyThemeUi = (theme) => {
+        const isDark = theme === "dark";
+        const title = isDark ? "Theme clair" : "Theme sombre";
+        const iconClass = isDark ? "bi-sun" : "bi-moon-stars";
+        themeButton.setAttribute("title", title);
+        themeButton.setAttribute("aria-label", `Basculer vers le ${title.toLowerCase()}`);
+        themeButton.innerHTML = `<i class="bi ${iconClass}" aria-hidden="true"></i>`;
+
+        if (themeColorMeta) {
+            themeColorMeta.setAttribute("content", isDark ? "#282a36" : "#f4f7fc");
+        }
+    };
+
+    const setTheme = (theme) => {
+        root.setAttribute("data-theme", theme);
+        localStorage.setItem("edulink-theme", theme);
+        applyThemeUi(theme);
+    };
+
+    const currentTheme = root.getAttribute("data-theme") || "light";
+    applyThemeUi(currentTheme);
+
+    themeButton.addEventListener("click", () => {
+        const activeTheme = root.getAttribute("data-theme") === "dark" ? "dark" : "light";
+        setTheme(activeTheme === "dark" ? "light" : "dark");
+    });
+}
+
 async function initPushNotifications() {
     const isAuthenticated = document.body.dataset.authenticated === "1";
     if (!isAuthenticated) {
@@ -50,38 +86,40 @@ async function initPushNotifications() {
         return;
     }
 
-    const showStatus = (text, className, disabled = true) => {
-        enableButton.textContent = text;
+    const showStatus = (text, className, iconClass, disabled = true) => {
         enableButton.className = `btn btn-sm me-2 ${className}`;
         enableButton.disabled = disabled;
         enableButton.classList.remove("d-none");
+        enableButton.setAttribute("title", text);
+        enableButton.setAttribute("aria-label", text);
+        enableButton.innerHTML = `<i class="bi ${iconClass}" aria-hidden="true"></i>`;
     };
 
     const response = await fetch("/push/public-key", { credentials: "same-origin" });
     if (!response.ok) {
-        showStatus("Push indisponible", "btn-outline-warning", true);
+        showStatus("Push indisponible", "btn-outline-warning", "bi-bell-slash", true);
         return;
     }
 
     const data = await response.json();
     const publicKey = data.publicKey;
     if (!publicKey) {
-        showStatus("Push non configure", "btn-outline-warning", true);
+        showStatus("Push non configure", "btn-outline-warning", "bi-bell-slash", true);
         return;
     }
 
     const registration = await navigator.serviceWorker.register("/service-worker.js");
     const existingSubscription = await registration.pushManager.getSubscription();
     if (existingSubscription) {
-        showStatus("Push mobile active", "btn-success", true);
+        showStatus("Push mobile active", "btn-success", "bi-bell-fill", true);
         return;
     }
 
-    showStatus("Activer push mobile", "btn-warning", false);
+    showStatus("Activer push mobile", "btn-warning", "bi-bell", false);
     enableButton.addEventListener("click", async () => {
         const permission = await Notification.requestPermission();
         if (permission !== "granted") {
-            showStatus("Permission refusee", "btn-outline-danger", true);
+            showStatus("Permission refusee", "btn-outline-danger", "bi-bell-slash", true);
             return;
         }
 
@@ -101,9 +139,11 @@ async function initPushNotifications() {
             body: JSON.stringify(subscription),
         });
 
-        showStatus("Push mobile active", "btn-success", true);
+        showStatus("Push mobile active", "btn-success", "bi-bell-fill", true);
     });
 }
+
+initThemeToggle();
 
 initPushNotifications().catch((error) => {
     console.error("Push init failed", error);
