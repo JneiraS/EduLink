@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h1 class="h5 mb-3">Publier une annonce</h1>
+                <form method="post" enctype="multipart/form-data">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <div class="mb-3">
+                        <label class="form-label" for="title">Titre</label>
+                        <input class="form-control" id="title" name="title" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" for="content">Contenu</label>
+                        <textarea class="form-control" id="content" name="content" rows="4" required></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" for="document">Document PDF (optionnel)</label>
+                        <input class="form-control" id="document" name="document" type="file" accept="application/pdf">
+                    </div>
+                    <button class="btn btn-primary" type="submit">Publier</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

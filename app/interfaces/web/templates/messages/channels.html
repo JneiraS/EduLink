@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row g-3">
+    <div class="col-lg-5">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h2 class="h6">Creer un canal</h2>
+                <form method="post">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <div class="mb-3">
+                        <label class="form-label" for="name">Nom du canal</label>
+                        <input class="form-control" id="name" name="name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" for="members">Membres</label>
+                        <select class="form-select" id="members" name="members" multiple>
+                            {% for user in users %}
+                            <option value="{{ user.id }}">{{ user.full_name }} ({{ user.role }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <button class="btn btn-primary" type="submit">Creer</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-7">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h2 class="h6">Mes canaux</h2>
+                {% if channels %}
+                <div class="list-group">
+                    {% for channel in channels %}
+                    <a class="list-group-item list-group-item-action"
+                        href="{{ url_for('messages.channel_detail', channel_id=channel.id) }}">{{ channel.name }}</a>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted mb-0">Aucun canal.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

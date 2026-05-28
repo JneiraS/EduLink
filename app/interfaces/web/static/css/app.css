@@ -1,0 +1,11 @@
+body {
+    background: linear-gradient(180deg, #eef6ff 0%, #f9fbff 100%);
+}
+
+.card {
+    border: 0;
+}
+
+#notifications-list .fw-semibold {
+    color: #0d6efd;
+}
