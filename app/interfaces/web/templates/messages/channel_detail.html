@@ -1,51 +1,59 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="card shadow-sm mb-3">
-    <div class="card-body">
-        <h1 class="h5 mb-0">Canal #{{ channel_id }}</h1>
-        <div class="mt-2">
-            <small class="text-muted">Membres:</small>
-            {% if members %}
-            <div class="mt-1 d-flex flex-wrap gap-2">
-                {% for member in members %}
-                <span class="badge text-bg-light border">{{ member.full_name }} ({{ member.role.value|capitalize
-                    }})</span>
+<div class="row g-3">
+    <div class="col-lg-8">
+        <div class="card shadow-sm mb-3">
+            <div class="card-body" id="messages-container">
+                {% if messages %}
+                {% for m in messages %}
+                <div class="mb-2 pb-2 border-bottom">
+                    <strong>{{ m.sender_name }}</strong>
+                    <small class="text-muted">{{ (m.created_at|string)|replace('T', ' ')|truncate(16, True, '')
+                        }}</small>
+                    <div>{{ m.content }}</div>
+                </div>
                 {% endfor %}
+                {% else %}
+                <p class="text-muted mb-0">Aucun message.</p>
+                {% endif %}
             </div>
-            {% else %}
-            <div class="text-muted">Aucun membre</div>
-            {% endif %}
+        </div>
+
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <form method="post">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <div class="mb-3">
+                        <label class="form-label" for="content">Votre message</label>
+                        <textarea class="form-control" id="content" name="content" rows="3" required></textarea>
+                    </div>
+                    <button class="btn btn-primary" type="submit">Envoyer</button>
+                </form>
+            </div>
         </div>
     </div>
-</div>
 
-<div class="card shadow-sm mb-3">
-    <div class="card-body" id="messages-container">
-        {% if messages %}
-        {% for m in messages %}
-        <div class="mb-2 pb-2 border-bottom">
-            <strong>{{ m.sender_name }}</strong>
-            <small class="text-muted">{{ (m.created_at|string)|replace('T', ' ')|truncate(16, True, '') }}</small>
-            <div>{{ m.content }}</div>
-        </div>
-        {% endfor %}
-        {% else %}
-        <p class="text-muted mb-0">Aucun message.</p>
-        {% endif %}
-    </div>
-</div>
-
-<div class="card shadow-sm">
-    <div class="card-body">
-        <form method="post">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            <div class="mb-3">
-                <label class="form-label" for="content">Votre message</label>
-                <textarea class="form-control" id="content" name="content" rows="3" required></textarea>
+    <div class="col-lg-4">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h1 class="h5 mb-0">Canal #{{ channel_id }}</h1>
+                <div class="mt-2">
+                    <small class="text-muted">Membres:</small>
+                    {% if members %}
+                    <div class="mt-1 d-flex flex-column gap-2">
+                        {% for member in members %}
+                        <span class="badge text-bg-light border text-start">{{ member.full_name }} ({{
+                            member.role.value|capitalize
+                            }})</span>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-muted">Aucun membre</div>
+                    {% endif %}
+                </div>
             </div>
-            <button class="btn btn-primary" type="submit">Envoyer</button>
-        </form>
+        </div>
     </div>
 </div>
 {% endblock %}

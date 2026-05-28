@@ -6,6 +6,11 @@ body {
     border: 0;
 }
 
+
 #notifications-list .fw-semibold {
     color: #0d6efd;
+}
+
+.container.py-4 {
+    height: 100vh;
 }
