@@ -59,6 +59,45 @@ def channel_detail(channel_id: int):
         channel_members = get_use_cases().list_channel_members.execute(
             current_actor(), channel_id=channel_id
         )
+        member_names = {}
+        for member in channel_members:
+            member_names[member.id] = member.full_name
+            member_names[str(member.id)] = member.full_name
+
+        # Resolve names for historical messages even if sender is no longer listed as channel member.
+        sender_ids = {m.sender_id for m in channel_messages}
+        if sender_ids:
+            known_users = UserModel.query.filter(UserModel.id.in_(sender_ids)).all()
+            for user in known_users:
+                member_names[user.id] = user.full_name
+                member_names[str(user.id)] = user.full_name
+
+        messages_view = []
+        for message in channel_messages:
+            sender_key = message.sender_id
+            try:
+                sender_key_int = int(sender_key)
+            except (TypeError, ValueError):
+                sender_key_int = None
+
+            sender_name = (
+                member_names.get(sender_key)
+                or member_names.get(str(sender_key))
+                or (
+                    member_names.get(sender_key_int)
+                    if sender_key_int is not None
+                    else None
+                )
+                or f"Utilisateur {sender_key}"
+            )
+
+            messages_view.append(
+                {
+                    "sender_name": sender_name,
+                    "created_at": message.created_at,
+                    "content": message.content,
+                }
+            )
     except (AuthorizationError, NotFoundError) as exc:
         flash(str(exc), "danger")
         return redirect(url_for(MESSAGES_CHANNELS))
@@ -66,6 +105,7 @@ def channel_detail(channel_id: int):
     return render_template(
         "messages/channel_detail.html",
         channel_id=channel_id,
-        messages=channel_messages,
+        messages=messages_view,
         members=channel_members,
+        member_names=member_names,
     )
