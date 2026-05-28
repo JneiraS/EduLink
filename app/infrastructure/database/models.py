@@ -73,3 +73,16 @@ class NotificationModel(db.Model):
     content = db.Column(db.String(255), nullable=False)
     is_read = db.Column(db.Boolean, default=False, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+
+
+class PushSubscriptionModel(db.Model):
+    __tablename__ = "push_subscriptions"
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(
+        db.Integer, db.ForeignKey(USERS_ID_FK), nullable=False, index=True
+    )
+    endpoint = db.Column(db.String(1024), nullable=False, unique=True)
+    p256dh_key = db.Column(db.String(255), nullable=False)
+    auth_key = db.Column(db.String(255), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)

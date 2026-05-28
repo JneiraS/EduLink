@@ -35,6 +35,29 @@ class SendMessage:
         )
         saved = self.messages.save(message)
 
+        channel = self.channels.find_by_id(channel_id)
+        member_ids = self.channels.list_member_ids(channel_id)
+        for member_id in member_ids:
+            if member_id == (actor.id or 0):
+                continue
+
+            created_notification = self.notifications.save(
+                Notification(
+                    id=None,
+                    user_id=member_id,
+                    content=f"Nouveau message dans le canal {channel.name}",
+                    is_read=False,
+                )
+            )
+            self.realtime.notify_user(
+                member_id,
+                {
+                    "id": created_notification.id,
+                    "content": created_notification.content,
+                    "created_at": str(created_notification.created_at),
+                },
+            )
+
         self.realtime.notify_channel(
             channel_id,
             {

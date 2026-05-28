@@ -4,6 +4,9 @@ import secrets
 from flask import Flask
 from dotenv import load_dotenv
 
+# Load .env as early as possible so config module sees environment variables.
+load_dotenv()
+
 from app.application.container import UseCaseContainer
 from app.application.use_cases.announcement_use_cases import (
     CreateAnnouncement,
@@ -20,6 +23,8 @@ from app.application.use_cases.message_use_cases import (
 from app.application.use_cases.notification_use_cases import (
     ListNotifications,
     MarkNotificationRead,
+    SubscribePushNotifications,
+    UnsubscribePushNotifications,
 )
 from app.config.settings import DevelopmentConfig, TestingConfig
 from app.extensions import csrf, db, login_manager, socketio
@@ -40,19 +45,20 @@ from app.infrastructure.repositories.message_repository import (
 from app.infrastructure.repositories.notification_repository import (
     SQLAlchemyNotificationRepository,
 )
+from app.infrastructure.repositories.push_subscription_repository import (
+    SQLAlchemyPushSubscriptionRepository,
+)
 from app.infrastructure.repositories.user_repository import SQLAlchemyUserRepository
 from app.interfaces.web.routes.announcements_routes import announcements_bp
 from app.interfaces.web.routes.auth_routes import auth_bp
 from app.interfaces.web.routes.dashboard_routes import dashboard_bp
 from app.interfaces.web.routes.messages_routes import messages_bp
 from app.interfaces.web.routes.notifications_routes import notifications_bp
+from app.interfaces.web.routes.push_routes import push_bp
 from app.interfaces.web.socket_events import register_socket_handlers
 
 
 def create_app(testing: bool = False):
-    # Load .env in local development so admin credentials and config vars are picked up.
-    load_dotenv()
-
     app = Flask(
         __name__,
         template_folder="interfaces/web/templates",
@@ -72,6 +78,7 @@ def create_app(testing: bool = False):
     app.register_blueprint(announcements_bp)
     app.register_blueprint(messages_bp)
     app.register_blueprint(notifications_bp)
+    app.register_blueprint(push_bp)
 
     with app.app_context():
         db.create_all()
@@ -82,8 +89,15 @@ def create_app(testing: bool = False):
     messages_repo = SQLAlchemyMessageRepository()
     channels_repo = SQLAlchemyChannelRepository()
     notifications_repo = SQLAlchemyNotificationRepository()
+    push_subscriptions_repo = SQLAlchemyPushSubscriptionRepository()
     hasher = WerkzeugPasswordHasher()
-    realtime = SocketIONotificationService(socketio)
+    realtime = SocketIONotificationService(
+        socketio=socketio,
+        push_subscriptions=push_subscriptions_repo,
+        vapid_private_key=app.config.get("VAPID_PRIVATE_KEY", ""),
+        vapid_public_key=app.config.get("VAPID_PUBLIC_KEY", ""),
+        vapid_subject=app.config.get("VAPID_SUBJECT", "mailto:admin@edulink.local"),
+    )
 
     app.extensions["services"] = {
         "users": users_repo,
@@ -91,6 +105,7 @@ def create_app(testing: bool = False):
         "messages": messages_repo,
         "channels": channels_repo,
         "notifications": notifications_repo,
+        "push_subscriptions": push_subscriptions_repo,
         "hasher": hasher,
         "realtime_notifications": realtime,
     }
@@ -120,6 +135,12 @@ def create_app(testing: bool = False):
         list_user_channels=ListUserChannels(channels=channels_repo),
         list_notifications=ListNotifications(notifications=notifications_repo),
         mark_notification_read=MarkNotificationRead(notifications=notifications_repo),
+        subscribe_push_notifications=SubscribePushNotifications(
+            push_subscriptions=push_subscriptions_repo
+        ),
+        unsubscribe_push_notifications=UnsubscribePushNotifications(
+            push_subscriptions=push_subscriptions_repo
+        ),
         create_channel=CreateChannel(channels=channels_repo),
     )
 

@@ -4,6 +4,7 @@ from app.domain.entities.announcement import Announcement
 from app.domain.entities.channel import Channel
 from app.domain.entities.message import Message
 from app.domain.entities.notification import Notification
+from app.domain.entities.push_subscription import PushSubscription
 from app.domain.entities.user import User
 
 
@@ -78,4 +79,28 @@ class ChannelRepositoryPort(ABC):
 
     @abstractmethod
     def find_by_id(self, channel_id: int) -> Channel | None:
+        raise NotImplementedError
+
+    @abstractmethod
+    def list_member_ids(self, channel_id: int) -> list[int]:
+        raise NotImplementedError
+
+
+class PushSubscriptionRepositoryPort(ABC):
+    @abstractmethod
+    def save_for_user(
+        self,
+        user_id: int,
+        endpoint: str,
+        p256dh_key: str,
+        auth_key: str,
+    ) -> PushSubscription:
+        raise NotImplementedError
+
+    @abstractmethod
+    def list_by_user(self, user_id: int) -> list[PushSubscription]:
+        raise NotImplementedError
+
+    @abstractmethod
+    def delete_by_endpoint(self, endpoint: str) -> None:
         raise NotImplementedError

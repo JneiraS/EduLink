@@ -15,6 +15,8 @@ from app.application.use_cases.message_use_cases import (
 from app.application.use_cases.notification_use_cases import (
     ListNotifications,
     MarkNotificationRead,
+    SubscribePushNotifications,
+    UnsubscribePushNotifications,
 )
 
 
@@ -30,4 +32,6 @@ class UseCaseContainer:
     list_user_channels: ListUserChannels
     list_notifications: ListNotifications
     mark_notification_read: MarkNotificationRead
+    subscribe_push_notifications: SubscribePushNotifications
+    unsubscribe_push_notifications: UnsubscribePushNotifications
     create_channel: CreateChannel

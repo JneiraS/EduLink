@@ -7,6 +7,9 @@ class BaseConfig:
     UPLOAD_FOLDER = os.getenv("UPLOAD_FOLDER", "uploads")
     MAX_CONTENT_LENGTH = 5 * 1024 * 1024
     ALLOWED_EXTENSIONS = {"pdf"}
+    VAPID_PUBLIC_KEY = os.getenv("VAPID_PUBLIC_KEY", "")
+    VAPID_PRIVATE_KEY = os.getenv("VAPID_PRIVATE_KEY", "")
+    VAPID_SUBJECT = os.getenv("VAPID_SUBJECT", "mailto:admin@edulink.local")
 
 
 class DevelopmentConfig(BaseConfig):
