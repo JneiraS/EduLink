@@ -68,7 +68,9 @@ def build_notification_channel_links(
     return notification_channel_links, notification_channel_links_by_content
 
 
-def resolve_channel_name(channel_id: int, user_channels, db_channel_name: str | None = None) -> str:
+def resolve_channel_name(
+    channel_id: int, user_channels, db_channel_name: str | None = None
+) -> str:
     if db_channel_name:
         channel_name = str(db_channel_name).strip()
         if channel_name:

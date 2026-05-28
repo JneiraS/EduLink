@@ -11,6 +11,7 @@ def utc_now() -> datetime:
     utc_zone = getattr(datetime, "UTC", timezone.utc)
     return datetime.now(utc_zone)
 
+
 channel_members = db.Table(
     "channel_members",
     db.Column("channel_id", db.Integer, db.ForeignKey("channels.id"), primary_key=True),
