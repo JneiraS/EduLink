@@ -385,6 +385,62 @@ hr {
     font-size: 0.95rem;
 }
 
+.announcement-item {
+    padding-top: 0.85rem;
+    border-color: var(--line) !important;
+}
+
+.announcement-item:first-child {
+    padding-top: 0;
+}
+
+.announcement-item:last-child {
+    border-bottom: 0 !important;
+    margin-bottom: 0 !important;
+    padding-bottom: 0 !important;
+}
+
+.announcement-meta {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin-bottom: 0.55rem;
+    padding: 0.2rem 0.6rem;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: var(--surface-strong);
+}
+
+.announcement-meta i {
+    color: var(--cyan);
+    font-size: 0.78rem;
+}
+
+.announcement-title {
+    font-weight: 700;
+    letter-spacing: 0.1px;
+    margin-bottom: 0.35rem;
+}
+
+.announcement-content {
+    color: var(--text-soft);
+    line-height: 1.55;
+}
+
+.announcement-attachment {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.2rem 0.6rem;
+    border: 1px dashed var(--line);
+    border-radius: 8px;
+    background: var(--surface-muted);
+}
+
+.announcement-attachment i {
+    color: var(--brand);
+}
+
 @media (max-width: 992px) {
     .navbar .container {
         gap: 0.5rem;

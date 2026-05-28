@@ -10,12 +10,18 @@
     <div class="card-body">
         {% if announcements %}
         {% for a in announcements %}
-        <article class="border-bottom pb-3 mb-3">
-            <h2 class="h6 mb-1">{{ a.title }}</h2>
-            <p class="mb-2">{{ a.content }}</p>
-            <small class="text-muted">{{ a.created_at.strftime('%d/%m/%Y') if a.created_at else '' }}</small>
+        <article class="announcement-item border-bottom pb-3 mb-3">
+            <div class="announcement-meta">
+                <i class="bi bi-calendar3" aria-hidden="true"></i>
+                <small class="text-muted fw-semibold">{{ a.created_at.strftime('%d/%m/%Y %H:%M') if a.created_at else '' }}</small>
+            </div>
+            <h2 class="announcement-title h6 mb-1">{{ a.title }}</h2>
+            <p class="announcement-content mb-2">{{ a.content }}</p>
             {% if a.pdf_filename %}
-            <div><small>PDF: {{ a.pdf_filename }}</small></div>
+            <div class="announcement-attachment">
+                <i class="bi bi-file-earmark-pdf" aria-hidden="true"></i>
+                <small>PDF: {{ a.pdf_filename }}</small>
+            </div>
             {% endif %}
         </article>
         {% endfor %}
