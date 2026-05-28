@@ -154,6 +154,19 @@ a:hover {
     color: var(--nav-brand);
 }
 
+.navbar-actions {
+    display: flex;
+    align-items: center;
+    flex-wrap: nowrap;
+    white-space: nowrap;
+}
+
+.nav-mobile-action {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
 .navbar .btn.btn-light {
     border: 1px solid var(--nav-btn-border);
     background: var(--nav-btn-bg);
@@ -375,6 +388,25 @@ hr {
 @media (max-width: 992px) {
     .navbar .container {
         gap: 0.5rem;
+    }
+
+    .navbar-actions {
+        gap: 0.35rem;
+    }
+
+    .navbar-actions .me-2 {
+        margin-right: 0 !important;
+    }
+
+    .nav-mobile-action {
+        width: 34px;
+        height: 34px;
+        padding: 0;
+        justify-content: center;
+    }
+
+    .nav-mobile-action .nav-action-label {
+        display: none;
     }
 
     .container.py-4 {
