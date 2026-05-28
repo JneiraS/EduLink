@@ -9,6 +9,7 @@ from app.application.use_cases.channel_use_cases import CreateChannel
 from app.application.use_cases.dashboard_use_case import GetDashboard
 from app.application.use_cases.message_use_cases import (
     ListChannelMessages,
+    ListChannelMembers,
     ListUserChannels,
     SendMessage,
 )
@@ -29,6 +30,7 @@ class UseCaseContainer:
     get_dashboard: GetDashboard
     send_message: SendMessage
     list_channel_messages: ListChannelMessages
+    list_channel_members: ListChannelMembers
     list_user_channels: ListUserChannels
     list_notifications: ListNotifications
     mark_notification_read: MarkNotificationRead

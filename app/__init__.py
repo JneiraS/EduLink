@@ -17,6 +17,7 @@ from app.application.use_cases.channel_use_cases import CreateChannel
 from app.application.use_cases.dashboard_use_case import GetDashboard
 from app.application.use_cases.message_use_cases import (
     ListChannelMessages,
+    ListChannelMembers,
     ListUserChannels,
     SendMessage,
 )
@@ -131,6 +132,9 @@ def create_app(testing: bool = False):
         ),
         list_channel_messages=ListChannelMessages(
             messages=messages_repo, channels=channels_repo
+        ),
+        list_channel_members=ListChannelMembers(
+            channels=channels_repo, users=users_repo
         ),
         list_user_channels=ListUserChannels(channels=channels_repo),
         list_notifications=ListNotifications(notifications=notifications_repo),

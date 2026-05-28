@@ -4,6 +4,18 @@
 <div class="card shadow-sm mb-3">
     <div class="card-body">
         <h1 class="h5 mb-0">Canal #{{ channel_id }}</h1>
+        <div class="mt-2">
+            <small class="text-muted">Membres:</small>
+            {% if members %}
+            <div class="mt-1 d-flex flex-wrap gap-2">
+                {% for member in members %}
+                <span class="badge text-bg-light border">{{ member.full_name }} ({{ member.role.value|capitalize }})</span>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="text-muted">Aucun membre</div>
+            {% endif %}
+        </div>
     </div>
 </div>
 

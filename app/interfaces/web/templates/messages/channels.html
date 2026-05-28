@@ -14,11 +14,20 @@
                     </div>
                     <div class="mb-3">
                         <label class="form-label" for="members">Membres</label>
-                        <select class="form-select" id="members" name="members" multiple>
+                        <p class="form-text mb-2">Selectionne les membres du canal.</p>
+                        <div class="border rounded p-2" id="members">
                             {% for user in users %}
-                            <option value="{{ user.id }}">{{ user.full_name }} ({{ user.role }})</option>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="members" value="{{ user.id }}"
+                                    id="member_{{ user.id }}" {% if user.id==current_user_id %}checked disabled{% endif
+                                    %}>
+                                <label class="form-check-label" for="member_{{ user.id }}">
+                                    {{ user.full_name }} ({{ user.role }}){% if user.id == current_user_id %} - vous{%
+                                    endif %}
+                                </label>
+                            </div>
                             {% endfor %}
-                        </select>
+                        </div>
                     </div>
                     <button class="btn btn-primary" type="submit">Creer</button>
                 </form>

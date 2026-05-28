@@ -8,8 +8,12 @@ from app.domain.ports.repositories import (
     ChannelRepositoryPort,
     MessageRepositoryPort,
     NotificationRepositoryPort,
+    UserRepositoryPort,
 )
 from app.domain.ports.services import RealtimeNotificationPort
+
+CHANNEL_NOT_FOUND = "Channel not found"
+NOT_A_MEMBER = "User is not member of this channel"
 
 
 @dataclass(slots=True)
@@ -21,9 +25,9 @@ class SendMessage:
 
     def execute(self, actor: User, channel_id: int, content: str) -> Message:
         if not self.channels.find_by_id(channel_id):
-            raise NotFoundError("Channel not found")
+            raise NotFoundError(CHANNEL_NOT_FOUND)
         if not self.channels.is_member(channel_id, actor.id or 0):
-            raise AuthorizationError("User is not member of this channel")
+            raise AuthorizationError(NOT_A_MEMBER)
         if not content.strip():
             raise ValidationError("Message content is required")
 
@@ -79,9 +83,9 @@ class ListChannelMessages:
 
     def execute(self, actor: User, channel_id: int) -> list[Message]:
         if not self.channels.find_by_id(channel_id):
-            raise NotFoundError("Channel not found")
+            raise NotFoundError(CHANNEL_NOT_FOUND)
         if not self.channels.is_member(channel_id, actor.id or 0):
-            raise AuthorizationError("User is not member of this channel")
+            raise AuthorizationError(NOT_A_MEMBER)
         return self.messages.list_by_channel(channel_id)
 
 
@@ -91,3 +95,22 @@ class ListUserChannels:
 
     def execute(self, actor: User):
         return self.channels.list_for_user(actor.id or 0)
+
+
+@dataclass(slots=True)
+class ListChannelMembers:
+    channels: ChannelRepositoryPort
+    users: UserRepositoryPort
+
+    def execute(self, actor: User, channel_id: int) -> list[User]:
+        if not self.channels.find_by_id(channel_id):
+            raise NotFoundError(CHANNEL_NOT_FOUND)
+        if not self.channels.is_member(channel_id, actor.id or 0):
+            raise AuthorizationError(NOT_A_MEMBER)
+
+        members = []
+        for user_id in self.channels.list_member_ids(channel_id):
+            user = self.users.find_by_id(user_id)
+            if user:
+                members.append(user)
+        return members

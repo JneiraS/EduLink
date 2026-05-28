@@ -1,5 +1,5 @@
 from flask import Blueprint, flash, redirect, render_template, request, url_for
-from flask_login import login_required
+from flask_login import current_user, login_required
 
 from app.domain.errors import AuthorizationError, NotFoundError, ValidationError
 from app.infrastructure.database.models import UserModel
@@ -14,7 +14,10 @@ MESSAGES_CHANNELS = "messages.channels"
 def channels():
     if request.method == "POST":
         name = request.form.get("name", "")
-        member_ids = [int(x) for x in request.form.getlist("members") if x.isdigit()]
+        raw_members = request.form.getlist("members") + request.form.getlist(
+            "members[]"
+        )
+        member_ids = sorted({int(x) for x in raw_members if x.isdigit()})
 
         try:
             get_use_cases().create_channel.execute(
@@ -28,7 +31,10 @@ def channels():
     channels_data = get_use_cases().list_user_channels.execute(current_actor())
     users = UserModel.query.order_by(UserModel.full_name.asc()).all()
     return render_template(
-        "messages/channels.html", channels=channels_data, users=users
+        "messages/channels.html",
+        channels=channels_data,
+        users=users,
+        current_user_id=current_user.id,
     )
 
 
@@ -50,10 +56,16 @@ def channel_detail(channel_id: int):
         channel_messages = get_use_cases().list_channel_messages.execute(
             current_actor(), channel_id=channel_id
         )
+        channel_members = get_use_cases().list_channel_members.execute(
+            current_actor(), channel_id=channel_id
+        )
     except (AuthorizationError, NotFoundError) as exc:
         flash(str(exc), "danger")
         return redirect(url_for(MESSAGES_CHANNELS))
 
     return render_template(
-        "messages/channel_detail.html", channel_id=channel_id, messages=channel_messages
+        "messages/channel_detail.html",
+        channel_id=channel_id,
+        messages=channel_messages,
+        members=channel_members,
     )
