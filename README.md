@@ -108,6 +108,30 @@ print(f"VAPID_PRIVATE_KEY={private_key}")
 PY
 ```
 
+### Tunnel HTTPS (test mobile Android)
+
+Le push web mobile exige HTTPS (une IP LAN en HTTP ne suffit pas).
+
+1. Lancer l'application:
+
+```bash
+python run.py
+```
+
+2. Dans un autre terminal, lancer le tunnel:
+
+```bash
+bash scripts/start_tunnel.sh
+```
+
+3. Ouvrir sur le mobile l'URL `https://...` affichee dans le terminal du tunnel.
+
+Le script utilise automatiquement, dans cet ordre:
+
+- `cloudflared`
+- `ngrok`
+- `npx localtunnel`
+
 ## Tests
 
 ```bash
