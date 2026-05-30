@@ -6,7 +6,6 @@ from pywebpush import WebPushException, webpush
 
 from app.domain.ports.services import RealtimeNotificationPort
 
-
 logger = logging.getLogger(__name__)
 
 
