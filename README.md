@@ -89,7 +89,23 @@ Variables optionnelles:
 Exemple de generation locale des cles (Python):
 
 ```bash
-python -c "from py_vapid import Vapid01,b64urlencode; from cryptography.hazmat.primitives.serialization import Encoding,PublicFormat,PrivateFormat,NoEncryption; v=Vapid01(); v.generate_keys(); print('VAPID_PUBLIC_KEY='+b64urlencode(v.public_key.public_bytes(Encoding.X962, PublicFormat.UncompressedPoint))); print(v.private_key.private_bytes(Encoding.PEM, PrivateFormat.PKCS8, NoEncryption()).decode())"
+python - <<'PY'
+from py_vapid import Vapid01, b64urlencode
+from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
+
+v = Vapid01()
+v.generate_keys()
+
+public_key = b64urlencode(
+  v.public_key.public_bytes(Encoding.X962, PublicFormat.UncompressedPoint)
+)
+private_key = b64urlencode(
+  v.private_key.private_numbers().private_value.to_bytes(32, "big")
+)
+
+print(f"VAPID_PUBLIC_KEY={public_key}")
+print(f"VAPID_PRIVATE_KEY={private_key}")
+PY
 ```
 
 ## Tests
