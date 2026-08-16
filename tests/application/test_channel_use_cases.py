@@ -141,7 +141,7 @@ def test_open_direct_conversation_creates():
     use_case = OpenDirectConversation(channels=channels, users=users)
     channel = use_case.execute(_actor(UserRole.TEACHER, 1), 2)
     assert channel.kind == "direct"
-    assert channel.name == "A"
+    assert channel.name == "A - A"
     assert set(channels.members[channel.id]) == {1, 2}
 
 

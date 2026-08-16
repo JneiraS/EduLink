@@ -207,7 +207,7 @@ def test_open_direct_conversation_creates(client, app):
     with app.app_context():
         direct = ChannelModel.query.filter_by(kind="direct").first()
         assert direct is not None
-        assert direct.name == "User PARENT"
+        assert direct.name == "User PARENT - User TEACHER"
 
 
 def test_open_direct_conversation_reuses_existing(client, app):
