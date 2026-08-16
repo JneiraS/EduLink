@@ -16,6 +16,19 @@ class SQLAlchemyAnnouncementRepository(AnnouncementRepositoryPort):
         db.session.commit()
         return self._to_entity(model)
 
+    def find_by_id(self, announcement_id: int) -> Announcement | None:
+        model = db.session.get(AnnouncementModel, announcement_id)
+        return self._to_entity(model) if model else None
+
+    def delete(self, announcement_id: int) -> Announcement | None:
+        model = db.session.get(AnnouncementModel, announcement_id)
+        if model is None:
+            return None
+        entity = self._to_entity(model)
+        db.session.delete(model)
+        db.session.commit()
+        return entity
+
     def list_all(self) -> list[Announcement]:
         rows = AnnouncementModel.query.order_by(
             AnnouncementModel.created_at.desc()

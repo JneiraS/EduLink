@@ -15,6 +15,15 @@ load_dotenv()
 logger = logging.getLogger(__name__)
 
 from app.application.container import UseCaseContainer
+from app.application.use_cases.admin_use_cases import (
+    DeleteAnnouncement,
+    DeleteChannel,
+    ListAnnouncementsForAdmin,
+    ListChannelsForAdmin,
+    ListUsersForAdmin,
+    ToggleUserActive,
+    UpdateUserRole,
+)
 from app.application.use_cases.announcement_use_cases import (
     CreateAnnouncement,
     ListAnnouncements,
@@ -60,6 +69,7 @@ from app.infrastructure.repositories.push_subscription_repository import (
 )
 from app.infrastructure.repositories.user_repository import SQLAlchemyUserRepository
 from app.interfaces.web.routes.announcements_routes import announcements_bp
+from app.interfaces.web.routes.admin_routes import admin_bp
 from app.interfaces.web.routes.auth_routes import auth_bp
 from app.interfaces.web.routes.dashboard_routes import dashboard_bp
 from app.interfaces.web.routes.messages_routes import messages_bp
@@ -95,6 +105,7 @@ def create_app(testing: bool = False):
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(dashboard_bp)
+    app.register_blueprint(admin_bp)
     app.register_blueprint(announcements_bp)
     app.register_blueprint(messages_bp)
     app.register_blueprint(notifications_bp)
@@ -178,6 +189,15 @@ def create_app(testing: bool = False):
         ),
         list_all_users=ListAllUsers(users=users_repo),
         find_users_by_ids=FindUsersByIds(users=users_repo),
+        list_users_for_admin=ListUsersForAdmin(users=users_repo),
+        list_announcements_for_admin=ListAnnouncementsForAdmin(
+            announcements=announcements_repo
+        ),
+        list_channels_for_admin=ListChannelsForAdmin(channels=channels_repo),
+        update_user_role=UpdateUserRole(users=users_repo),
+        toggle_user_active=ToggleUserActive(users=users_repo),
+        delete_announcement=DeleteAnnouncement(announcements=announcements_repo),
+        delete_channel=DeleteChannel(channels=channels_repo),
     )
 
     register_socket_handlers(socketio)

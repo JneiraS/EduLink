@@ -55,6 +55,10 @@ Routes must not import `app.infrastructure` models or `app.extensions.db` direct
 - Notifications: `channel_id` FK column (nullable) links message-notifications to a channel; announcement-notifications leave it `NULL`. UI links to the channel via `n.channel_id` — do **not** parse the human-readable `content` string. Web push delivery runs in a `ThreadPoolExecutor` (background) inside `SocketIONotificationService`; DB writes and socket emits stay in the request.
 - Pagination: announcements use page-based `paginate(page, per_page)` (default 10, `?page=`); channel messages use a chat pattern — latest `limit` (default 50) plus a "load older" link via `?before=<message_id>` (`list_by_channel(channel_id, limit, before_id)` returns `(messages, has_more)`).
 
+## Documentation
+
+Developer docs live in `docs/` and are the onboarding path for new developers: `ARCHITECTURE.md` (how the project works) and `ADDING_A_FEATURE.md` (the step-by-step recipe for adding a feature). They must never drift from the code. Whenever you implement a new feature — new use case, port method, entity, route, template, migration, config/settings change, or test convention — update the relevant `docs/` file(s) in the same change. A feature is not done, and must not be committed, if the docs are stale.
+
 ## Testing notes
 
 - `tests/conftest.py` provides an `app` fixture via `create_app(testing=True)` (in-memory SQLite, CSRF off). Create users/channels inside `with app.app_context():` and flush to get IDs before using `app.test_client()`. Shared helpers live in `tests/helpers.py` (`login`, `create_user`, `create_channel`, `add_message`, `add_announcement`, `add_notification`).

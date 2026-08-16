@@ -1276,6 +1276,86 @@ hr {
 }
 
 /* ============================================================
+   Admin panel
+   ============================================================ */
+.admin-table {
+    --bs-table-bg: var(--surface);
+    --bs-table-color: var(--text);
+    --bs-table-border-color: var(--line);
+    --bs-table-hover-bg: var(--list-hover-bg);
+    --bs-table-hover-color: var(--text);
+    color: var(--text);
+}
+
+.admin-table th {
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-soft);
+    font-weight: 700;
+}
+
+.admin-table thead th {
+    background-color: var(--surface-muted);
+    border-bottom-color: var(--line);
+}
+
+.admin-table td {
+    vertical-align: middle;
+}
+
+.role-select {
+    min-width: 9rem;
+    font-weight: 600;
+    border-radius: var(--r-md);
+}
+
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.28rem 0.75rem;
+    border-radius: var(--r-full);
+    font-size: 0.78rem;
+    font-weight: 700;
+    line-height: 1.4;
+}
+
+.status-badge::before {
+    content: "";
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: currentColor;
+}
+
+.status-active {
+    background: rgba(37, 194, 110, 0.12);
+    color: #0f8a4d;
+}
+
+.status-inactive {
+    background: rgba(239, 68, 68, 0.12);
+    color: #c2410c;
+}
+
+[data-theme="dark"] .status-active {
+    background: rgba(52, 211, 153, 0.16);
+    color: #34d399;
+}
+
+[data-theme="dark"] .status-inactive {
+    background: rgba(248, 113, 113, 0.16);
+    color: #f87171;
+}
+
+.avatar-sm {
+    width: 34px;
+    height: 34px;
+    font-size: 0.78rem;
+}
+
+/* ============================================================
    Responsive
    ============================================================ */
 @media (max-width: 992px) {

@@ -142,6 +142,15 @@ function initCharCounters() {
     });
 }
 
+function initConfirmDialogs() {
+    document.addEventListener("submit", (event) => {
+        const confirmMessage = event.submitter && event.submitter.dataset.confirm;
+        if (confirmMessage && !window.confirm(confirmMessage)) {
+            event.preventDefault();
+        }
+    });
+}
+
 function initAutoGrow() {
     document.querySelectorAll("[data-auto-grow]").forEach((el) => {
         const resize = () => {
@@ -218,6 +227,8 @@ function initFileZone() {
 initThemeToggle();
 
 initCharCounters();
+
+initConfirmDialogs();
 
 initAutoGrow();
 

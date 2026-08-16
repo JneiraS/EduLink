@@ -36,6 +36,14 @@ class AnnouncementRepositoryPort(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    def find_by_id(self, announcement_id: int) -> Announcement | None:
+        raise NotImplementedError
+
+    @abstractmethod
+    def delete(self, announcement_id: int) -> Announcement | None:
+        raise NotImplementedError
+
+    @abstractmethod
     def list_all(self) -> list[Announcement]:
         raise NotImplementedError
 
@@ -93,6 +101,14 @@ class ChannelRepositoryPort(ABC):
 
     @abstractmethod
     def find_by_id(self, channel_id: int) -> Channel | None:
+        raise NotImplementedError
+
+    @abstractmethod
+    def list_all(self) -> list[Channel]:
+        raise NotImplementedError
+
+    @abstractmethod
+    def delete(self, channel_id: int) -> Channel | None:
         raise NotImplementedError
 
     @abstractmethod

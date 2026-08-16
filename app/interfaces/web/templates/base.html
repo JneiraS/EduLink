@@ -38,6 +38,14 @@
                     <span class="nav-action-label">Messagerie</span>
                 </a>
 
+                {% if current_user.role == 'ADMIN' %}
+                <a class="nav-pill {% if endpoint.startswith('admin.') %}active{% endif %}"
+                    href="{{ url_for('admin.members') }}" title="Administration">
+                    <i class="bi bi-sliders" aria-hidden="true"></i>
+                    <span class="nav-action-label">Administration</span>
+                </a>
+                {% endif %}
+
                 <button class="btn btn-light icon-btn theme-toggle-btn" id="theme-toggle-btn" type="button"
                     aria-label="Basculer vers le theme sombre" title="Theme sombre">
                     <i class="bi bi-moon-stars" aria-hidden="true"></i>
