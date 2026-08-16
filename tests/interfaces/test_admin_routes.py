@@ -71,6 +71,15 @@ def test_admin_members_page_lists_users(client, app):
     assert b"Paul Parent" in response.data
 
 
+def test_admin_members_page_links_to_create_user(client, app):
+    admin_id = create_user(app, role="ADMIN", email="admin11@admin.local")
+    login(client, admin_id)
+    response = client.get("/admin/members")
+    assert response.status_code == 200
+    assert b"/auth/users/new" in response.data
+    assert b"Creer un utilisateur" in response.data
+
+
 def test_admin_role_change_success(client, app):
     admin_id = create_user(app, role="ADMIN", email="admin2@admin.local")
     parent_id = create_user(app, role="PARENT", email="parent2@admin.local")
