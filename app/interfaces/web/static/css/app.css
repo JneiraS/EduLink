@@ -441,6 +441,45 @@ html[data-theme="dark"] .nav-pill.active {
     display: inline;
 }
 
+.admin-nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-bottom: var(--space-4);
+    padding: 0.25rem;
+    background: var(--surface-strong);
+    border: 1px solid var(--line);
+    border-radius: var(--r-full);
+    width: fit-content;
+    max-width: 100%;
+}
+
+.admin-nav-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.42rem 0.9rem;
+    border-radius: var(--r-full);
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--nav-link);
+    transition: background-color var(--dur-fast) ease, color var(--dur-fast) ease;
+}
+
+.admin-nav-link:hover {
+    color: var(--nav-brand);
+    background: var(--nav-link-hover-bg);
+}
+
+.admin-nav-link.active {
+    background: var(--brand);
+    color: var(--btn-primary-text);
+}
+
+html[data-theme="dark"] .admin-nav-link.active {
+    color: #171a29;
+}
+
 .navbar .btn.btn-light {
     border: 1px solid var(--nav-btn-border);
     background: var(--nav-btn-bg);

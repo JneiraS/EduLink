@@ -126,6 +126,8 @@ une violation d'architecture.
 - **`socket_events.py`** : enregistre les handlers SocketIO (rejoindre les
   rooms `user_<id>` et `channel_<id>`).
 - **`templates/`** : Jinja2. **`static/`** : CSS/JS custom, manifest PWA.
+  La section Administration partage une sous-navigation (`admin/_nav.html`)
+  entre ses trois pages : Membres, Annonces et Canaux.
 
 Le **sélecteur de membres** (création de canal et « ajouter des membres ») est
 un composant réutilisable : recherche temps réel, regroupement par rôle
