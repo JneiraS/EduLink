@@ -29,9 +29,12 @@ publique pour l'instant.
 |---|---|---|---|
 | Login / logout / création de comptes | `auth_routes.py` | `LoginUser`, `RegisterUser` | `user_repository.py`, `auth/password_hasher.py` |
 | Dashboard adapté au rôle | `dashboard_routes.py` | `GetDashboard` | `announcement_repository.py`, `notification_repository.py` |
-| Annonces (liste, création, PDF) | `announcements_routes.py` | `CreateAnnouncement`, `ListAnnouncements` | `announcement_repository.py` |
+| Annonces (liste, création ciblée, PDF) | `announcements_routes.py` | `CreateAnnouncement` (audience = « Tous » ou canaux de l'auteur), `ListAnnouncements` | `announcement_repository.py`, `channel_repository.py` |
+| Accusé de réception des annonces (X/Y) | `announcements_routes.py` | `ConfirmAnnouncementRead`, `GetAnnouncementReadStatus` | `announcement_repository.py` |
 | Canaux de messagerie (liste/création) | `messages_routes.py` | `CreateChannel`, `AddChannelMembers`, `ListUserChannels` | `channel_repository.py` |
+| Conversations directes 1:1 | `messages_routes.py` (`/new-conversation`) | `OpenDirectConversation` | `channel_repository.py` |
 | Messages en canal (chat + pagination) | `messages_routes.py` | `SendMessage`, `ListChannelMessages`, `ListChannelMembers` | `message_repository.py`, `channel_repository.py` |
+| Modèles de messages | `messages_routes.py` (`/templates`) | `ListMessageTemplates`, `CreateMessageTemplate`, `DeleteMessageTemplate` | `message_template_repository.py` |
 | Notifications (liste / lecture) | `notifications_routes.py` | `ListNotifications`, `MarkNotificationRead` | `notification_repository.py` |
 | Push web (abonnement PWA) | `push_routes.py` | `SubscribePushNotifications`, `UnsubscribePushNotifications` | `push_subscription_repository.py` |
 | **Administration** (création de comptes, rôles, activ./désactiv., suppression) | `admin_routes.py` + lien vers `auth_routes.py` (`/auth/users/new`) | `ListUsersForAdmin`, `UpdateUserRole`, `ToggleUserActive`, `ListAnnouncementsForAdmin`, `DeleteAnnouncement`, `ListChannelsForAdmin`, `DeleteChannel` + `RegisterUser` | `user_repository.py`, `announcement_repository.py`, `channel_repository.py` |
@@ -67,14 +70,18 @@ une violation d'architecture.
 ### 2.1 `app/domain/` — le cœur métier
 
 - **`entities/`** — entités **dataclass** (`slots=True`), `id: int | None` :
-  `User`, `Channel`, `Message`, `Announcement`, `Notification`,
-  `PushSubscription`. Exemple : `app/domain/entities/user.py`.
+  `User`, `Channel` (avec `kind` : `"group"` ou `"direct"`), `Message`,
+  `Announcement` (avec `target_channel_ids` pour le ciblage), `Notification`,
+  `PushSubscription`, `MessageTemplate`. Exemple :
+  `app/domain/entities/user.py`.
   - `UserRole` (enum) : `PARENT` / `TEACHER` / `ADMIN`.
   - « Peut gérer les membres d'un canal » = `ADMIN` ou `TEACHER`.
 - **`ports/`** — contrats **abstraits** (ABC) :
-  - `repositories.py` : `UserRepositoryPort`, `AnnouncementRepositoryPort`,
+  - `repositories.py` : `UserRepositoryPort`, `AnnouncementRepositoryPort`
+    (dont `mark_read` / `is_read` / `count_read` pour les accusés de réception),
     `MessageRepositoryPort`, `NotificationRepositoryPort`,
-    `ChannelRepositoryPort`, `PushSubscriptionRepositoryPort`.
+    `ChannelRepositoryPort` (dont `find_direct_between` pour les 1:1),
+    `PushSubscriptionRepositoryPort`, `MessageTemplateRepositoryPort`.
   - `services.py` : `PasswordHasherPort`, `RealtimeNotificationPort`.
 - **`errors.py`** — hiérarchie d'erreurs métier :
   `DomainError` → `AuthenticationError`, `AuthorizationError`, `NotFoundError`,
@@ -98,8 +105,10 @@ une violation d'architecture.
 ### 2.3 `app/infrastructure/` — les adaptateurs
 
 - **`database/models.py`** : modèles SQLAlchemy (`UserModel`,
-  `AnnouncementModel`, `ChannelModel`, `MessageModel`, `NotificationModel`,
-  `PushSubscriptionModel`, table d'association `channel_members`).
+  `AnnouncementModel`, `AnnouncementReadModel`, `ChannelModel` (avec `kind`),
+  `MessageModel`, `NotificationModel`, `PushSubscriptionModel`,
+  `MessageTemplateModel`, tables d'association `channel_members` et
+  `announcement_channels`).
 - **`repositories/`** : implémentations SQLAlchemy des ports. Chaque repo a une
   méthode privée **`_to_entity(model) -> Entity`** : c'est le **seul endroit**
   où se fait le mapping ORM → domaine. Un repo expose parfois une méthode
@@ -129,12 +138,19 @@ une violation d'architecture.
   La section Administration partage une sous-navigation (`admin/_nav.html`)
   entre ses trois pages : Membres, Annonces et Canaux.
 
-Le **sélecteur de membres** (création de canal et « ajouter des membres ») est
+Le **sélecteur de membres** (création de canal, « ajouter des membres ») est
 un composant réutilisable : recherche temps réel, regroupement par rôle
 (`group_users_by_role` dans `presentation.py`), sélection globale par groupe,
 compteur de sélection et chips supprimables. Le comportement vit dans
 `static/js/app.js` (`initMemberPicker`) via des `data-*` hooks — aucune fonction
 JS inline. Sans JS, la liste complète des cases à cocher reste fonctionnelle.
+Le même regroupement par rôle sert de **liste de contacts** pour les
+conversations 1:1 (`messages/new_conversation.html`, radios de sélection
+unique). Le compositeur de message embarque un sélecteur de **modèles**
+(`initTemplateInsert` : boutons `data-template-content` qui insèrent le texte
+dans le textarea) et la page annonce un sélecteur d'**audience**
+(`initAudiencePicker` : radios qui affichent/masquent la liste des canaux
+ciblés).
 
 ---
 
@@ -209,7 +225,30 @@ Point d'entrée : `run.py` → `create_app()` + `socketio.run(...)` (host/port v
 - Limites de longueur → `ValidationError` **dans le use case**, jamais dans la
   route. Limites actuelles : `full_name` ≤120, email ≤254, password 8–128,
   titre d'annonce ≤255, contenu d'annonce ≤5000, nom de canal ≤120, contenu de
-  message ≤5000.
+  message ≤5000, label de modèle de message ≤80, contenu de modèle ≤5000.
+
+### Annonces ciblées & accusés de réception
+
+- `CreateAnnouncement` notifie **tous** les utilisateurs sauf si
+  `target_channel_ids` est renseigné : l'audience est alors l'**union des
+  membres des canaux ciblés** (chaque canal doit exister → `NotFoundError`).
+  Le sélecteur de la page ne propose que **les canaux de l'auteur**
+  (`list_user_channels`) ; « Tous » reste disponible.
+- Les accusés de réception sont idempotents (`mark_read`). `GetAnnouncementReadStatus`
+  calcule le dénominateur « X/Y » : union des membres des canaux ciblés pour une
+  annonce ciblée, sinon le nombre total d'utilisateurs. Le compteur « Vu par
+  X/Y » s'affiche pour admin/teacher ; le bouton « Confirmer la lecture » (ou
+  l'état « Confirme ») pour tous.
+
+### Conversations 1:1
+
+- `Channel.kind` vaut `"group"` (défaut) ou `"direct"`. Les conversations
+  directes sont **réservées à deux membres** : `AddChannelMembers` refuse
+  d'ajouter qui que ce soit sur un canal `direct`, et l'UI masque le panneau
+  « Ajouter des membres ». `OpenDirectConversation` réutilise la conversation
+  existante entre deux utilisateurs (`find_direct_between`) et nomme le canal
+  **du nom de l'autre personne**. Tout utilisateur authentifié peut ouvrir une
+  conversation directe (annuaire minimal).
 
 ### Sécurité
 
@@ -300,7 +339,12 @@ tests/
   apostrophe** (ex. `b"Acces reserve a l"`).
 - **Un login par client** : plusieurs `app.test_client()` du même app partagent
   l'état de session. Ne pas cumuler deux logins sur le même client sans
-  logout.
+  logout. De plus, pytest-flask pousse un `test_request_context` autouse qui
+  **caches `current_user` pour toute la durée du test** : un second `login()`
+  en cours de test ne rebranche pas réellement `current_user` (la session
+  change, pas l'utilisateur courant). Pour « agir en tant qu'un autre
+  utilisateur », créer les données directement en base (modèles SQLAlchemy)
+  puis faire **un seul** `login()` — ne pas enchaîner deux logins.
 - **`db.session.get(Model, id)`** plutôt que `Model.query.get(id)` (deprecated
   en SQLAlchemy 2.0).
 - Les fonctions temps réel (SocketIO) et le web push ne sont testés

@@ -1,8 +1,19 @@
+from app.infrastructure.database.models import ChannelModel, MessageTemplateModel
 from tests.helpers import add_message, create_channel, create_user, login
 
 
 def test_channels_page_requires_login(client):
     response = client.get("/messages/channels")
+    assert response.status_code == 302
+
+
+def test_new_conversation_page_requires_login(client):
+    response = client.get("/messages/new-conversation")
+    assert response.status_code == 302
+
+
+def test_templates_page_requires_login(client):
+    response = client.get("/messages/templates")
     assert response.status_code == 302
 
 
@@ -170,3 +181,160 @@ def test_channel_detail_add_members_renders_picker(client, app):
     assert b'data-role-group="PARENT"' in response.data
     assert b"data-member-search" in response.data
     assert f'id="member_add_{parent_id}"'.encode() in response.data
+
+
+def test_new_conversation_page_renders_contacts(client, app):
+    teacher_id = create_user(app, role="TEACHER", email="nc1@t.local", full_name="Noemie Teacher")
+    parent_id = create_user(app, role="PARENT", email="nc2@t.local", full_name="Pierre Parent")
+    login(client, teacher_id)
+    response = client.get("/messages/new-conversation")
+    assert response.status_code == 200
+    assert f'id="contact_{parent_id}"'.encode() in response.data
+    assert f'id="contact_{teacher_id}"'.encode() not in response.data
+
+
+def test_open_direct_conversation_creates(client, app):
+    teacher_id = create_user(app, role="TEACHER", email="nc3@t.local")
+    parent_id = create_user(app, role="PARENT", email="nc4@t.local")
+    login(client, teacher_id)
+    response = client.post(
+        "/messages/new-conversation",
+        data={"member": str(parent_id)},
+        follow_redirects=True,
+    )
+    assert response.status_code == 200
+    assert b"Conversation creee" in response.data
+    with app.app_context():
+        direct = ChannelModel.query.filter_by(kind="direct").first()
+        assert direct is not None
+        assert direct.name == "User PARENT"
+
+
+def test_open_direct_conversation_reuses_existing(client, app):
+    teacher_id = create_user(app, role="TEACHER", email="nc5@t.local")
+    parent_id = create_user(app, role="PARENT", email="nc6@t.local")
+    login(client, teacher_id)
+    client.post("/messages/new-conversation", data={"member": str(parent_id)})
+    client.post("/messages/new-conversation", data={"member": str(parent_id)})
+    with app.app_context():
+        assert ChannelModel.query.filter_by(kind="direct").count() == 1
+
+
+def test_open_direct_conversation_requires_member(client, app):
+    teacher_id = create_user(app, role="TEACHER", email="nc7@t.local")
+    login(client, teacher_id)
+    response = client.post(
+        "/messages/new-conversation", data={"member": ""}, follow_redirects=True
+    )
+    assert b"Selectionnez un contact" in response.data
+
+
+def test_channels_page_lists_direct_and_group_sections(client, app):
+    teacher_id = create_user(app, role="TEACHER", email="nc8@t.local")
+    parent_id = create_user(app, role="PARENT", email="nc9@t.local")
+    create_channel(app, "Classe X", teacher_id, [parent_id])
+    login(client, teacher_id)
+    client.post("/messages/new-conversation", data={"member": str(parent_id)})
+    response = client.get("/messages/channels")
+    assert response.status_code == 200
+    assert b"Conversations" in response.data
+    assert b"Canaux" in response.data
+    assert b"Classe X" in response.data
+
+
+def test_channel_detail_hides_add_members_for_direct(client, app):
+    teacher_id = create_user(app, role="TEACHER", email="nc10@t.local")
+    parent_id = create_user(app, role="PARENT", email="nc11@t.local")
+    login(client, teacher_id)
+    client.post("/messages/new-conversation", data={"member": str(parent_id)})
+    with app.app_context():
+        direct_id = ChannelModel.query.filter_by(kind="direct").first().id
+    response = client.get(f"/messages/channels/{direct_id}")
+    assert response.status_code == 200
+    assert b"Ajouter des membres" not in response.data
+
+
+def test_add_members_rejected_for_direct(client, app):
+    teacher_id = create_user(app, role="TEACHER", email="nc12@t.local")
+    parent_id = create_user(app, role="PARENT", email="nc13@t.local")
+    login(client, teacher_id)
+    client.post("/messages/new-conversation", data={"member": str(parent_id)})
+    with app.app_context():
+        direct_id = ChannelModel.query.filter_by(kind="direct").first().id
+    response = client.post(
+        f"/messages/channels/{direct_id}",
+        data={"action": "add_members", "members": [str(teacher_id)]},
+        follow_redirects=True,
+    )
+    assert b"Cannot add members to a direct conversation" in response.data
+
+
+def test_create_message_template_route(client, app):
+    teacher_id = create_user(app, role="TEACHER", email="mt1@t.local")
+    login(client, teacher_id)
+    response = client.post(
+        "/messages/templates",
+        data={"label": "Reponse", "content": "Bonjour"},
+        follow_redirects=True,
+    )
+    assert response.status_code == 200
+    assert b"Modele cree" in response.data
+    assert b"Reponse" in response.data
+
+
+def test_create_message_template_requires_label(client, app):
+    teacher_id = create_user(app, role="TEACHER", email="mt2@t.local")
+    login(client, teacher_id)
+    response = client.post(
+        "/messages/templates",
+        data={"label": "  ", "content": "Bonjour"},
+        follow_redirects=True,
+    )
+    assert b"Label is required" in response.data
+
+
+def test_delete_message_template_route(client, app):
+    teacher_id = create_user(app, role="TEACHER", email="mt3@t.local")
+    login(client, teacher_id)
+    client.post(
+        "/messages/templates", data={"label": "Reponse", "content": "Bonjour"}
+    )
+    with app.app_context():
+        template_id = MessageTemplateModel.query.first().id
+    response = client.post(
+        f"/messages/templates/{template_id}/delete", follow_redirects=True
+    )
+    assert b"Modele supprime" in response.data
+    with app.app_context():
+        assert MessageTemplateModel.query.count() == 0
+
+
+def test_delete_template_rejects_other_owner(client, app):
+    teacher_id = create_user(app, role="TEACHER", email="mt5@t.local")
+    other_id = create_user(app, role="TEACHER", email="mt6@t.local")
+    with app.app_context():
+        from app.extensions import db
+
+        db.session.add(
+            MessageTemplateModel(owner_id=other_id, label="Autre", content="Contenu")
+        )
+        db.session.commit()
+        template_id = MessageTemplateModel.query.first().id
+    login(client, teacher_id)
+    response = client.post(
+        f"/messages/templates/{template_id}/delete", follow_redirects=True
+    )
+    assert b"Only the owner can delete this template" in response.data
+    with app.app_context():
+        assert MessageTemplateModel.query.count() == 1
+
+
+def test_template_picker_renders_in_channel(client, app):
+    admin_id = create_user(app, role="ADMIN", email="mt4@t.local")
+    channel_id = create_channel(app, "Canal", admin_id, [admin_id])
+    login(client, admin_id)
+    client.post("/messages/templates", data={"label": "Reponse", "content": "Bonjour"})
+    response = client.get(f"/messages/channels/{channel_id}")
+    assert response.status_code == 200
+    assert b"data-template-picker" in response.data
+    assert b"data-template-content" in response.data

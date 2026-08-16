@@ -38,6 +38,10 @@ class AddChannelMembers:
         if not self.channels.find_by_id(channel_id):
             raise NotFoundError("Channel not found")
 
+        channel = self.channels.find_by_id(channel_id)
+        if channel.kind == "direct":
+            raise ValidationError("Cannot add members to a direct conversation")
+
         if not self.channels.is_member(channel_id, actor.id or 0):
             raise AuthorizationError("User is not member of this channel")
 
@@ -49,3 +53,30 @@ class AddChannelMembers:
             if not self.users.find_by_id(member_id):
                 raise ValidationError(f"User {member_id} does not exist")
             self.channels.add_member(channel_id, member_id)
+
+
+@dataclass(slots=True)
+class OpenDirectConversation:
+    channels: ChannelRepositoryPort
+    users: UserRepositoryPort
+
+    def execute(self, actor: User, other_user_id: int) -> Channel:
+        other = self.users.find_by_id(other_user_id)
+        if other is None:
+            raise NotFoundError("User not found")
+        if other.id == (actor.id or 0):
+            raise ValidationError("Cannot start a conversation with yourself")
+
+        existing = self.channels.find_direct_between(actor.id or 0, other.id or 0)
+        if existing is not None:
+            return existing
+
+        return self.channels.create_with_members(
+            Channel(
+                id=None,
+                name=other.full_name,
+                created_by=actor.id or 0,
+                kind="direct",
+            ),
+            member_ids=[actor.id or 0, other.id or 0],
+        )

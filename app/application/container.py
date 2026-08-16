@@ -10,17 +10,28 @@ from app.application.use_cases.admin_use_cases import (
     UpdateUserRole,
 )
 from app.application.use_cases.announcement_use_cases import (
+    ConfirmAnnouncementRead,
     CreateAnnouncement,
+    GetAnnouncementReadStatus,
     ListAnnouncements,
 )
 from app.application.use_cases.auth_use_cases import LoginUser, RegisterUser
-from app.application.use_cases.channel_use_cases import AddChannelMembers, CreateChannel
+from app.application.use_cases.channel_use_cases import (
+    AddChannelMembers,
+    CreateChannel,
+    OpenDirectConversation,
+)
 from app.application.use_cases.dashboard_use_case import GetDashboard
 from app.application.use_cases.message_use_cases import (
     ListChannelMessages,
     ListChannelMembers,
     ListUserChannels,
     SendMessage,
+)
+from app.application.use_cases.message_template_use_cases import (
+    CreateMessageTemplate,
+    DeleteMessageTemplate,
+    ListMessageTemplates,
 )
 from app.application.use_cases.notification_use_cases import (
     ListNotifications,
@@ -37,6 +48,8 @@ class UseCaseContainer:
     login_user: LoginUser
     create_announcement: CreateAnnouncement
     list_announcements: ListAnnouncements
+    confirm_announcement_read: ConfirmAnnouncementRead
+    get_announcement_read_status: GetAnnouncementReadStatus
     get_dashboard: GetDashboard
     send_message: SendMessage
     list_channel_messages: ListChannelMessages
@@ -46,8 +59,12 @@ class UseCaseContainer:
     mark_notification_read: MarkNotificationRead
     subscribe_push_notifications: SubscribePushNotifications
     unsubscribe_push_notifications: UnsubscribePushNotifications
+    list_message_templates: ListMessageTemplates
+    create_message_template: CreateMessageTemplate
+    delete_message_template: DeleteMessageTemplate
     create_channel: CreateChannel
     add_channel_members: AddChannelMembers
+    open_direct_conversation: OpenDirectConversation
     list_all_users: ListAllUsers
     find_users_by_ids: FindUsersByIds
     list_users_for_admin: ListUsersForAdmin

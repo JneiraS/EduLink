@@ -1,9 +1,17 @@
 import pytest
 
-from app.application.use_cases.channel_use_cases import AddChannelMembers, CreateChannel
+from app.application.use_cases.channel_use_cases import (
+    AddChannelMembers,
+    CreateChannel,
+    OpenDirectConversation,
+)
 from app.domain.entities.channel import Channel
 from app.domain.entities.user import User, UserRole
-from app.domain.errors import AuthorizationError, ValidationError
+from app.domain.errors import (
+    AuthorizationError,
+    NotFoundError,
+    ValidationError,
+)
 
 
 class InMemoryChannels:
@@ -19,6 +27,14 @@ class InMemoryChannels:
 
     def find_by_id(self, channel_id):
         return next((c for c in self.channels if c.id == channel_id), None)
+
+    def find_direct_between(self, user_a, user_b):
+        for channel in self.channels:
+            if channel.kind != "direct":
+                continue
+            if set(self.members.get(channel.id, [])) == {user_a, user_b}:
+                return channel
+        return None
 
     def _ensure_channel(self, channel_id):
         if not any(c.id == channel_id for c in self.channels):
@@ -107,3 +123,51 @@ def test_add_channel_members_rejects_empty():
     use_case = AddChannelMembers(channels=channels, users=InMemoryUsers())
     with pytest.raises(ValidationError):
         use_case.execute(_actor(UserRole.ADMIN, 1), 1, [])
+
+
+def test_add_channel_members_rejects_direct_conversation():
+    channels = InMemoryChannels()
+    channels.channels.append(Channel(id=5, name="Parent", created_by=1, kind="direct"))
+    channels.members[5] = [1, 2]
+    use_case = AddChannelMembers(channels=channels, users=InMemoryUsers())
+    with pytest.raises(ValidationError):
+        use_case.execute(_actor(UserRole.ADMIN, 1), 5, [3])
+
+
+def test_open_direct_conversation_creates():
+    users = InMemoryUsers()
+    users.users.append(_actor(UserRole.PARENT, 2))
+    channels = InMemoryChannels()
+    use_case = OpenDirectConversation(channels=channels, users=users)
+    channel = use_case.execute(_actor(UserRole.TEACHER, 1), 2)
+    assert channel.kind == "direct"
+    assert channel.name == "A"
+    assert set(channels.members[channel.id]) == {1, 2}
+
+
+def test_open_direct_conversation_reuses_existing():
+    users = InMemoryUsers()
+    users.users.append(_actor(UserRole.PARENT, 2))
+    channels = InMemoryChannels()
+    existing = Channel(id=7, name="Parent", created_by=1, kind="direct")
+    channels.channels.append(existing)
+    channels.members[7] = [1, 2]
+    use_case = OpenDirectConversation(channels=channels, users=users)
+    channel = use_case.execute(_actor(UserRole.TEACHER, 1), 2)
+    assert channel.id == 7
+
+
+def test_open_direct_conversation_rejects_missing_user():
+    use_case = OpenDirectConversation(
+        channels=InMemoryChannels(), users=InMemoryUsers()
+    )
+    with pytest.raises(NotFoundError):
+        use_case.execute(_actor(UserRole.TEACHER, 1), 999)
+
+
+def test_open_direct_conversation_rejects_self():
+    users = InMemoryUsers()
+    users.users.append(_actor(UserRole.TEACHER, 1))
+    use_case = OpenDirectConversation(channels=InMemoryChannels(), users=users)
+    with pytest.raises(ValidationError):
+        use_case.execute(_actor(UserRole.TEACHER, 1), 1)

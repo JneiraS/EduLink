@@ -20,6 +20,8 @@ CHANNEL_DETAIL = "messages.channel_detail"
 @messages_bp.route("/channels", methods=["GET", "POST"])
 @login_required
 def channels():
+    actor = current_actor()
+    can_manage = actor.role in {UserRole.ADMIN, UserRole.TEACHER}
     member_ids: list[int] = []
     form_name = ""
     if request.method == "POST":
@@ -28,15 +30,15 @@ def channels():
         member_ids = parse_member_ids(request.form)
 
         try:
-            get_use_cases().create_channel.execute(
-                current_actor(), name=name, members=member_ids
-            )
+            get_use_cases().create_channel.execute(actor, name=name, members=member_ids)
             flash("Canal cree", "success")
             return redirect(url_for(MESSAGES_CHANNELS))
         except (ValidationError, AuthorizationError) as exc:
             flash(str(exc), "danger")
 
-    channels_data = get_use_cases().list_user_channels.execute(current_actor())
+    channels_data = get_use_cases().list_user_channels.execute(actor)
+    direct_channels = [c for c in channels_data if c.kind == "direct"]
+    group_channels = [c for c in channels_data if c.kind != "direct"]
     users = sorted(
         get_use_cases().list_all_users.execute(),
         key=lambda u: u.full_name.casefold(),
@@ -44,11 +46,79 @@ def channels():
     return render_template(
         "messages/channels.html",
         channels=channels_data,
+        direct_channels=direct_channels,
+        group_channels=group_channels,
         users_by_role=group_users_by_role(users),
         selected_member_ids=member_ids,
         form_name=form_name,
         current_user_id=current_user.id,
+        can_manage=can_manage,
     )
+
+
+@messages_bp.route("/new-conversation", methods=["GET", "POST"])
+@login_required
+def new_conversation():
+    actor = current_actor()
+    if request.method == "POST":
+        member_id = request.form.get("member", "")
+        if not member_id.isdigit():
+            flash("Selectionnez un contact", "danger")
+            return redirect(url_for("messages.new_conversation"))
+
+        try:
+            channel = get_use_cases().open_direct_conversation.execute(
+                actor, other_user_id=int(member_id)
+            )
+            flash("Conversation creee", "success")
+            return redirect(url_for(CHANNEL_DETAIL, channel_id=channel.id))
+        except (ValidationError, NotFoundError) as exc:
+            flash(str(exc), "danger")
+            return redirect(url_for("messages.new_conversation"))
+
+    users = sorted(
+        get_use_cases().list_all_users.execute(),
+        key=lambda u: u.full_name.casefold(),
+    )
+    contacts = [user for user in users if user.id != (actor.id or 0)]
+    return render_template(
+        "messages/new_conversation.html",
+        users_by_role=group_users_by_role(contacts),
+        current_user_id=current_user.id,
+    )
+
+
+@messages_bp.route("/templates", methods=["GET", "POST"])
+@login_required
+def templates():
+    actor = current_actor()
+    if request.method == "POST":
+        label = request.form.get("label", "")
+        content = request.form.get("content", "")
+        try:
+            get_use_cases().create_message_template.execute(
+                actor, label=label, content=content
+            )
+            flash("Modele cree", "success")
+            return redirect(url_for("messages.templates"))
+        except ValidationError as exc:
+            flash(str(exc), "danger")
+
+    my_templates = get_use_cases().list_message_templates.execute(actor)
+    return render_template("messages/templates.html", templates=my_templates)
+
+
+@messages_bp.route("/templates/<int:template_id>/delete", methods=["POST"])
+@login_required
+def delete_template(template_id: int):
+    try:
+        get_use_cases().delete_message_template.execute(
+            current_actor(), template_id
+        )
+        flash("Modele supprime", "success")
+    except AuthorizationError as exc:
+        flash(str(exc), "danger")
+    return redirect(url_for("messages.templates"))
 
 
 @messages_bp.route("/channels/<int:channel_id>", methods=["GET", "POST"])
@@ -71,7 +141,6 @@ def channel_detail(channel_id: int):
                 flash(str(exc), "danger")
 
             return redirect(url_for(CHANNEL_DETAIL, channel_id=channel_id))
-
         content = request.form.get("content", "")
         try:
             get_use_cases().send_message.execute(
@@ -92,6 +161,10 @@ def channel_detail(channel_id: int):
             actor, channel_id=channel_id
         )
         channel_name = resolve_channel_name(channel_id, user_channels)
+        channel_obj = next(
+            (channel for channel in user_channels if channel.id == channel_id), None
+        )
+        is_direct = bool(channel_obj and channel_obj.kind == "direct")
         member_names = build_member_name_index(
             channel_members,
             channel_messages,
@@ -109,6 +182,7 @@ def channel_detail(channel_id: int):
             user for user in all_users if user.id not in current_member_ids
         ]
         can_manage_members = actor.role in {UserRole.ADMIN, UserRole.TEACHER}
+        message_templates = get_use_cases().list_message_templates.execute(actor)
     except (AuthorizationError, NotFoundError) as exc:
         flash(str(exc), "danger")
         return redirect(url_for(MESSAGES_CHANNELS))
@@ -121,6 +195,8 @@ def channel_detail(channel_id: int):
         members=channel_members,
         available_users_by_role=group_users_by_role(available_users),
         can_manage_members=can_manage_members,
+        is_direct=is_direct,
+        message_templates=message_templates,
         has_older=has_older,
         oldest_message_id=channel_messages[0].id if channel_messages else None,
     )

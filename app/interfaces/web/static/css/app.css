@@ -802,6 +802,18 @@ textarea.form-control:focus {
     background: var(--surface);
 }
 
+.channel-picker {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    max-height: 220px;
+    overflow-y: auto;
+    padding: var(--space-2);
+    border: 1px solid var(--line);
+    border-radius: var(--r-md);
+    background: var(--surface);
+}
+
 .member-picker-toolbar {
     display: flex;
     flex-wrap: wrap;
@@ -1194,6 +1206,65 @@ textarea.form-control:focus {
 .announcement-attachment:hover {
     color: var(--brand-strong);
     border-style: solid;
+}
+
+.announcement-read-status {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2);
+    margin-top: 0.75rem;
+}
+
+.template-picker {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2);
+    margin-top: 0.5rem;
+}
+
+.template-picker details > summary {
+    list-style: none;
+    cursor: pointer;
+    border: 1px solid var(--line);
+}
+
+.template-picker details > summary::-webkit-details-marker {
+    display: none;
+}
+
+.template-picker-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-1);
+    margin-top: var(--space-2);
+}
+
+.template-option {
+    border: 1px solid var(--line);
+    border-radius: var(--r-full);
+    background: var(--surface-strong);
+    color: var(--text);
+    font-size: 0.85rem;
+    padding: 0.3rem 0.75rem;
+    transition: background-color var(--dur-fast) ease, border-color var(--dur-fast) ease;
+}
+
+.template-option:hover {
+    border-color: var(--brand);
+    background: var(--brand-soft);
+}
+
+.template-manage {
+    font-size: 0.85rem;
+    color: var(--brand);
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.template-manage:hover {
+    text-decoration: underline;
 }
 
 /* ============================================================

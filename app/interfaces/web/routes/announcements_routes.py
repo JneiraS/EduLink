@@ -15,6 +15,7 @@ from flask import (
 from flask_login import login_required
 from werkzeug.utils import secure_filename
 
+from app.domain.errors import NotFoundError
 from app.interfaces.web.routes.utils import current_actor, get_use_cases
 
 announcements_bp = Blueprint("announcements", __name__, url_prefix="/announcements")
@@ -48,12 +49,30 @@ def list_announcements():
     page = max(request.args.get("page", 1, type=int), 1)
     announcements, total = get_use_cases().list_announcements.execute(page=page)
     total_pages = max((total + 9) // 10, 1)
+    read_status = get_use_cases().get_announcement_read_status.execute(
+        current_actor(), announcements
+    )
     return render_template(
         "announcements/list.html",
         announcements=announcements,
+        read_status=read_status,
         page=page,
         total_pages=total_pages,
     )
+
+
+@announcements_bp.route("/<int:announcement_id>/confirm-read", methods=["POST"])
+@login_required
+def confirm_read(announcement_id: int):
+    try:
+        get_use_cases().confirm_announcement_read.execute(
+            current_actor(), announcement_id
+        )
+        flash("Lecture confirmee", "success")
+    except NotFoundError as exc:
+        flash(str(exc), "danger")
+    page = max(request.args.get("page", 1, type=int), 1)
+    return redirect(url_for("announcements.list_announcements", page=page))
 
 
 @announcements_bp.route("/files/<path:filename>", methods=["GET"])
@@ -68,11 +87,25 @@ def download_announcement_pdf(filename: str):
 @announcements_bp.route("/new", methods=["GET", "POST"])
 @login_required
 def create_announcement():
+    actor = current_actor()
+    channels = get_use_cases().list_user_channels.execute(actor)
+
     if request.method == "POST":
         title = request.form.get("title", "")
         content = request.form.get("content", "")
         upload = request.files.get("document")
         pdf_filename = None
+
+        audience = request.form.get("audience", "all")
+        if audience == "channels":
+            target_channel_ids = sorted(
+                {int(value) for value in request.form.getlist("target_channels") if value.isdigit()}
+            )
+            if not target_channel_ids:
+                flash("Selectionnez au moins un canal", "danger")
+                return redirect(url_for("announcements.create_announcement"))
+        else:
+            target_channel_ids = []
 
         if upload and upload.filename:
             if not _allowed_file(upload.filename):
@@ -88,10 +121,11 @@ def create_announcement():
 
         try:
             get_use_cases().create_announcement.execute(
-                actor=current_actor(),
+                actor=actor,
                 title=title,
                 content=content,
                 pdf_filename=pdf_filename,
+                target_channel_ids=target_channel_ids,
             )
         except Exception:
             if pdf_filename:
@@ -101,4 +135,4 @@ def create_announcement():
         flash("Annonce publiee", "success")
         return redirect(url_for("announcements.list_announcements"))
 
-    return render_template("announcements/create.html")
+    return render_template("announcements/create.html", channels=channels)

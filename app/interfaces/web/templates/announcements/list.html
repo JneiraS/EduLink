@@ -31,6 +31,23 @@
                 <small>{{ display_pdf_name }}</small>
             </a>
             {% endif %}
+            {% set status = read_status.get(a.id) %}
+            {% if status %}
+            <div class="announcement-read-status">
+                {% if current_user.role|string|upper in ['ADMIN', 'TEACHER'] %}
+                <span class="badge text-bg-light border">Vu par {{ status[0] }}/{{ status[1] }}</span>
+                {% endif %}
+                {% if not status[2] %}
+                <form method="post"
+                    action="{{ url_for('announcements.confirm_read', announcement_id=a.id, page=page) }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button class="btn btn-sm btn-outline-primary" type="submit">Confirmer la lecture</button>
+                </form>
+                {% else %}
+                <span class="badge text-bg-success border">Confirme</span>
+                {% endif %}
+            </div>
+            {% endif %}
         </article>
         {% endfor %}
         {% else %}

@@ -3,6 +3,7 @@ from abc import ABC, abstractmethod
 from app.domain.entities.announcement import Announcement
 from app.domain.entities.channel import Channel
 from app.domain.entities.message import Message
+from app.domain.entities.message_template import MessageTemplate
 from app.domain.entities.notification import Notification
 from app.domain.entities.push_subscription import PushSubscription
 from app.domain.entities.user import User
@@ -49,6 +50,18 @@ class AnnouncementRepositoryPort(ABC):
 
     @abstractmethod
     def paginate(self, page: int, per_page: int) -> tuple[list[Announcement], int]:
+        raise NotImplementedError
+
+    @abstractmethod
+    def mark_read(self, announcement_id: int, user_id: int) -> None:
+        raise NotImplementedError
+
+    @abstractmethod
+    def is_read(self, announcement_id: int, user_id: int) -> bool:
+        raise NotImplementedError
+
+    @abstractmethod
+    def count_read(self, announcement_id: int) -> int:
         raise NotImplementedError
 
 
@@ -104,6 +117,10 @@ class ChannelRepositoryPort(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    def find_direct_between(self, user_a: int, user_b: int) -> Channel | None:
+        raise NotImplementedError
+
+    @abstractmethod
     def list_all(self) -> list[Channel]:
         raise NotImplementedError
 
@@ -137,4 +154,22 @@ class PushSubscriptionRepositoryPort(ABC):
 
     @abstractmethod
     def delete_for_user(self, user_id: int, endpoint: str) -> None:
+        raise NotImplementedError
+
+
+class MessageTemplateRepositoryPort(ABC):
+    @abstractmethod
+    def save(self, template: MessageTemplate) -> MessageTemplate:
+        raise NotImplementedError
+
+    @abstractmethod
+    def list_by_owner(self, owner_id: int) -> list[MessageTemplate]:
+        raise NotImplementedError
+
+    @abstractmethod
+    def find_by_id(self, template_id: int) -> MessageTemplate | None:
+        raise NotImplementedError
+
+    @abstractmethod
+    def delete(self, template_id: int) -> MessageTemplate | None:
         raise NotImplementedError

@@ -183,6 +183,42 @@ function initMemberPicker() {
     });
 }
 
+function initAudiencePicker() {
+    document.querySelectorAll("[data-audience-toggle]").forEach((radio) => {
+        const target = document.getElementById(radio.dataset.audienceToggle);
+        if (!target) {
+            return;
+        }
+        const apply = () => {
+            target.classList.toggle("d-none", !radio.checked);
+        };
+        radio.addEventListener("change", apply);
+        apply();
+    });
+}
+
+function initTemplateInsert() {
+    document.querySelectorAll("[data-template-picker]").forEach((picker) => {
+        picker.querySelectorAll("[data-template-content]").forEach((button) => {
+            button.addEventListener("click", () => {
+                const textarea = document.getElementById("content");
+                if (!textarea) {
+                    return;
+                }
+                const content = button.dataset.templateContent || "";
+                if (!content) {
+                    return;
+                }
+                textarea.value = textarea.value
+                    ? `${textarea.value}\n${content}`
+                    : content;
+                textarea.dispatchEvent(new Event("input", { bubbles: true }));
+                textarea.focus();
+            });
+        });
+    });
+}
+
 function initThemeToggle() {
     const root = document.documentElement;
     const themeButton = document.getElementById("theme-toggle-btn");
@@ -333,6 +369,10 @@ initChatScroll();
 initFileZone();
 
 initMemberPicker();
+
+initAudiencePicker();
+
+initTemplateInsert();
 
 if (isAuthenticated) {
     initPushNotifications().catch((error) => {

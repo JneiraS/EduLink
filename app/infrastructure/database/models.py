@@ -18,6 +18,19 @@ channel_members = db.Table(
     db.Column("user_id", db.Integer, db.ForeignKey(USERS_ID_FK), primary_key=True),
 )
 
+announcement_channels = db.Table(
+    "announcement_channels",
+    db.Column(
+        "announcement_id",
+        db.Integer,
+        db.ForeignKey("announcements.id"),
+        primary_key=True,
+    ),
+    db.Column(
+        "channel_id", db.Integer, db.ForeignKey("channels.id"), primary_key=True
+    ),
+)
+
 
 class UserModel(UserMixin, db.Model):
     __tablename__ = "users"
@@ -45,11 +58,22 @@ class AnnouncementModel(db.Model):
     created_at = db.Column(db.DateTime, default=utc_now, nullable=False)
 
 
+class AnnouncementReadModel(db.Model):
+    __tablename__ = "announcement_reads"
+
+    announcement_id = db.Column(
+        db.Integer, db.ForeignKey("announcements.id"), primary_key=True
+    )
+    user_id = db.Column(db.Integer, db.ForeignKey(USERS_ID_FK), primary_key=True)
+    read_at = db.Column(db.DateTime, default=utc_now, nullable=False)
+
+
 class ChannelModel(db.Model):
     __tablename__ = "channels"
 
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(120), nullable=False)
+    kind = db.Column(db.String(10), nullable=False, default="group")
     created_by = db.Column(db.Integer, db.ForeignKey(USERS_ID_FK), nullable=False)
     created_at = db.Column(db.DateTime, default=utc_now, nullable=False)
     members = db.relationship(
@@ -94,4 +118,14 @@ class PushSubscriptionModel(db.Model):
     endpoint = db.Column(db.String(1024), nullable=False, unique=True)
     p256dh_key = db.Column(db.String(255), nullable=False)
     auth_key = db.Column(db.String(255), nullable=False)
+    created_at = db.Column(db.DateTime, default=utc_now, nullable=False)
+
+
+class MessageTemplateModel(db.Model):
+    __tablename__ = "message_templates"
+
+    id = db.Column(db.Integer, primary_key=True)
+    owner_id = db.Column(db.Integer, db.ForeignKey(USERS_ID_FK), nullable=False)
+    label = db.Column(db.String(80), nullable=False)
+    content = db.Column(db.Text, nullable=False)
     created_at = db.Column(db.DateTime, default=utc_now, nullable=False)

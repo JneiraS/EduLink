@@ -3,6 +3,7 @@
 {% block content %}
 <div class="row g-4 reveal-group">
     <div class="col-lg-5">
+        {% if can_manage %}
         <div class="card shadow-sm h-100">
             <div class="card-body">
                 <span class="kicker">Messagerie</span>
@@ -72,15 +73,52 @@
                 </form>
             </div>
         </div>
+        {% endif %}
+
+        <div class="card shadow-sm {% if can_manage %}mt-3{% endif %}">
+            <div class="card-body">
+                <h2 class="h5 mb-2">Nouvelle conversation</h2>
+                <p class="text-muted mb-3">Discutez en prive avec un enseignant ou un parent.</p>
+                <a class="btn btn-outline-primary" href="{{ url_for('messages.new_conversation') }}">
+                    <i class="bi bi-person-plus me-2" aria-hidden="true"></i>Nouvelle conversation
+                </a>
+            </div>
+        </div>
     </div>
 
     <div class="col-lg-7">
-        <div class="card shadow-sm h-100">
+        <div class="card shadow-sm">
             <div class="card-body">
-                <h2 class="h5 mb-3">Mes canaux</h2>
-                {% if channels %}
+                <h2 class="h5 mb-3">Conversations</h2>
+                {% if direct_channels %}
                 <div class="list-group">
-                    {% for channel in channels %}
+                    {% for channel in direct_channels %}
+                    <a class="list-group-item list-group-item-action border rounded-3 mb-2"
+                        href="{{ url_for('messages.channel_detail', channel_id=channel.id) }}">
+                        <span class="channel-row">
+                            <span class="channel-icon" aria-hidden="true"><i class="bi bi-person"></i></span>
+                            <span class="channel-name">{{ channel.name }}</span>
+                            <span class="channel-chevron" aria-hidden="true"><i class="bi bi-chevron-right"></i></span>
+                        </span>
+                    </a>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="empty-state">
+                    <span class="empty-icon" aria-hidden="true"><i class="bi bi-person"></i></span>
+                    <div class="empty-title">Aucune conversation</div>
+                    <div class="empty-hint">Lancez une conversation privee avec un contact.</div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="card shadow-sm mt-3">
+            <div class="card-body">
+                <h2 class="h5 mb-3">Canaux</h2>
+                {% if group_channels %}
+                <div class="list-group">
+                    {% for channel in group_channels %}
                     <a class="list-group-item list-group-item-action border rounded-3 mb-2"
                         href="{{ url_for('messages.channel_detail', channel_id=channel.id) }}">
                         <span class="channel-row">

@@ -131,7 +131,14 @@ Faites passer le test de l'étape 1 (vert).
   `initConfirmDialogs` dans `app.js`).
 - Sélection multiple de personnes : réutilisez le **sélecteur de membres**
   (`group_users_by_role` dans `presentation.py` + `initMemberPicker` dans
-  `app.js`), qui fournit recherche, regroupement par rôle et compteur.
+  `app.js`), qui fournit recherche, regroupement par rôle et compteur. Pour une
+  sélection **unique** (ex. l'interlocuteur d'une conversation 1:1), le même
+  `group_users_by_role` alimente une liste de radios (`messages/new_conversation.html`).
+- Bascule d'options de formulaire (afficher/masquer un bloc) : `data-audience-toggle`
+  + `data-audience-target` (gérés par `initAudiencePicker`) — voir le sélecteur
+  d'audience des annonces.
+- Insertion d'un contenu réutilisable dans un textarea (modèles de messages) :
+  boutons `data-template-content` gérés par `initTemplateInsert`.
 
 ### Étape 9 — Tests d'interface
 
@@ -229,7 +236,17 @@ câblage ne fait que de l'assemblage.
   écrire l'input sur une seule ligne dans le template.
 - **Plusieurs logins sur le même `app.test_client()`** : la session est
   partagée entre clients d'un même app. Un seul login par client, ou logout
-  explicite entre deux.
+  explicite entre deux. Attention : pytest-flask pousse un
+  `test_request_context` autouse qui **caches `current_user`** pour toute la
+  durée du test — enchaîner `login(A)` puis `login(B)` ne rebranche pas
+  réellement l'utilisateur courant. Pour « agir en tant qu'un autre », créer
+  les données directement en base puis faire **un seul** `login()`.
+- **Colonne `NOT NULL` sur une table existante** : `alembic revision
+  --autogenerate` ne détecte pas le besoin d'un `server_default`. Pour que
+  SQLite remplisse les lignes existantes, ajoutez `server_default="..."` à la
+  colonne dans la migration (ex. `channels.kind` → `server_default='group'`).
+- **Clé primaire composite** : `db.session.get(Model, (pk1, pk2))` (ex.
+  `AnnouncementReadModel`).
 - **`Model.query.get(id)` est déprécié** : utiliser `db.session.get(Model, id)`.
 - **Changement de schéma** : passer par une migration Alembic, jamais par
   `create_all` (les tests re-créent le schéma eux-mêmes via `create_all` sur

@@ -74,6 +74,22 @@
                         <i class="bi bi-send" aria-hidden="true"></i>
                     </button>
                 </form>
+                {% if message_templates %}
+                <div class="template-picker" data-template-picker>
+                    <details>
+                        <summary class="btn btn-sm btn-outline-secondary">
+                            <i class="bi bi-file-earmark-text me-1" aria-hidden="true"></i>Modeles
+                        </summary>
+                        <div class="template-picker-list">
+                            {% for template in message_templates %}
+                            <button type="button" class="template-option"
+                                data-template-content="{{ template.content|e }}">{{ template.label }}</button>
+                            {% endfor %}
+                        </div>
+                    </details>
+                    <a class="template-manage" href="{{ url_for('messages.templates') }}">Gerer mes modeles</a>
+                </div>
+                {% endif %}
             </div>
         </div>
     </div>
@@ -101,7 +117,7 @@
             </div>
         </div>
 
-        {% if can_manage_members and (current_user.role|string|upper in ['ADMIN', 'TEACHER']) %}
+        {% if can_manage_members and not is_direct and (current_user.role|string|upper in ['ADMIN', 'TEACHER']) %}
         <div class="card shadow-sm mt-3">
             <div class="card-body">
                 <h2 class="h6 mb-3">Ajouter des membres</h2>

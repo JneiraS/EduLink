@@ -25,17 +25,28 @@ from app.application.use_cases.admin_use_cases import (
     UpdateUserRole,
 )
 from app.application.use_cases.announcement_use_cases import (
+    ConfirmAnnouncementRead,
     CreateAnnouncement,
+    GetAnnouncementReadStatus,
     ListAnnouncements,
 )
 from app.application.use_cases.auth_use_cases import LoginUser, RegisterUser
-from app.application.use_cases.channel_use_cases import AddChannelMembers, CreateChannel
+from app.application.use_cases.channel_use_cases import (
+    AddChannelMembers,
+    CreateChannel,
+    OpenDirectConversation,
+)
 from app.application.use_cases.dashboard_use_case import GetDashboard
 from app.application.use_cases.message_use_cases import (
     ListChannelMessages,
     ListChannelMembers,
     ListUserChannels,
     SendMessage,
+)
+from app.application.use_cases.message_template_use_cases import (
+    CreateMessageTemplate,
+    DeleteMessageTemplate,
+    ListMessageTemplates,
 )
 from app.application.use_cases.notification_use_cases import (
     ListNotifications,
@@ -60,6 +71,9 @@ from app.infrastructure.repositories.channel_repository import (
 )
 from app.infrastructure.repositories.message_repository import (
     SQLAlchemyMessageRepository,
+)
+from app.infrastructure.repositories.message_template_repository import (
+    SQLAlchemyMessageTemplateRepository,
 )
 from app.infrastructure.repositories.notification_repository import (
     SQLAlchemyNotificationRepository,
@@ -127,6 +141,7 @@ def create_app(testing: bool = False):
     channels_repo = SQLAlchemyChannelRepository()
     notifications_repo = SQLAlchemyNotificationRepository()
     push_subscriptions_repo = SQLAlchemyPushSubscriptionRepository()
+    message_templates_repo = SQLAlchemyMessageTemplateRepository()
     hasher = WerkzeugPasswordHasher()
     realtime = SocketIONotificationService(
         socketio=socketio,
@@ -144,6 +159,7 @@ def create_app(testing: bool = False):
         "channels": channels_repo,
         "notifications": notifications_repo,
         "push_subscriptions": push_subscriptions_repo,
+        "message_templates": message_templates_repo,
         "hasher": hasher,
         "realtime_notifications": realtime,
     }
@@ -155,9 +171,18 @@ def create_app(testing: bool = False):
             announcements=announcements_repo,
             notifications=notifications_repo,
             users=users_repo,
+            channels=channels_repo,
             realtime=realtime,
         ),
         list_announcements=ListAnnouncements(announcements=announcements_repo),
+        confirm_announcement_read=ConfirmAnnouncementRead(
+            announcements=announcements_repo
+        ),
+        get_announcement_read_status=GetAnnouncementReadStatus(
+            announcements=announcements_repo,
+            channels=channels_repo,
+            users=users_repo,
+        ),
         get_dashboard=GetDashboard(
             announcements=announcements_repo, notifications=notifications_repo
         ),
@@ -182,8 +207,21 @@ def create_app(testing: bool = False):
         unsubscribe_push_notifications=UnsubscribePushNotifications(
             push_subscriptions=push_subscriptions_repo
         ),
+        list_message_templates=ListMessageTemplates(
+            templates=message_templates_repo
+        ),
+        create_message_template=CreateMessageTemplate(
+            templates=message_templates_repo
+        ),
+        delete_message_template=DeleteMessageTemplate(
+            templates=message_templates_repo
+        ),
         create_channel=CreateChannel(channels=channels_repo),
         add_channel_members=AddChannelMembers(
+            channels=channels_repo,
+            users=users_repo,
+        ),
+        open_direct_conversation=OpenDirectConversation(
             channels=channels_repo,
             users=users_repo,
         ),
