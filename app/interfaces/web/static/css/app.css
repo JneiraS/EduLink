@@ -1278,12 +1278,26 @@ hr {
 /* ============================================================
    Admin panel
    ============================================================ */
+.admin-table {
+    --bs-table-bg: var(--surface);
+    --bs-table-color: var(--text);
+    --bs-table-border-color: var(--line);
+    --bs-table-hover-bg: var(--list-hover-bg);
+    --bs-table-hover-color: var(--text);
+    color: var(--text);
+}
+
 .admin-table th {
     font-size: 0.72rem;
     letter-spacing: 0.08em;
     text-transform: uppercase;
     color: var(--text-soft);
     font-weight: 700;
+}
+
+.admin-table thead th {
+    background-color: var(--surface-muted);
+    border-bottom-color: var(--line);
 }
 
 .admin-table td {
