@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-end mb-4 gap-3 flex-wrap reveal-group">
+    <div>
+        <span class="kicker">Administration</span>
+        <h1 class="page-title">Gestion des membres</h1>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body">
+        {% if users %}
+        <div class="table-responsive">
+            <table class="table table-hover align-middle admin-table">
+                <thead>
+                    <tr>
+                        <th scope="col">Membre</th>
+                        <th scope="col">Role</th>
+                        <th scope="col">Statut</th>
+                        <th scope="col" class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for u in users %}
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                {% set name_parts = u.full_name.split()[:2] %}
+                                {% set initials = (name_parts[0][0] if name_parts else '') ~ (name_parts[1][0] if name_parts|length > 1 else '') %}
+                                <span class="avatar avatar-sm" aria-hidden="true">{{ initials|upper }}</span>
+                                <div>
+                                    <div class="fw-semibold">{{ u.full_name }}</div>
+                                    <small class="text-muted">{{ u.email }}</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <form method="post" action="{{ url_for('admin.change_role', user_id=u.id) }}"
+                                class="d-inline-flex align-items-center gap-2">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <select name="role" class="form-select form-select-sm role-select"
+                                    aria-label="Role de {{ u.full_name }}">
+                                    {% for r in roles %}
+                                    <option value="{{ r.value }}" {% if u.role == r %}selected{% endif %}>{{ r.value }}</option>
+                                    {% endfor %}
+                                </select>
+                                <button class="btn btn-sm btn-outline-secondary" type="submit" title="Appliquer le role">
+                                    <i class="bi bi-check-lg" aria-hidden="true"></i>
+                                </button>
+                            </form>
+                        </td>
+                        <td>
+                            {% if u.is_active %}
+                            <span class="status-badge status-active">Actif</span>
+                        {% else %}
+                            <span class="status-badge status-inactive">Desactive</span>
+                        {% endif %}
+                        </td>
+                        <td class="text-end">
+                            <form method="post" action="{{ url_for('admin.toggle_active', user_id=u.id) }}"
+                                class="d-inline">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button class="btn btn-sm {{ 'btn-outline-danger' if u.is_active else 'btn-outline-success' }}"
+                                    type="submit" data-confirm="{{ 'Desactiver ce compte ?' if u.is_active else 'Reactiver ce compte ?' }}">
+                                    <i class="bi {{ 'bi-person-x' if u.is_active else 'bi-person-check' }} me-1"
+                                        aria-hidden="true"></i>
+                                    {{ 'Desactiver' if u.is_active else 'Reactiver' }}
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <span class="empty-icon" aria-hidden="true"><i class="bi bi-people"></i></span>
+            <div class="empty-title">Aucun membre</div>
+            <div class="empty-hint">Les comptes crees apparaitront ici.</div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

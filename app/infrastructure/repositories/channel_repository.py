@@ -1,9 +1,14 @@
-from sqlalchemy import select
+from sqlalchemy import delete, select
 
 from app.domain.entities.channel import Channel
 from app.domain.ports.repositories import ChannelRepositoryPort
 from app.extensions import db
-from app.infrastructure.database.models import ChannelModel, channel_members
+from app.infrastructure.database.models import (
+    ChannelModel,
+    MessageModel,
+    NotificationModel,
+    channel_members,
+)
 
 
 class SQLAlchemyChannelRepository(ChannelRepositoryPort):
@@ -66,6 +71,31 @@ class SQLAlchemyChannelRepository(ChannelRepositoryPort):
         if not row:
             return None
         return Channel(id=row.id, name=row.name, created_by=row.created_by)
+
+    def list_all(self) -> list[Channel]:
+        rows = ChannelModel.query.order_by(ChannelModel.created_at.desc()).all()
+        return [Channel(id=r.id, name=r.name, created_by=r.created_by) for r in rows]
+
+    def delete(self, channel_id: int) -> Channel | None:
+        row = db.session.get(ChannelModel, channel_id)
+        if row is None:
+            return None
+        entity = Channel(id=row.id, name=row.name, created_by=row.created_by)
+
+        db.session.execute(
+            delete(channel_members).where(channel_members.c.channel_id == channel_id)
+        )
+        db.session.execute(
+            delete(MessageModel).where(MessageModel.channel_id == channel_id)
+        )
+        db.session.execute(
+            delete(NotificationModel).where(
+                NotificationModel.channel_id == channel_id
+            )
+        )
+        db.session.delete(row)
+        db.session.commit()
+        return entity
 
     def list_member_ids(self, channel_id: int) -> list[int]:
         stmt = select(channel_members.c.user_id).where(

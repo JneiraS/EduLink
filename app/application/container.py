@@ -1,5 +1,14 @@
 from dataclasses import dataclass
 
+from app.application.use_cases.admin_use_cases import (
+    DeleteAnnouncement,
+    DeleteChannel,
+    ListAnnouncementsForAdmin,
+    ListChannelsForAdmin,
+    ListUsersForAdmin,
+    ToggleUserActive,
+    UpdateUserRole,
+)
 from app.application.use_cases.announcement_use_cases import (
     CreateAnnouncement,
     ListAnnouncements,
@@ -41,3 +50,10 @@ class UseCaseContainer:
     add_channel_members: AddChannelMembers
     list_all_users: ListAllUsers
     find_users_by_ids: FindUsersByIds
+    list_users_for_admin: ListUsersForAdmin
+    list_announcements_for_admin: ListAnnouncementsForAdmin
+    list_channels_for_admin: ListChannelsForAdmin
+    update_user_role: UpdateUserRole
+    toggle_user_active: ToggleUserActive
+    delete_announcement: DeleteAnnouncement
+    delete_channel: DeleteChannel

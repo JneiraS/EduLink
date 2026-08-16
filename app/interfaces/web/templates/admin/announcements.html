@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-end mb-4 gap-3 flex-wrap reveal-group">
+    <div>
+        <span class="kicker">Administration</span>
+        <h1 class="page-title">Gestion des annonces</h1>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body">
+        {% if announcements %}
+        {% for a in announcements %}
+        <article class="announcement-item">
+            <div class="announcement-meta">
+                <i class="bi bi-calendar3" aria-hidden="true"></i>
+                <small class="text-muted fw-semibold">{{ a.created_at.strftime('%d/%m/%Y %H:%M') if a.created_at else '' }}</small>
+                {% if author_names.get(a.created_by) %}
+                <span class="text-muted">·</span>
+                <small class="text-muted fw-semibold">
+                    <i class="bi bi-person me-1" aria-hidden="true"></i>{{ author_names.get(a.created_by) }}
+                </small>
+                {% endif %}
+            </div>
+            <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap">
+                <div>
+                    <h2 class="announcement-title">{{ a.title }}</h2>
+                    <p class="announcement-content mb-0">{{ a.content }}</p>
+                    {% if a.pdf_filename %}
+                    {% set display_pdf_name = a.pdf_filename.split('_', 1)[1] if '_' in a.pdf_filename else a.pdf_filename %}
+                    <span class="announcement-attachment">
+                        <i class="bi bi-file-earmark-pdf" aria-hidden="true"></i>
+                        <small>{{ display_pdf_name }}</small>
+                    </span>
+                    {% endif %}
+                </div>
+                <form method="post" action="{{ url_for('admin.delete_announcement', announcement_id=a.id) }}" class="d-inline">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button class="btn btn-sm btn-outline-danger" type="submit"
+                        data-confirm="Supprimer cette annonce et sa piece jointe ?">
+                        <i class="bi bi-trash me-1" aria-hidden="true"></i>Supprimer
+                    </button>
+                </form>
+            </div>
+        </article>
+        {% endfor %}
+        {% else %}
+        <div class="empty-state">
+            <span class="empty-icon" aria-hidden="true"><i class="bi bi-megaphone"></i></span>
+            <div class="empty-title">Aucune annonce</div>
+            <div class="empty-hint">Les annonces creees par les enseignants apparaitront ici.</div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
