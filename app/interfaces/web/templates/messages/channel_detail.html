@@ -46,9 +46,9 @@
                         <span class="avatar avatar-sm" aria-hidden="true">{{ s_initials|upper }}</span>
                         {% endif %}
                         <div class="bubble">
-                            {% if not is_mine %}
+                            <!-- {% if not is_mine %}
                             <div class="bubble-sender">{{ m.sender_name }}</div>
-                            {% endif %}
+                            {% endif %} -->
                             <div class="bubble-text">{{ m.content }}</div>
                             <span class="bubble-time">{{ m.created_at.strftime('%d/%m/%Y %H:%M') if m.created_at else
                                 '' }}</span>
