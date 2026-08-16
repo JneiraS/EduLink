@@ -154,7 +154,9 @@ annonce un sélecteur d'**audience** (`initAudiencePicker` : radios qui
 affichent/masquent la liste des canaux ciblés). Le point d'entrée
 « Gerer mes modeles » est lui **toujours visible** (page canal + page
 Messagerie), pour éviter le cul-de-sac où l'on ne peut pas créer un premier
-modèle sans en posséder déjà un.
+modèle sans en posséder déjà un. Sur la page Messagerie, le CTA
+« Nouvelle conversation » est porté par l'**en-tête de page** (bouton primaire
+à droite), donc visible en haut même sans canal existant.
 
 ---
 

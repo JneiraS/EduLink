@@ -1,12 +1,20 @@
 {% extends 'base.html' %}
 
 {% block content %}
+<div class="d-flex align-items-center justify-content-between gap-3 mb-4 reveal-group">
+    <div>
+        <span class="kicker">Messagerie</span>
+        <h1 class="page-title mb-0">Messagerie</h1>
+    </div>
+    <a class="btn btn-primary" href="{{ url_for('messages.new_conversation') }}">
+        <i class="bi bi-person-plus me-2" aria-hidden="true"></i>Nouvelle conversation
+    </a>
+</div>
 <div class="row g-4 reveal-group">
     <div class="col-lg-5">
         {% if can_manage %}
         <div class="card shadow-sm h-100">
             <div class="card-body">
-                <span class="kicker">Messagerie</span>
                 <h2 class="h5 mb-3">Creer un canal</h2>
                 <form method="post">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -74,16 +82,6 @@
             </div>
         </div>
         {% endif %}
-
-        <div class="card shadow-sm {% if can_manage %}mt-3{% endif %}">
-            <div class="card-body">
-                <h2 class="h5 mb-2">Nouvelle conversation</h2>
-                <p class="text-muted mb-3">Discutez en prive avec un enseignant ou un parent.</p>
-                <a class="btn btn-outline-primary" href="{{ url_for('messages.new_conversation') }}">
-                    <i class="bi bi-person-plus me-2" aria-hidden="true"></i>Nouvelle conversation
-                </a>
-            </div>
-        </div>
 
         <div class="card shadow-sm mt-3">
             <div class="card-body">

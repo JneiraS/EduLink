@@ -357,6 +357,19 @@ def test_channels_page_links_to_message_templates(client, app):
     assert b"Mes modeles de messages" in response.data
 
 
+def test_channels_page_has_top_new_conversation_cta(client, app):
+    teacher_id = create_user(app, role="TEACHER", email="nc7@t.local")
+    login(client, teacher_id)
+    response = client.get("/messages/channels")
+    assert response.status_code == 200
+    html = response.data.decode()
+    cta = html.find("/messages/new-conversation")
+    first_card = html.find(">Creer un canal<")
+    assert cta != -1
+    assert first_card != -1
+    assert cta < first_card
+
+
 def test_edit_template_page_requires_login(client):
     response = client.get("/messages/templates/1/edit")
     assert response.status_code == 302
