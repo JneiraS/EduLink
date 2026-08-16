@@ -355,3 +355,65 @@ def test_channels_page_links_to_message_templates(client, app):
     response = client.get("/messages/channels")
     assert response.status_code == 200
     assert b"Mes modeles de messages" in response.data
+
+
+def test_edit_template_page_requires_login(client):
+    response = client.get("/messages/templates/1/edit")
+    assert response.status_code == 302
+
+
+def test_edit_template_renders_form(client, app):
+    teacher_id = create_user(app, role="TEACHER", email="mt9@t.local")
+    login(client, teacher_id)
+    client.post("/messages/templates", data={"label": "Reponse", "content": "Bonjour"})
+    with app.app_context():
+        template_id = MessageTemplateModel.query.first().id
+    response = client.get(f"/messages/templates/{template_id}/edit")
+    assert response.status_code == 200
+    assert b"Modifier le modele" in response.data
+    assert b"value=\"Reponse\"" in response.data
+
+
+def test_edit_template_updates(client, app):
+    teacher_id = create_user(app, role="TEACHER", email="mt10@t.local")
+    login(client, teacher_id)
+    client.post("/messages/templates", data={"label": "Reponse", "content": "Bonjour"})
+    with app.app_context():
+        template_id = MessageTemplateModel.query.first().id
+    response = client.post(
+        f"/messages/templates/{template_id}/edit",
+        data={"label": "Nouveau", "content": "Mis a jour"},
+        follow_redirects=True,
+    )
+    assert b"Modele mis a jour" in response.data
+    with app.app_context():
+        from app.extensions import db
+
+        template = db.session.get(MessageTemplateModel, template_id)
+        assert template.label == "Nouveau"
+        assert template.content == "Mis a jour"
+
+
+def test_edit_template_rejects_other_owner(client, app):
+    teacher_id = create_user(app, role="TEACHER", email="mt11@t.local")
+    other_id = create_user(app, role="TEACHER", email="mt12@t.local")
+    with app.app_context():
+        from app.extensions import db
+
+        db.session.add(
+            MessageTemplateModel(owner_id=other_id, label="Autre", content="Contenu")
+        )
+        db.session.commit()
+        template_id = MessageTemplateModel.query.first().id
+    login(client, teacher_id)
+    response = client.post(
+        f"/messages/templates/{template_id}/edit",
+        data={"label": "X", "content": "y"},
+        follow_redirects=True,
+    )
+    assert b"Template not found" in response.data
+    with app.app_context():
+        from app.extensions import db
+
+        template = db.session.get(MessageTemplateModel, template_id)
+        assert template.label == "Autre"

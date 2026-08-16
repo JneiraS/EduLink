@@ -32,6 +32,7 @@ from app.application.use_cases.message_template_use_cases import (
     CreateMessageTemplate,
     DeleteMessageTemplate,
     ListMessageTemplates,
+    UpdateMessageTemplate,
 )
 from app.application.use_cases.notification_use_cases import (
     ListNotifications,
@@ -62,6 +63,7 @@ class UseCaseContainer:
     list_message_templates: ListMessageTemplates
     create_message_template: CreateMessageTemplate
     delete_message_template: DeleteMessageTemplate
+    update_message_template: UpdateMessageTemplate
     create_channel: CreateChannel
     add_channel_members: AddChannelMembers
     open_direct_conversation: OpenDirectConversation

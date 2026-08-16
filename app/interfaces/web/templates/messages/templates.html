@@ -35,6 +35,8 @@
                             <div class="fw-semibold">{{ template.label }}</div>
                             <small class="text-muted">{{ template.content }}</small>
                         </div>
+                        <a class="btn btn-sm btn-outline-primary"
+                            href="{{ url_for('messages.edit_template', template_id=template.id) }}">Modifier</a>
                         <form method="post"
                             action="{{ url_for('messages.delete_template', template_id=template.id) }}">
                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">

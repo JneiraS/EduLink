@@ -4,6 +4,7 @@ from app.application.use_cases.message_template_use_cases import (
     CreateMessageTemplate,
     DeleteMessageTemplate,
     ListMessageTemplates,
+    UpdateMessageTemplate,
 )
 from app.domain.entities.message_template import MessageTemplate
 from app.domain.entities.user import User, UserRole
@@ -29,6 +30,14 @@ class InMemoryTemplates:
         for index, template in enumerate(self.items):
             if template.id == template_id:
                 return self.items.pop(index)
+        return None
+
+    def update(self, template_id, label, content):
+        for template in self.items:
+            if template.id == template_id:
+                template.label = label
+                template.content = content
+                return template
         return None
 
 
@@ -100,3 +109,43 @@ def test_delete_message_template_removes():
     use_case = DeleteMessageTemplate(templates=repo)
     use_case.execute(_actor(uid=1), template.id)
     assert repo.find_by_id(template.id) is None
+
+
+def test_update_message_template_edits():
+    repo = InMemoryTemplates()
+    template = repo.save(MessageTemplate(id=None, owner_id=1, label="A", content="c"))
+    use_case = UpdateMessageTemplate(templates=repo)
+    updated = use_case.execute(_actor(uid=1), template.id, "Nouveau", "Contenu mis a jour")
+    assert updated.label == "Nouveau"
+    assert updated.content == "Contenu mis a jour"
+
+
+def test_update_message_template_owner_only():
+    repo = InMemoryTemplates()
+    template = repo.save(MessageTemplate(id=None, owner_id=1, label="A", content="c"))
+    use_case = UpdateMessageTemplate(templates=repo)
+    with pytest.raises(AuthorizationError):
+        use_case.execute(_actor(uid=2), template.id, "X", "y")
+
+
+def test_update_message_template_not_found():
+    repo = InMemoryTemplates()
+    use_case = UpdateMessageTemplate(templates=repo)
+    with pytest.raises(ValidationError):
+        use_case.execute(_actor(uid=1), 999, "X", "y")
+
+
+def test_update_message_template_requires_label():
+    repo = InMemoryTemplates()
+    template = repo.save(MessageTemplate(id=None, owner_id=1, label="A", content="c"))
+    use_case = UpdateMessageTemplate(templates=repo)
+    with pytest.raises(ValidationError):
+        use_case.execute(_actor(uid=1), template.id, "  ", "y")
+
+
+def test_update_message_template_requires_content():
+    repo = InMemoryTemplates()
+    template = repo.save(MessageTemplate(id=None, owner_id=1, label="A", content="c"))
+    use_case = UpdateMessageTemplate(templates=repo)
+    with pytest.raises(ValidationError):
+        use_case.execute(_actor(uid=1), template.id, "X", "  ")

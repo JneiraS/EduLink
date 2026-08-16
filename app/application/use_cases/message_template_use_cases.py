@@ -57,3 +57,32 @@ class DeleteMessageTemplate:
         if template.owner_id != (actor.id or 0):
             raise AuthorizationError("Only the owner can delete this template")
         self.templates.delete(template_id)
+
+
+@dataclass(slots=True)
+class UpdateMessageTemplate:
+    templates: MessageTemplateRepositoryPort
+
+    def execute(
+        self, actor: User, template_id: int, label: str, content: str
+    ) -> MessageTemplate:
+        label = label.strip()
+        content = content.strip()
+        if not label:
+            raise ValidationError("Label is required")
+        if len(label) > MAX_LABEL_LENGTH:
+            raise ValidationError(
+                f"Label must be at most {MAX_LABEL_LENGTH} characters"
+            )
+        if not content:
+            raise ValidationError("Content is required")
+        if len(content) > MAX_TEMPLATE_CONTENT_LENGTH:
+            raise ValidationError(
+                f"Content must be at most {MAX_TEMPLATE_CONTENT_LENGTH} characters"
+            )
+        template = self.templates.find_by_id(template_id)
+        if template is None:
+            raise ValidationError("Template not found")
+        if template.owner_id != (actor.id or 0):
+            raise AuthorizationError("Only the owner can edit this template")
+        return self.templates.update(template_id, label, content)

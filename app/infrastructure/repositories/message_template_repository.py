@@ -36,6 +36,15 @@ class SQLAlchemyMessageTemplateRepository(MessageTemplateRepositoryPort):
         db.session.commit()
         return entity
 
+    def update(self, template_id: int, label: str, content: str) -> MessageTemplate | None:
+        row = db.session.get(MessageTemplateModel, template_id)
+        if row is None:
+            return None
+        row.label = label
+        row.content = content
+        db.session.commit()
+        return self._to_entity(row)
+
     def _to_entity(self, row: MessageTemplateModel) -> MessageTemplate:
         return MessageTemplate(
             id=row.id,

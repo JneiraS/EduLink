@@ -1,6 +1,7 @@
 from flask import Blueprint, flash, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
 
+from app.domain.entities.message_template import MessageTemplate
 from app.domain.entities.user import UserRole
 from app.domain.errors import AuthorizationError, NotFoundError, ValidationError
 from app.interfaces.web.routes.presentation import (
@@ -119,6 +120,39 @@ def delete_template(template_id: int):
     except AuthorizationError as exc:
         flash(str(exc), "danger")
     return redirect(url_for("messages.templates"))
+
+
+@messages_bp.route("/templates/<int:template_id>/edit", methods=["GET", "POST"])
+@login_required
+def edit_template(template_id: int):
+    actor = current_actor()
+    my_templates = get_use_cases().list_message_templates.execute(actor)
+    template = next(
+        (t for t in my_templates if t.id == template_id), None
+    )
+    if template is None:
+        flash("Template not found", "danger")
+        return redirect(url_for("messages.templates"))
+
+    if request.method == "POST":
+        label = request.form.get("label", "")
+        content = request.form.get("content", "")
+        try:
+            get_use_cases().update_message_template.execute(
+                actor, template_id, label=label, content=content
+            )
+            flash("Modele mis a jour", "success")
+            return redirect(url_for("messages.templates"))
+        except ValidationError as exc:
+            flash(str(exc), "danger")
+            template = MessageTemplate(
+                id=template_id,
+                owner_id=actor.id or 0,
+                label=label,
+                content=content,
+            )
+
+    return render_template("messages/edit_template.html", template=template)
 
 
 @messages_bp.route("/channels/<int:channel_id>", methods=["GET", "POST"])

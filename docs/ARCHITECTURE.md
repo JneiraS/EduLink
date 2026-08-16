@@ -34,7 +34,7 @@ publique pour l'instant.
 | Canaux de messagerie (liste/création) | `messages_routes.py` | `CreateChannel`, `AddChannelMembers`, `ListUserChannels` | `channel_repository.py` |
 | Conversations directes 1:1 | `messages_routes.py` (`/new-conversation`) | `OpenDirectConversation` | `channel_repository.py` |
 | Messages en canal (chat + pagination) | `messages_routes.py` | `SendMessage`, `ListChannelMessages`, `ListChannelMembers` | `message_repository.py`, `channel_repository.py` |
-| Modèles de messages | `messages_routes.py` (`/templates`) | `ListMessageTemplates`, `CreateMessageTemplate`, `DeleteMessageTemplate` | `message_template_repository.py` |
+| Modèles de messages | `messages_routes.py` (`/templates`, `/templates/<id>/edit`) | `ListMessageTemplates`, `CreateMessageTemplate`, `UpdateMessageTemplate`, `DeleteMessageTemplate` | `message_template_repository.py` |
 | Notifications (liste / lecture) | `notifications_routes.py` | `ListNotifications`, `MarkNotificationRead` | `notification_repository.py` |
 | Push web (abonnement PWA) | `push_routes.py` | `SubscribePushNotifications`, `UnsubscribePushNotifications` | `push_subscription_repository.py` |
 | **Administration** (création de comptes, rôles, activ./désactiv., suppression) | `admin_routes.py` + lien vers `auth_routes.py` (`/auth/users/new`) | `ListUsersForAdmin`, `UpdateUserRole`, `ToggleUserActive`, `ListAnnouncementsForAdmin`, `DeleteAnnouncement`, `ListChannelsForAdmin`, `DeleteChannel` + `RegisterUser` | `user_repository.py`, `announcement_repository.py`, `channel_repository.py` |
@@ -81,7 +81,8 @@ une violation d'architecture.
     (dont `mark_read` / `is_read` / `count_read` pour les accusés de réception),
     `MessageRepositoryPort`, `NotificationRepositoryPort`,
     `ChannelRepositoryPort` (dont `find_direct_between` pour les 1:1),
-    `PushSubscriptionRepositoryPort`, `MessageTemplateRepositoryPort`.
+    `PushSubscriptionRepositoryPort`, `MessageTemplateRepositoryPort`
+    (dont `update` pour modifier un modèle existant).
   - `services.py` : `PasswordHasherPort`, `RealtimeNotificationPort`.
 - **`errors.py`** — hiérarchie d'erreurs métier :
   `DomainError` → `AuthenticationError`, `AuthorizationError`, `NotFoundError`,

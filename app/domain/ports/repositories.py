@@ -173,3 +173,9 @@ class MessageTemplateRepositoryPort(ABC):
     @abstractmethod
     def delete(self, template_id: int) -> MessageTemplate | None:
         raise NotImplementedError
+
+    @abstractmethod
+    def update(
+        self, template_id: int, label: str, content: str
+    ) -> MessageTemplate | None:
+        raise NotImplementedError

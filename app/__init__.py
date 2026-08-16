@@ -47,6 +47,7 @@ from app.application.use_cases.message_template_use_cases import (
     CreateMessageTemplate,
     DeleteMessageTemplate,
     ListMessageTemplates,
+    UpdateMessageTemplate,
 )
 from app.application.use_cases.notification_use_cases import (
     ListNotifications,
@@ -214,6 +215,9 @@ def create_app(testing: bool = False):
             templates=message_templates_repo
         ),
         delete_message_template=DeleteMessageTemplate(
+            templates=message_templates_repo
+        ),
+        update_message_template=UpdateMessageTemplate(
             templates=message_templates_repo
         ),
         create_channel=CreateChannel(channels=channels_repo),
