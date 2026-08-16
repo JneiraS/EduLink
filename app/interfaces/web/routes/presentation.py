@@ -1,5 +1,7 @@
 from collections.abc import Mapping
 
+from app.domain.entities.user import UserRole
+
 
 def as_list(value):
     if value is None:
@@ -20,6 +22,27 @@ def read_value(item, key: str, default=None):
 def parse_member_ids(form_data) -> list[int]:
     raw_members = form_data.getlist("members") + form_data.getlist("members[]")
     return sorted({int(value) for value in raw_members if value.isdigit()})
+
+
+ROLE_ORDER = (UserRole.ADMIN, UserRole.TEACHER, UserRole.PARENT)
+ROLE_LABELS = {
+    UserRole.ADMIN: "Administrateurs",
+    UserRole.TEACHER: "Enseignants",
+    UserRole.PARENT: "Parents",
+}
+
+
+def group_users_by_role(users) -> list[tuple[UserRole, str, list]]:
+    """Group domain users by role into fixed-order sections for the member picker."""
+    buckets = {role: [] for role in ROLE_ORDER}
+    for user in users:
+        try:
+            role = UserRole(user.role)
+        except (TypeError, ValueError):
+            continue
+        if role in buckets:
+            buckets[role].append(user)
+    return [(role, ROLE_LABELS[role], buckets[role]) for role in ROLE_ORDER]
 
 
 def resolve_channel_name(

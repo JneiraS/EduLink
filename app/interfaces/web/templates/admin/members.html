@@ -6,7 +6,12 @@
         <span class="kicker">Administration</span>
         <h1 class="page-title">Gestion des membres</h1>
     </div>
+    <a class="btn btn-primary" href="{{ url_for('auth.create_user') }}">
+        <i class="bi bi-person-plus me-2" aria-hidden="true"></i>Creer un utilisateur
+    </a>
 </div>
+
+{% include 'admin/_nav.html' %}
 
 <div class="card shadow-sm">
     <div class="card-body">

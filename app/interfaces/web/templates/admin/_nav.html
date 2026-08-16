@@ -1,0 +1,15 @@
+{% set endpoint = request.endpoint or '' %}
+<nav class="admin-nav" aria-label="Sections d'administration">
+    <a class="admin-nav-link {% if endpoint == 'admin.members' %}active{% endif %}"
+        href="{{ url_for('admin.members') }}">
+        <i class="bi bi-people me-2" aria-hidden="true"></i>Membres
+    </a>
+    <a class="admin-nav-link {% if endpoint == 'admin.announcements' %}active{% endif %}"
+        href="{{ url_for('admin.announcements') }}">
+        <i class="bi bi-megaphone me-2" aria-hidden="true"></i>Annonces
+    </a>
+    <a class="admin-nav-link {% if endpoint == 'admin.channels' %}active{% endif %}"
+        href="{{ url_for('admin.channels') }}">
+        <i class="bi bi-hash me-2" aria-hidden="true"></i>Canaux
+    </a>
+</nav>

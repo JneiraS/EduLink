@@ -12,27 +12,58 @@
                     <div class="mb-3">
                         <label class="form-label" for="name">Nom du canal</label>
                         <input class="form-control" id="name" name="name" required maxlength="120"
-                            placeholder="Ex. Classe de CM2">
+                            placeholder="Ex. Classe de CM2" value="{{ form_name or '' }}">
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Membres</label>
-                        <p class="form-text mb-2">Selectionne les membres du canal.</p>
-                        <div class="border rounded p-2 d-flex flex-column gap-1" id="members">
-                            {% for user in users %}
-                            <label class="member-option form-check form-check-inline mb-0" for="member_{{ user.id }}">
-                                <input class="form-check-input" type="checkbox" name="members" value="{{ user.id }}"
-                                    id="member_{{ user.id }}" {% if user.id==current_user_id %}checked disabled{% endif
-                                    %}>
-                                {% set name_parts = user.full_name.split()[:2] %}
-                                {% set user_initials = (name_parts[0][0] if name_parts else '') ~ (name_parts[1][0] if name_parts|length > 1 else '') %}
-                                <span class="avatar avatar-sm" aria-hidden="true">{{ user_initials|upper }}</span>
-                                <span class="form-check-label">
-                                    {{ user.full_name }} ({{ user.role.value }})
-                                    {% if user.id == current_user_id %}<span class="text-muted">- vous</span>{% endif
-                                    %}
-                                </span>
-                            </label>
-                            {% endfor %}
+                        <label class="form-label" for="member-search">Membres</label>
+                        <p class="form-text mb-2">Recherchez et selectionnez les membres. Vous serez automatiquement
+                            membre du canal.</p>
+
+                        <div class="member-picker border rounded p-3" data-member-picker>
+                            <div class="member-picker-toolbar">
+                                <input class="form-control form-control-sm member-picker-search" id="member-search"
+                                    type="search" data-member-search placeholder="Rechercher un membre..."
+                                    aria-label="Rechercher un membre" autocomplete="off">
+                                <span class="member-picker-count" data-selected-count
+                                    aria-live="polite">0 selectionne(s)</span>
+                                <button type="button" class="member-picker-clear" data-clear-selection>Effacer</button>
+                            </div>
+
+                            <div class="member-picker-empty" data-search-empty hidden>
+                                Aucun membre ne correspond a la recherche.
+                            </div>
+
+                            <div class="member-picker-groups">
+                                {% for group_role, group_label, group_users in users_by_role %}
+                                {% if group_users %}
+                                <fieldset class="member-group" data-role-group="{{ group_role.value }}">
+                                    <legend class="member-group-header">
+                                        <label class="member-group-toggle">
+                                            <input type="checkbox" class="form-check-input" data-group-toggle
+                                                aria-label="Tout selectionner les {{ group_label|lower }}">
+                                            <span class="member-group-label">{{ group_label }}</span>
+                                            <span class="badge text-bg-light" data-group-count>{{ group_users|length }}</span>
+                                        </label>
+                                    </legend>
+                                    <div class="member-group-body">
+                                        {% for user in group_users %}
+                                        {% set name_parts = user.full_name.split()[:2] %}
+                                        {% set user_initials = (name_parts[0][0] if name_parts else '') ~ (name_parts[1][0] if name_parts|length > 1 else '') %}
+                                        <label class="member-option" for="member_{{ user.id }}">
+                                            <input class="form-check-input member-checkbox" type="checkbox" name="members" value="{{ user.id }}" id="member_{{ user.id }}"{% if user.id == current_user_id %} checked disabled{% endif %}{% if user.id in selected_member_ids %} checked{% endif %}>
+                                            <span class="avatar avatar-sm" aria-hidden="true">{{ user_initials|upper }}</span>
+                                            <span class="member-option-name">{{ user.full_name }}</span>
+                                            {% if user.id == current_user_id %}<span class="badge text-bg-light ms-auto">Vous</span>{% endif %}
+                                        </label>
+                                        {% endfor %}
+                                    </div>
+                                </fieldset>
+                                {% endif %}
+                                {% endfor %}
+                            </div>
+
+                            <div class="member-picker-summary" data-selected-summary
+                                aria-label="Membres selectionnes"></div>
                         </div>
                     </div>
                     <button class="btn btn-primary" type="submit">

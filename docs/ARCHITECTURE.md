@@ -34,7 +34,7 @@ publique pour l'instant.
 | Messages en canal (chat + pagination) | `messages_routes.py` | `SendMessage`, `ListChannelMessages`, `ListChannelMembers` | `message_repository.py`, `channel_repository.py` |
 | Notifications (liste / lecture) | `notifications_routes.py` | `ListNotifications`, `MarkNotificationRead` | `notification_repository.py` |
 | Push web (abonnement PWA) | `push_routes.py` | `SubscribePushNotifications`, `UnsubscribePushNotifications` | `push_subscription_repository.py` |
-| **Administration** (rôles, activ./désactiv., suppression) | `admin_routes.py` | `ListUsersForAdmin`, `UpdateUserRole`, `ToggleUserActive`, `ListAnnouncementsForAdmin`, `DeleteAnnouncement`, `ListChannelsForAdmin`, `DeleteChannel` | `user_repository.py`, `announcement_repository.py`, `channel_repository.py` |
+| **Administration** (création de comptes, rôles, activ./désactiv., suppression) | `admin_routes.py` + lien vers `auth_routes.py` (`/auth/users/new`) | `ListUsersForAdmin`, `UpdateUserRole`, `ToggleUserActive`, `ListAnnouncementsForAdmin`, `DeleteAnnouncement`, `ListChannelsForAdmin`, `DeleteChannel` + `RegisterUser` | `user_repository.py`, `announcement_repository.py`, `channel_repository.py` |
 | Requêtes utilitaires (lecture) | routes diverses | `ListAllUsers`, `FindUsersByIds` | `user_repository.py` |
 
 Le temps réel n'apparaît pas dans un blueprint : `SocketIONotificationService`
@@ -121,10 +121,20 @@ une violation d'architecture.
     passation Flask-Login `get_auth_model(id)`)
   - `current_actor()` → `User` domaine via `users.find_by_id(...)`
 - **`routes/presentation.py`** : helpers de mise en forme (résolution des noms
-  d'expéditeurs, construction de la vue des messages, parse des membres).
+  d'expéditeurs, construction de la vue des messages, parse des membres,
+  `group_users_by_role` pour le sélecteur de membres).
 - **`socket_events.py`** : enregistre les handlers SocketIO (rejoindre les
   rooms `user_<id>` et `channel_<id>`).
 - **`templates/`** : Jinja2. **`static/`** : CSS/JS custom, manifest PWA.
+  La section Administration partage une sous-navigation (`admin/_nav.html`)
+  entre ses trois pages : Membres, Annonces et Canaux.
+
+Le **sélecteur de membres** (création de canal et « ajouter des membres ») est
+un composant réutilisable : recherche temps réel, regroupement par rôle
+(`group_users_by_role` dans `presentation.py`), sélection globale par groupe,
+compteur de sélection et chips supprimables. Le comportement vit dans
+`static/js/app.js` (`initMemberPicker`) via des `data-*` hooks — aucune fonction
+JS inline. Sans JS, la liste complète des cases à cocher reste fonctionnelle.
 
 ---
 

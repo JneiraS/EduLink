@@ -71,6 +71,15 @@ def test_admin_members_page_lists_users(client, app):
     assert b"Paul Parent" in response.data
 
 
+def test_admin_members_page_links_to_create_user(client, app):
+    admin_id = create_user(app, role="ADMIN", email="admin11@admin.local")
+    login(client, admin_id)
+    response = client.get("/admin/members")
+    assert response.status_code == 200
+    assert b"/auth/users/new" in response.data
+    assert b"Creer un utilisateur" in response.data
+
+
 def test_admin_role_change_success(client, app):
     admin_id = create_user(app, role="ADMIN", email="admin2@admin.local")
     parent_id = create_user(app, role="PARENT", email="parent2@admin.local")
@@ -238,3 +247,14 @@ def test_admin_nav_link_hidden_for_parent(client, app):
     parent_page = client.get("/").data
     assert b"Administration" not in parent_page
     assert b"User PARENT" in parent_page
+
+
+def test_admin_pages_link_to_all_admin_sections(client, app):
+    admin_id = create_user(app, role="ADMIN", email="admin12@admin.local")
+    login(client, admin_id)
+    for page_url in ["/admin/members", "/admin/announcements", "/admin/channels"]:
+        response = client.get(page_url)
+        assert response.status_code == 200
+        assert b"/admin/members" in response.data
+        assert b"/admin/announcements" in response.data
+        assert b"/admin/channels" in response.data
