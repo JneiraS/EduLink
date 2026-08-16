@@ -1,11 +1,7 @@
 from app.extensions import db
 from app.infrastructure.database.models import ChannelModel, UserModel, channel_members
 
-
-def _login(client, user_id: int) -> None:
-    with client.session_transaction() as sess:
-        sess["_user_id"] = str(user_id)
-        sess["_fresh"] = True
+from tests.helpers import login
 
 
 def test_parent_cannot_see_add_members_panel(app):
@@ -41,7 +37,7 @@ def test_parent_cannot_see_add_members_panel(app):
         channel_id = channel.id
 
     client = app.test_client()
-    _login(client, parent_id)
+    login(client, parent_id)
 
     response = client.get(f"/messages/channels/{channel_id}")
     assert response.status_code == 200

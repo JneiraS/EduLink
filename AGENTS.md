@@ -16,6 +16,11 @@ python run.py
 # Tests
 pytest
 
+# Migrations (Alembic)
+alembic upgrade head        # explicit fallback; dev server auto-migrates on boot
+alembic revision --autogenerate -m "describe change"
+alembic downgrade -1
+
 # HTTPS tunnel for mobile web-push testing
 bash scripts/start_tunnel.sh [PORT]   # tries cloudflared -> ngrok -> npx localtunnel
 ```
@@ -48,6 +53,8 @@ Routes must not import `app.infrastructure` models or `app.extensions.db` direct
 
 ## Testing notes
 
-- `tests/conftest.py` provides an `app` fixture via `create_app(testing=True)` (in-memory SQLite, CSRF off). Create users/channels inside `with app.app_context():` and flush to get IDs before using `app.test_client()`.
-- DB schema is created with `db.create_all()` on app creation — there are **no migrations** (no Alembic). Schema changes require deleting the dev `*.db`/`instance/` file.
+- `tests/conftest.py` provides an `app` fixture via `create_app(testing=True)` (in-memory SQLite, CSRF off). Create users/channels inside `with app.app_context():` and flush to get IDs before using `app.test_client()`. Shared helpers live in `tests/helpers.py` (`login`, `create_user`, `create_channel`, `add_message`, `add_announcement`, `add_notification`).
+- Schema is managed by **Alembic** (`migrations/`). In dev, `create_app()` runs `alembic upgrade head` automatically on boot; `scripts/migrate.sh` is the explicit fallback. In testing, `create_app(testing=True)` still uses `db.create_all()` on the in-memory DB (Alembic can't share a `:memory:` connection), so schema changes go through a new Alembic migration for dev, not `create_all`.
+- `TestingConfig` sets `VAPID_PUBLIC_KEY`/`VAPID_PRIVATE_KEY` to `""` so tests are hermetic and never read `.env` keys or trigger web push.
+- CSRF is off in `TestingConfig`; CSRF tests re-enable it per-test via `app.config["WTF_CSRF_ENABLED"] = True`. Note flashed messages and template values are HTML-escaped (apostrophes render as `&#39;`), so assert on substrings without apostrophes.
 - Real-time features (SocketIO) and web push are only exercised indirectly; the notification/message use-case tests rely on the realtime service tolerating no connected client.

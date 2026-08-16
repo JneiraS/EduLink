@@ -4,6 +4,8 @@ import secrets
 from flask import Flask
 from flask import flash, redirect, url_for
 from dotenv import load_dotenv
+from alembic import command
+from alembic.config import Config
 
 # Load .env as early as possible so config module sees environment variables.
 load_dotenv()
@@ -85,7 +87,13 @@ def create_app(testing: bool = False):
     app.register_blueprint(push_bp)
 
     with app.app_context():
-        db.create_all()
+        if app.config["TESTING"]:
+            # In-memory SQLite: create_all on the app's own connection (Alembic
+            # would open a separate connection to :memory:, yielding a fresh DB).
+            db.create_all()
+        else:
+            # Dev/prod: schema is managed by Alembic migrations.
+            _run_migrations()
         _seed_initial_admin()
 
     users_repo = SQLAlchemyUserRepository()
@@ -166,6 +174,13 @@ def create_app(testing: bool = False):
         return redirect(url_for("dashboard.home"))
 
     return app
+
+
+def _run_migrations() -> None:
+    alembic_ini = os.path.abspath(
+        os.path.join(os.path.dirname(__file__), "..", "alembic.ini")
+    )
+    command.upgrade(Config(alembic_ini), "head")
 
 
 @login_manager.user_loader

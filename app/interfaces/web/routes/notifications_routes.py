@@ -16,6 +16,7 @@ def list_notifications():
             "id": n.id,
             "content": n.content,
             "is_read": n.is_read,
+            "channel_id": n.channel_id,
             "created_at": str(n.created_at),
         }
         for n in notifications

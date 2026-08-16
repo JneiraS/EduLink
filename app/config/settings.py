@@ -20,3 +20,6 @@ class TestingConfig(BaseConfig):
     TESTING = True
     WTF_CSRF_ENABLED = False
     SQLALCHEMY_DATABASE_URI = "sqlite:///:memory:"
+    # Hermetic tests: never read VAPID keys from .env, so no web push in tests.
+    VAPID_PUBLIC_KEY = ""
+    VAPID_PRIVATE_KEY = ""
