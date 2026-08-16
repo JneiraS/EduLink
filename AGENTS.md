@@ -43,6 +43,8 @@ Routes must not import `app.infrastructure` models or `app.extensions.db` direct
 - Flask-WTF CSRF is on for dev, off in tests (`TestingConfig.WTF_CSRF_ENABLED = False`). In tests that need a logged-in session, set `sess["_user_id"]` directly (see `tests/interfaces/test_messages_channel_permissions.py:_login`).
 - Admin seeding: `create_app()` seeds `admin@edulink.local` (or `EDULINK_ADMIN_EMAIL`) with `EDULINK_ADMIN_PASSWORD`; if unset, a random one is printed to console. `.env` is gitignored but already contains a dev admin password + VAPID keys — do not commit or log secrets.
 - Uploads: `UPLOAD_FOLDER` (default `uploads/`), only `.pdf`, max 5 MB (`MAX_CONTENT_LENGTH`, `ALLOWED_EXTENSIONS` in settings).
+- Notifications: `channel_id` FK column (nullable) links message-notifications to a channel; announcement-notifications leave it `NULL`. UI links to the channel via `n.channel_id` — do **not** parse the human-readable `content` string. Web push delivery runs in a `ThreadPoolExecutor` (background) inside `SocketIONotificationService`; DB writes and socket emits stay in the request.
+- Pagination: announcements use page-based `paginate(page, per_page)` (default 10, `?page=`); channel messages use a chat pattern — latest `limit` (default 50) plus a "load older" link via `?before=<message_id>` (`list_by_channel(channel_id, limit, before_id)` returns `(messages, has_more)`).
 
 ## Testing notes
 

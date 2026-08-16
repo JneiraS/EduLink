@@ -5,6 +5,13 @@
     <div class="col-lg-8">
         <div class="card shadow-sm mb-3">
             <div class="card-body" id="messages-container">
+                {% if has_older %}
+                <div class="mb-3">
+                    <a class="btn btn-outline-secondary btn-sm"
+                        href="{{ url_for('messages.channel_detail', channel_id=channel_id, before=oldest_message_id) }}">Charger
+                        les messages plus anciens</a>
+                </div>
+                {% endif %}
                 {% if messages %}
                 {% for m in messages %}
                 <div class="mb-2 pb-2 border-bottom">

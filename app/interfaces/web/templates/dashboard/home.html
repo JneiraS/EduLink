@@ -33,17 +33,14 @@
         <div class="card shadow-sm">
             <div class="card-body">
                 <h2 class="h6">Activite recente</h2>
-                {% set notification_channel_links = notification_channel_links|default({}) %}
-                {% set notification_channel_links_by_content = notification_channel_links_by_content|default({}) %}
                 {% set ns = namespace(has_non_announcement_notifications=false) %}
                 {% for n in notifications %}
-                {% if 'Nouvelle annonce' not in (n.content or '') %}
+                {% if n.channel_id is not none %}
                 {% set ns.has_non_announcement_notifications = true %}
                 {% endif %}
                 {% endfor %}
                 {% if latest_announcements or ns.has_non_announcement_notifications %}
-                <ul class="list-group list-group-flush" id="notifications-list"
-                    data-channel-links='{{ channel_links_by_name|default({})|tojson }}'>
+                <ul class="list-group list-group-flush" id="notifications-list">
                     {% for item in latest_announcements %}
                     <li class="list-group-item px-0">
                         <div class="d-flex justify-content-between align-items-start gap-2">
@@ -58,15 +55,13 @@
                     </li>
                     {% endfor %}
                     {% for n in notifications[:5] %}
-                    {% if 'Nouvelle annonce' not in (n.content or '') %}
+                    {% if n.channel_id is not none %}
                     <li class="list-group-item px-0 {% if not n.is_read %}fw-semibold{% endif %}">
-                        {% set channel_id = notification_channel_links.get(n.id) or
-                        notification_channel_links_by_content.get(n.content) %}
                         <div class="d-flex justify-content-between align-items-start gap-2">
                             <div>
                                 <span class="badge text-bg-light border me-2">Notification</span>
-                                {% if channel_id %}
-                                <a href="{{ url_for('messages.channel_detail', channel_id=channel_id) }}">{{ n.content
+                                {% if n.channel_id %}
+                                <a href="{{ url_for('messages.channel_detail', channel_id=n.channel_id) }}">{{ n.content
                                     }}</a>
                                 {% else %}
                                 {{ n.content }}

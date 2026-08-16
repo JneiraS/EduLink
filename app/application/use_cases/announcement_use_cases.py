@@ -42,6 +42,7 @@ class CreateAnnouncement:
                 user_id=user.id or 0,
                 content=f"Nouvelle annonce: {saved.title}",
                 is_read=False,
+                channel_id=None,
             )
             created_notif = self.notifications.save(notification)
             self.realtime.notify_user(
@@ -60,5 +61,5 @@ class CreateAnnouncement:
 class ListAnnouncements:
     announcements: AnnouncementRepositoryPort
 
-    def execute(self) -> list[Announcement]:
-        return self.announcements.list_all()
+    def execute(self, page: int = 1, per_page: int = 10):
+        return self.announcements.paginate(page, per_page)

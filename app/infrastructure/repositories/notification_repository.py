@@ -11,6 +11,7 @@ class SQLAlchemyNotificationRepository(NotificationRepositoryPort):
             user_id=notification.user_id,
             content=notification.content,
             is_read=notification.is_read,
+            channel_id=notification.channel_id,
         )
         db.session.add(model)
         db.session.commit()
@@ -39,5 +40,6 @@ class SQLAlchemyNotificationRepository(NotificationRepositoryPort):
             user_id=model.user_id,
             content=model.content,
             is_read=model.is_read,
+            channel_id=model.channel_id,
             created_at=model.created_at,
         )

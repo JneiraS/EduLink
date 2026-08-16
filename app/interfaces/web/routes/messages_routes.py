@@ -77,8 +77,9 @@ def channel_detail(channel_id: int):
             return redirect(url_for(MESSAGES_CHANNELS))
 
     try:
-        channel_messages = get_use_cases().list_channel_messages.execute(
-            actor, channel_id=channel_id
+        before_id = request.args.get("before", type=int)
+        channel_messages, has_older = get_use_cases().list_channel_messages.execute(
+            actor, channel_id=channel_id, before_id=before_id
         )
         user_channels = get_use_cases().list_user_channels.execute(actor)
         channel_members = get_use_cases().list_channel_members.execute(
@@ -114,4 +115,6 @@ def channel_detail(channel_id: int):
         members=channel_members,
         available_users=available_users,
         can_manage_members=can_manage_members,
+        has_older=has_older,
+        oldest_message_id=channel_messages[0].id if channel_messages else None,
     )

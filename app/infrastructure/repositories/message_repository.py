@@ -15,13 +15,18 @@ class SQLAlchemyMessageRepository(MessageRepositoryPort):
         db.session.commit()
         return self._to_entity(model)
 
-    def list_by_channel(self, channel_id: int) -> list[Message]:
-        rows = (
-            MessageModel.query.filter_by(channel_id=channel_id)
-            .order_by(MessageModel.created_at.asc())
-            .all()
-        )
-        return [self._to_entity(row) for row in rows]
+    def list_by_channel(
+        self, channel_id: int, limit: int, before_id: int | None = None
+    ) -> tuple[list[Message], bool]:
+        query = MessageModel.query.filter_by(channel_id=channel_id)
+        if before_id is not None:
+            query = query.filter(MessageModel.id < before_id)
+        rows = query.order_by(MessageModel.id.desc()).limit(limit + 1).all()
+        has_more = len(rows) > limit
+        rows = rows[:limit]
+        # Newest first for stable page slices; re-sort ascending for display.
+        rows.reverse()
+        return [self._to_entity(row) for row in rows], has_more
 
     def _to_entity(self, model: MessageModel) -> Message:
         return Message(

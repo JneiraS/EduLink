@@ -22,6 +22,16 @@ class SQLAlchemyAnnouncementRepository(AnnouncementRepositoryPort):
         ).all()
         return [self._to_entity(row) for row in rows]
 
+    def paginate(self, page: int, per_page: int) -> tuple[list[Announcement], int]:
+        total = AnnouncementModel.query.count()
+        rows = (
+            AnnouncementModel.query.order_by(AnnouncementModel.created_at.desc())
+            .offset((page - 1) * per_page)
+            .limit(per_page)
+            .all()
+        )
+        return [self._to_entity(row) for row in rows], total
+
     def _to_entity(self, model: AnnouncementModel) -> Announcement:
         return Announcement(
             id=model.id,

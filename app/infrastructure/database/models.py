@@ -78,6 +78,9 @@ class NotificationModel(db.Model):
     )
     content = db.Column(db.String(255), nullable=False)
     is_read = db.Column(db.Boolean, default=False, nullable=False)
+    channel_id = db.Column(
+        db.Integer, db.ForeignKey("channels.id"), nullable=True, index=True
+    )
     created_at = db.Column(db.DateTime, default=utc_now, nullable=False)
 
 

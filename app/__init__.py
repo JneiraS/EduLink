@@ -98,6 +98,7 @@ def create_app(testing: bool = False):
     realtime = SocketIONotificationService(
         socketio=socketio,
         push_subscriptions=push_subscriptions_repo,
+        app=app,
         vapid_private_key=app.config.get("VAPID_PRIVATE_KEY", ""),
         vapid_public_key=app.config.get("VAPID_PUBLIC_KEY", ""),
         vapid_subject=app.config.get("VAPID_SUBJECT", "mailto:admin@edulink.local"),

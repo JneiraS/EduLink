@@ -39,6 +39,10 @@ class AnnouncementRepositoryPort(ABC):
     def list_all(self) -> list[Announcement]:
         raise NotImplementedError
 
+    @abstractmethod
+    def paginate(self, page: int, per_page: int) -> tuple[list[Announcement], int]:
+        raise NotImplementedError
+
 
 class MessageRepositoryPort(ABC):
     @abstractmethod
@@ -46,7 +50,9 @@ class MessageRepositoryPort(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def list_by_channel(self, channel_id: int) -> list[Message]:
+    def list_by_channel(
+        self, channel_id: int, limit: int, before_id: int | None = None
+    ) -> tuple[list[Message], bool]:
         raise NotImplementedError
 
 

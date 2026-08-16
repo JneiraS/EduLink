@@ -38,8 +38,15 @@ def _allowed_file(filename: str) -> bool:
 @announcements_bp.route("/", methods=["GET"])
 @login_required
 def list_announcements():
-    announcements = get_use_cases().list_announcements.execute()
-    return render_template("announcements/list.html", announcements=announcements)
+    page = max(request.args.get("page", 1, type=int), 1)
+    announcements, total = get_use_cases().list_announcements.execute(page=page)
+    total_pages = max((total + 9) // 10, 1)
+    return render_template(
+        "announcements/list.html",
+        announcements=announcements,
+        page=page,
+        total_pages=total_pages,
+    )
 
 
 @announcements_bp.route("/files/<path:filename>", methods=["GET"])

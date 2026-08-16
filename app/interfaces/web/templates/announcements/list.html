@@ -29,6 +29,22 @@
         {% else %}
         <p class="text-muted mb-0">Aucune annonce disponible.</p>
         {% endif %}
+
+        {% if total_pages > 1 %}
+        <nav class="mt-3" aria-label="Pagination des annonces">
+            <ul class="pagination pagination-sm mb-0">
+                <li class="page-item {% if page <= 1 %}disabled{% endif %}">
+                    <a class="page-link" href="{{ url_for('announcements.list_announcements', page=page-1) }}">Precedent</a>
+                </li>
+                <li class="page-item disabled">
+                    <span class="page-link">Page {{ page }} / {{ total_pages }}</span>
+                </li>
+                <li class="page-item {% if page >= total_pages %}disabled{% endif %}">
+                    <a class="page-link" href="{{ url_for('announcements.list_announcements', page=page+1) }}">Suivant</a>
+                </li>
+            </ul>
+        </nav>
+        {% endif %}
     </div>
 </div>
 {% endblock %}

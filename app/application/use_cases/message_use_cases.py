@@ -51,6 +51,7 @@ class SendMessage:
                     user_id=member_id,
                     content=f"Nouveau message dans le canal {channel.name}",
                     is_read=False,
+                    channel_id=channel_id,
                 )
             )
             self.realtime.notify_user(
@@ -58,6 +59,7 @@ class SendMessage:
                 {
                     "id": created_notification.id,
                     "content": created_notification.content,
+                    "channel_id": channel_id,
                     "created_at": str(created_notification.created_at),
                 },
             )
@@ -81,12 +83,18 @@ class ListChannelMessages:
     messages: MessageRepositoryPort
     channels: ChannelRepositoryPort
 
-    def execute(self, actor: User, channel_id: int) -> list[Message]:
+    def execute(
+        self,
+        actor: User,
+        channel_id: int,
+        limit: int = 50,
+        before_id: int | None = None,
+    ):
         if not self.channels.find_by_id(channel_id):
             raise NotFoundError(CHANNEL_NOT_FOUND)
         if not self.channels.is_member(channel_id, actor.id or 0):
             raise AuthorizationError(NOT_A_MEMBER)
-        return self.messages.list_by_channel(channel_id)
+        return self.messages.list_by_channel(channel_id, limit, before_id)
 
 
 @dataclass(slots=True)
