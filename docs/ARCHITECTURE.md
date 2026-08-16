@@ -148,9 +148,12 @@ Le même regroupement par rôle sert de **liste de contacts** pour les
 conversations 1:1 (`messages/new_conversation.html`, radios de sélection
 unique). Le compositeur de message embarque un sélecteur de **modèles**
 (`initTemplateInsert` : boutons `data-template-content` qui insèrent le texte
-dans le textarea) et la page annonce un sélecteur d'**audience**
-(`initAudiencePicker` : radios qui affichent/masquent la liste des canaux
-ciblés).
+dans le textarea, affiché dès qu'il existe au moins un modèle) et la page
+annonce un sélecteur d'**audience** (`initAudiencePicker` : radios qui
+affichent/masquent la liste des canaux ciblés). Le point d'entrée
+« Gerer mes modeles » est lui **toujours visible** (page canal + page
+Messagerie), pour éviter le cul-de-sac où l'on ne peut pas créer un premier
+modèle sans en posséder déjà un.
 
 ---
 

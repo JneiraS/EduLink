@@ -338,3 +338,20 @@ def test_template_picker_renders_in_channel(client, app):
     assert response.status_code == 200
     assert b"data-template-picker" in response.data
     assert b"data-template-content" in response.data
+
+
+def test_channel_detail_shows_template_entry_without_templates(client, app):
+    admin_id = create_user(app, role="ADMIN", email="mt7@t.local")
+    channel_id = create_channel(app, "Canal", admin_id, [admin_id])
+    login(client, admin_id)
+    response = client.get(f"/messages/channels/{channel_id}")
+    assert response.status_code == 200
+    assert b"Gerer mes modeles" in response.data
+
+
+def test_channels_page_links_to_message_templates(client, app):
+    parent_id = create_user(app, role="PARENT", email="mt8@t.local")
+    login(client, parent_id)
+    response = client.get("/messages/channels")
+    assert response.status_code == 200
+    assert b"Mes modeles de messages" in response.data

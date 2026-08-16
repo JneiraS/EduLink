@@ -234,6 +234,11 @@ câblage ne fait que de l'assemblage.
   à la ligne dans le template) produit des espaces/retours dans le HTML. Pour
   asserter sur un attribut exact (ex. `value="3" id="member_3" checked`),
   écrire l'input sur une seule ligne dans le template.
+- **Point d'entrée toujours exposé** : une liste vide ne doit pas masquer
+  l'accès à la fonctionnalité (cul-de-sac de découvrabilité). Ex. les modèles
+  de messages : le lien « Gerer mes modeles » est affiché en permanence sur la
+  page canal et sur la page Messagerie, le picker de sélection seul est
+  conditionnel à l'existence de modèles.
 - **Plusieurs logins sur le même `app.test_client()`** : la session est
   partagée entre clients d'un même app. Un seul login par client, ou logout
   explicite entre deux. Attention : pytest-flask pousse un
