@@ -1,4 +1,5 @@
-const socket = io();
+const isAuthenticated = document.body.dataset.authenticated === "1";
+const socket = isAuthenticated ? io() : null;
 
 function initThemeFromStorage() {
     try {
@@ -13,42 +14,63 @@ function initThemeFromStorage() {
 
 initThemeFromStorage();
 
-socket.on("connect", () => {
-    console.log("Socket connected");
-});
+if (socket) {
+    socket.on("connect", () => {
+        console.log("Socket connected");
+    });
 
-socket.on("notification", (payload) => {
-    const list = document.getElementById("notifications-list");
-    if (!list) return;
+    socket.on("notification", (payload) => {
+        const list = document.getElementById("notifications-list");
+        if (!list) return;
 
-    const content = payload.content || "";
-    const channelId = payload.channel_id;
+        const content = payload.content || "";
+        const channelId = payload.channel_id;
 
-    const item = document.createElement("li");
-    item.className = "list-group-item fw-semibold";
+        const item = document.createElement("li");
+        item.className = "timeline-item";
 
-    const badge = document.createElement("span");
-    badge.className = "badge text-bg-light border me-2";
-    badge.textContent = "Notification";
-    item.appendChild(badge);
+        const dot = document.createElement("span");
+        dot.className = "timeline-dot timeline-dot--message";
+        dot.setAttribute("aria-hidden", "true");
+        dot.innerHTML = '<i class="bi bi-chat-dots"></i>';
 
-    if (channelId) {
-        const link = document.createElement("a");
-        link.href = `/messages/channels/${channelId}`;
-        link.textContent = content;
-        item.appendChild(link);
-    } else {
-        item.appendChild(document.createTextNode(content));
-    }
+        const body = document.createElement("div");
+        body.className = "timeline-body";
+        const row = document.createElement("div");
+        row.className = "d-flex justify-content-between align-items-baseline gap-2";
 
-    list.prepend(item);
-});
+        const text = document.createElement("div");
+        if (channelId) {
+            const link = document.createElement("a");
+            link.href = `/messages/channels/${channelId}`;
+            link.textContent = content;
+            text.appendChild(link);
+        } else {
+            text.appendChild(document.createTextNode(content));
+        }
+        row.appendChild(text);
 
-socket.on("channel_message", () => {
-    if (window.location.pathname.includes("/messages/channels/")) {
-        window.location.reload();
-    }
-});
+        const time = document.createElement("span");
+        time.className = "timeline-time";
+        time.textContent = new Date().toLocaleTimeString("fr-FR", {
+            hour: "2-digit",
+            minute: "2-digit",
+        });
+        row.appendChild(time);
+
+        body.appendChild(row);
+        item.appendChild(dot);
+        item.appendChild(body);
+
+        list.prepend(item);
+    });
+
+    socket.on("channel_message", () => {
+        if (window.location.pathname.includes("/messages/channels/")) {
+            window.location.reload();
+        }
+    });
+}
 
 function urlBase64ToUint8Array(base64String) {
     const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
@@ -82,7 +104,7 @@ function initThemeToggle() {
         themeButton.innerHTML = `<i class="bi ${iconClass}" aria-hidden="true"></i>`;
 
         if (themeColorMeta) {
-            themeColorMeta.setAttribute("content", isDark ? "#282a36" : "#f4f7fc");
+            themeColorMeta.setAttribute("content", isDark ? "#151724" : "#f6f4ee");
         }
     };
 
@@ -101,12 +123,115 @@ function initThemeToggle() {
     });
 }
 
-async function initPushNotifications() {
-    const isAuthenticated = document.body.dataset.authenticated === "1";
-    if (!isAuthenticated) {
+function initCharCounters() {
+    document.querySelectorAll("[data-maxlength]").forEach((input) => {
+        const max = parseInt(input.dataset.maxlength, 10);
+        const counter = document.querySelector(`[data-counter-for="${input.id}"]`);
+        if (!counter) {
+            return;
+        }
+
+        const update = () => {
+            const length = input.value.length;
+            counter.textContent = `${length} / ${max}`;
+            counter.classList.toggle("is-over", length > max);
+        };
+
+        input.addEventListener("input", update);
+        update();
+    });
+}
+
+function initAutoGrow() {
+    document.querySelectorAll("[data-auto-grow]").forEach((el) => {
+        const resize = () => {
+            el.style.height = "auto";
+            el.style.height = `${el.scrollHeight}px`;
+        };
+        el.addEventListener("input", resize);
+        resize();
+    });
+}
+
+function initChatScroll() {
+    const container = document.getElementById("messages-container");
+    if (!container) {
         return;
     }
 
+    const hasBefore = new URLSearchParams(window.location.search).has("before");
+    container.scrollTop = hasBefore ? 0 : container.scrollHeight;
+}
+
+function initFileZone() {
+    const zone = document.querySelector("[data-file-label]");
+    if (!zone) {
+        return;
+    }
+
+    const input = document.getElementById(zone.getAttribute("for"));
+    if (!input) {
+        return;
+    }
+
+    const updateLabel = () => {
+        const name = input.files && input.files[0] ? input.files[0].name : null;
+        const strong = zone.querySelector("strong");
+        const hint = zone.querySelector(".text-muted");
+        if (name) {
+            if (strong) {
+                strong.textContent = name;
+            }
+            if (hint) {
+                hint.textContent = "Pret a etre publie.";
+            }
+        } else if (strong && hint) {
+            strong.textContent = "Deposer un PDF";
+            hint.textContent = "Maximum 5 Mo, format PDF.";
+        }
+    };
+
+    input.addEventListener("change", updateLabel);
+
+    ["dragenter", "dragover"].forEach((eventName) => {
+        zone.addEventListener(eventName, (event) => {
+            event.preventDefault();
+            zone.classList.add("is-dragover");
+        });
+    });
+
+    ["dragleave", "drop"].forEach((eventName) => {
+        zone.addEventListener(eventName, (event) => {
+            event.preventDefault();
+            zone.classList.remove("is-dragover");
+        });
+    });
+
+    zone.addEventListener("drop", (event) => {
+        if (event.dataTransfer && event.dataTransfer.files.length) {
+            input.files = event.dataTransfer.files;
+            updateLabel();
+        }
+    });
+}
+
+initThemeToggle();
+
+initCharCounters();
+
+initAutoGrow();
+
+initChatScroll();
+
+initFileZone();
+
+if (isAuthenticated) {
+    initPushNotifications().catch((error) => {
+        console.error("Push init failed", error);
+    });
+}
+
+async function initPushNotifications() {
     if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
         return;
     }
@@ -172,9 +297,3 @@ async function initPushNotifications() {
         showStatus("Push mobile active", "btn-success", "bi-bell-fill", true);
     });
 }
-
-initThemeToggle();
-
-initPushNotifications().catch((error) => {
-    console.error("Push init failed", error);
-});
