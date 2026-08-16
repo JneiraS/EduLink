@@ -1,20 +1,21 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="row">
+<div class="row justify-content-center">
     <div class="col-lg-7">
         <div class="card shadow-sm">
             <div class="card-body">
-                <h2 class="h5 mb-3">Creation de compte utilisateur</h2>
+                <span class="kicker">Administration</span>
+                <h1 class="page-title mb-4">Creation de compte utilisateur</h1>
                 <form method="post">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <div class="mb-3">
                         <label class="form-label" for="full_name">Nom complet</label>
-                        <input class="form-control" id="full_name" name="full_name" required>
+                        <input class="form-control" id="full_name" name="full_name" required maxlength="120">
                     </div>
                     <div class="mb-3">
                         <label class="form-label" for="email">Email</label>
-                        <input class="form-control" id="email" type="email" name="email" required>
+                        <input class="form-control" id="email" type="email" name="email" required maxlength="254">
                     </div>
                     <div class="mb-3">
                         <label class="form-label" for="role">Role</label>
@@ -24,11 +25,15 @@
                             {% endfor %}
                         </select>
                     </div>
-                    <div class="mb-3">
+                    <div class="mb-4">
                         <label class="form-label" for="password">Mot de passe</label>
-                        <input class="form-control" id="password" type="password" name="password" required>
+                        <input class="form-control" id="password" type="password" name="password" required
+                            minlength="8" maxlength="128" autocomplete="new-password">
+                        <small class="form-text">8 a 128 caracteres.</small>
                     </div>
-                    <button class="btn btn-primary" type="submit">Creer le compte</button>
+                    <button class="btn btn-primary" type="submit">
+                        <i class="bi bi-person-plus me-2" aria-hidden="true"></i>Creer le compte
+                    </button>
                 </form>
             </div>
         </div>

@@ -1,43 +1,78 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="row g-3">
+<div class="row g-4 reveal-group">
     <div class="col-lg-8">
-        <div class="card shadow-sm mb-3">
-            <div class="card-body" id="messages-container">
-                {% if has_older %}
-                <div class="mb-3">
-                    <a class="btn btn-outline-secondary btn-sm"
-                        href="{{ url_for('messages.channel_detail', channel_id=channel_id, before=oldest_message_id) }}">Charger
-                        les messages plus anciens</a>
-                </div>
-                {% endif %}
-                {% if messages %}
-                {% for m in messages %}
-                <div class="mb-2 pb-2 border-bottom">
-                    <strong>{{ m.sender_name }}</strong>
-                    <small class="text-muted fw-semibold">{{ m.created_at.strftime('%d/%m/%Y %H:%M') if m.created_at
-                        else ''
-                        }}</small>
-                    <div>{{ m.content }}</div>
-                </div>
-                {% endfor %}
-                {% else %}
-                <p class="text-muted mb-0">Aucun message.</p>
-                {% endif %}
-            </div>
-        </div>
-
-        <div class="card shadow-sm">
+        <div class="card shadow-sm chat-window">
             <div class="card-body">
-                <form method="post">
+                <div class="chat-header">
+                    <div>
+                        <h1 class="h5 mb-0">{{ channel_name or ('Canal #' ~ channel_id) }}</h1>
+                        <small class="text-muted">{{ members|length }} membre{{ 's' if members|length != 1 else ''
+                            }}</small>
+                    </div>
+                    {% if members %}
+                    <div class="avatar-stack" aria-hidden="true">
+                        {% for member in members[:5] %}
+                        {% set name_parts = member.full_name.split()[:2] %}
+                        {% set m_initials = (name_parts[0][0] if name_parts else '') ~ (name_parts[1][0] if name_parts|length > 1 else '') %}
+                        <span class="avatar avatar-sm" title="{{ member.full_name }}">{{ m_initials|upper }}</span>
+                        {% endfor %}
+                        {% if members|length > 5 %}
+                        <span class="avatar avatar-sm">+{{ members|length - 5 }}</span>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="chat-messages" id="messages-container" aria-live="polite">
+                    {% if has_older %}
+                    <div class="load-older text-center">
+                        <a class="btn btn-outline-secondary btn-sm"
+                            href="{{ url_for('messages.channel_detail', channel_id=channel_id, before=oldest_message_id) }}">
+                            <i class="bi bi-arrow-counterclockwise me-2" aria-hidden="true"></i>Charger les messages
+                            plus anciens
+                        </a>
+                    </div>
+                    {% endif %}
+
+                    {% if messages %}
+                    {% for m in messages %}
+                    {% set is_mine = m.sender_id is defined and m.sender_id == current_user.id %}
+                    <div class="chat-message {% if is_mine %}chat-message--mine{% endif %}">
+                        {% if not is_mine %}
+                        {% set name_parts = m.sender_name.split()[:2] %}
+                        {% set s_initials = (name_parts[0][0] if name_parts else '') ~ (name_parts[1][0] if name_parts|length > 1 else '') %}
+                        <span class="avatar avatar-sm" aria-hidden="true">{{ s_initials|upper }}</span>
+                        {% endif %}
+                        <div class="bubble">
+                            {% if not is_mine %}
+                            <div class="bubble-sender">{{ m.sender_name }}</div>
+                            {% endif %}
+                            <div class="bubble-text">{{ m.content }}</div>
+                            <span class="bubble-time">{{ m.created_at.strftime('%d/%m/%Y %H:%M') if m.created_at else
+                                '' }}</span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                    {% else %}
+                    <div class="empty-state">
+                        <span class="empty-icon" aria-hidden="true"><i class="bi bi-chat-dots"></i></span>
+                        <div class="empty-title">Aucun message</div>
+                        <div class="empty-hint">Lancez la conversation !</div>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <form method="post" class="composer">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <input type="hidden" name="action" value="send_message">
-                    <div class="mb-3">
-                        <label class="form-label" for="content">Votre message</label>
-                        <textarea class="form-control" id="content" name="content" rows="3" required></textarea>
-                    </div>
-                    <button class="btn btn-primary" type="submit">Envoyer</button>
+                    <label class="visually-hidden" for="content">Votre message</label>
+                    <textarea class="form-control" id="content" name="content" rows="1" maxlength="5000"
+                        data-maxlength="5000" data-auto-grow placeholder="Votre message..."></textarea>
+                    <button class="btn btn-primary send-btn" type="submit" aria-label="Envoyer">
+                        <i class="bi bi-send" aria-hidden="true"></i>
+                    </button>
                 </form>
             </div>
         </div>
@@ -46,41 +81,41 @@
     <div class="col-lg-4">
         <div class="card shadow-sm">
             <div class="card-body">
-                <h1 class="h5 mb-0">{{ channel_name or ('Canal #' ~ channel_id) }}</h1>
-                <div class="mt-2">
-                    <small class="text-muted">Membres:</small>
-                    {% if members %}
-                    <div class="mt-1 d-flex flex-column gap-2">
-                        {% for member in members %}
-                        <span class="badge text-bg-light border text-start">{{ member.full_name }} ({{
-                            member.role.value|capitalize
-                            }})</span>
-                        {% endfor %}
+                <h2 class="h6 mb-3"><i class="bi bi-people me-2" aria-hidden="true"></i>Membres</h2>
+                {% if members %}
+                <div class="d-flex flex-column gap-2">
+                    {% for member in members %}
+                    {% set name_parts = member.full_name.split()[:2] %}
+                    {% set m_initials = (name_parts[0][0] if name_parts else '') ~ (name_parts[1][0] if name_parts|length > 1 else '') %}
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="avatar avatar-sm" aria-hidden="true">{{ m_initials|upper }}</span>
+                        <span class="me-auto">{{ member.full_name }}</span>
+                        <span
+                            class="badge text-bg-light border badge-role badge-role--{{ member.role.value|lower }}">{{ member.role.value|capitalize }}</span>
                     </div>
-                    {% else %}
-                    <div class="text-muted">Aucun membre</div>
-                    {% endif %}
+                    {% endfor %}
                 </div>
+                {% else %}
+                <div class="text-muted">Aucun membre</div>
+                {% endif %}
             </div>
         </div>
 
         {% if can_manage_members and (current_user.role|string|upper in ['ADMIN', 'TEACHER']) %}
         <div class="card shadow-sm mt-3">
             <div class="card-body">
-                <h2 class="h6">Ajouter des membres</h2>
+                <h2 class="h6 mb-3">Ajouter des membres</h2>
                 {% if available_users %}
                 <form method="post">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <input type="hidden" name="action" value="add_members">
-                    <div class="border rounded p-2 mb-3" id="members">
+                    <div class="d-flex flex-column gap-1 mb-3" id="members">
                         {% for user in available_users %}
-                        <div class="form-check">
+                        <label class="member-option form-check form-check-inline mb-0" for="member_add_{{ user.id }}">
                             <input class="form-check-input" type="checkbox" name="members" value="{{ user.id }}"
                                 id="member_add_{{ user.id }}">
-                            <label class="form-check-label" for="member_add_{{ user.id }}">
-                                {{ user.full_name }} ({{ user.role.value|capitalize }})
-                            </label>
-                        </div>
+                            <span class="form-check-label">{{ user.full_name }} ({{ user.role.value|capitalize }})</span>
+                        </label>
                         {% endfor %}
                     </div>
                     <button class="btn btn-outline-primary" type="submit">Ajouter</button>

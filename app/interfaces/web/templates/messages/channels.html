@@ -1,52 +1,71 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="row g-3">
+<div class="row g-4 reveal-group">
     <div class="col-lg-5">
-        <div class="card shadow-sm">
+        <div class="card shadow-sm h-100">
             <div class="card-body">
-                <h2 class="h6">Creer un canal</h2>
+                <span class="kicker">Messagerie</span>
+                <h2 class="h5 mb-3">Creer un canal</h2>
                 <form method="post">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <div class="mb-3">
                         <label class="form-label" for="name">Nom du canal</label>
-                        <input class="form-control" id="name" name="name" required>
+                        <input class="form-control" id="name" name="name" required maxlength="120"
+                            placeholder="Ex. Classe de CM2">
                     </div>
                     <div class="mb-3">
-                        <label class="form-label" for="members">Membres</label>
+                        <label class="form-label">Membres</label>
                         <p class="form-text mb-2">Selectionne les membres du canal.</p>
-                        <div class="border rounded p-2" id="members">
+                        <div class="border rounded p-2 d-flex flex-column gap-1" id="members">
                             {% for user in users %}
-                            <div class="form-check">
+                            <label class="member-option form-check form-check-inline mb-0" for="member_{{ user.id }}">
                                 <input class="form-check-input" type="checkbox" name="members" value="{{ user.id }}"
                                     id="member_{{ user.id }}" {% if user.id==current_user_id %}checked disabled{% endif
                                     %}>
-                                <label class="form-check-label" for="member_{{ user.id }}">
-                                    {{ user.full_name }} ({{ user.role.value }}){% if user.id == current_user_id %} - vous{%
-                                    endif %}
-                                </label>
-                            </div>
+                                {% set name_parts = user.full_name.split()[:2] %}
+                                {% set user_initials = (name_parts[0][0] if name_parts else '') ~ (name_parts[1][0] if name_parts|length > 1 else '') %}
+                                <span class="avatar avatar-sm" aria-hidden="true">{{ user_initials|upper }}</span>
+                                <span class="form-check-label">
+                                    {{ user.full_name }} ({{ user.role.value }})
+                                    {% if user.id == current_user_id %}<span class="text-muted">- vous</span>{% endif
+                                    %}
+                                </span>
+                            </label>
                             {% endfor %}
                         </div>
                     </div>
-                    <button class="btn btn-primary" type="submit">Creer</button>
+                    <button class="btn btn-primary" type="submit">
+                        <i class="bi bi-plus-lg me-2" aria-hidden="true"></i>Creer
+                    </button>
                 </form>
             </div>
         </div>
     </div>
+
     <div class="col-lg-7">
-        <div class="card shadow-sm">
+        <div class="card shadow-sm h-100">
             <div class="card-body">
-                <h2 class="h6">Mes canaux</h2>
+                <h2 class="h5 mb-3">Mes canaux</h2>
                 {% if channels %}
                 <div class="list-group">
                     {% for channel in channels %}
-                    <a class="list-group-item list-group-item-action"
-                        href="{{ url_for('messages.channel_detail', channel_id=channel.id) }}">{{ channel.name }}</a>
+                    <a class="list-group-item list-group-item-action border rounded-3 mb-2"
+                        href="{{ url_for('messages.channel_detail', channel_id=channel.id) }}">
+                        <span class="channel-row">
+                            <span class="channel-icon" aria-hidden="true"><i class="bi bi-hash"></i></span>
+                            <span class="channel-name">{{ channel.name }}</span>
+                            <span class="channel-chevron" aria-hidden="true"><i class="bi bi-chevron-right"></i></span>
+                        </span>
+                    </a>
                     {% endfor %}
                 </div>
                 {% else %}
-                <p class="text-muted mb-0">Aucun canal.</p>
+                <div class="empty-state">
+                    <span class="empty-icon" aria-hidden="true"><i class="bi bi-chat-dots"></i></span>
+                    <div class="empty-title">Aucun canal</div>
+                    <div class="empty-hint">Creez votre premier canal pour discuter avec votre equipe.</div>
+                </div>
                 {% endif %}
             </div>
         </div>
