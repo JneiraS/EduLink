@@ -13,6 +13,21 @@ class SQLAlchemyChannelRepository(ChannelRepositoryPort):
         db.session.commit()
         return Channel(id=model.id, name=model.name, created_by=model.created_by)
 
+    def create_with_members(
+        self, channel: Channel, member_ids: list[int]
+    ) -> Channel:
+        model = ChannelModel(name=channel.name, created_by=channel.created_by)
+        db.session.add(model)
+        db.session.flush()
+        for member_id in dict.fromkeys(member_ids):
+            db.session.execute(
+                channel_members.insert().values(
+                    channel_id=model.id, user_id=member_id
+                )
+            )
+        db.session.commit()
+        return Channel(id=model.id, name=model.name, created_by=model.created_by)
+
     def list_for_user(self, user_id: int) -> list[Channel]:
         rows = (
             db.session.query(ChannelModel)

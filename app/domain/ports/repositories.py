@@ -66,6 +66,10 @@ class ChannelRepositoryPort(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    def create_with_members(self, channel: Channel, member_ids: list[int]) -> Channel:
+        raise NotImplementedError
+
+    @abstractmethod
     def list_for_user(self, user_id: int) -> list[Channel]:
         raise NotImplementedError
 
@@ -103,4 +107,8 @@ class PushSubscriptionRepositoryPort(ABC):
 
     @abstractmethod
     def delete_by_endpoint(self, endpoint: str) -> None:
+        raise NotImplementedError
+
+    @abstractmethod
+    def delete_for_user(self, user_id: int, endpoint: str) -> None:
         raise NotImplementedError

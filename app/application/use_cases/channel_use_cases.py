@@ -16,13 +16,11 @@ class CreateChannel:
         if not name.strip():
             raise ValidationError("Channel name is required")
 
-        channel = self.channels.create(
-            Channel(id=None, name=name.strip(), created_by=actor.id or 0)
+        member_ids = [actor.id or 0, *members]
+        return self.channels.create_with_members(
+            Channel(id=None, name=name.strip(), created_by=actor.id or 0),
+            member_ids=member_ids,
         )
-        self.channels.add_member(channel.id or 0, actor.id or 0)
-        for member_id in members:
-            self.channels.add_member(channel.id or 0, member_id)
-        return channel
 
 
 @dataclass(slots=True)

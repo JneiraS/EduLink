@@ -40,6 +40,15 @@ class SQLAlchemyPushSubscriptionRepository(PushSubscriptionRepositoryPort):
         db.session.delete(model)
         db.session.commit()
 
+    def delete_for_user(self, user_id: int, endpoint: str) -> None:
+        model = PushSubscriptionModel.query.filter_by(
+            user_id=user_id, endpoint=endpoint
+        ).first()
+        if not model:
+            return
+        db.session.delete(model)
+        db.session.commit()
+
     def _to_entity(self, model: PushSubscriptionModel) -> PushSubscription:
         return PushSubscription(
             id=model.id,

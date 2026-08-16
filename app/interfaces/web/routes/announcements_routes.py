@@ -15,7 +15,6 @@ from flask import (
 from flask_login import login_required
 from werkzeug.utils import secure_filename
 
-from app.domain.errors import AuthorizationError, ValidationError
 from app.interfaces.web.routes.utils import current_actor, get_use_cases
 
 announcements_bp = Blueprint("announcements", __name__, url_prefix="/announcements")
@@ -77,9 +76,12 @@ def create_announcement():
                 content=content,
                 pdf_filename=pdf_filename,
             )
-            flash("Annonce publiee", "success")
-            return redirect(url_for("announcements.list_announcements"))
-        except (ValidationError, AuthorizationError) as exc:
-            flash(str(exc), "danger")
+        except Exception:
+            if pdf_filename:
+                os.remove(os.path.join(_uploads_dir(), pdf_filename))
+            raise
+
+        flash("Annonce publiee", "success")
+        return redirect(url_for("announcements.list_announcements"))
 
     return render_template("announcements/create.html")

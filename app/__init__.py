@@ -2,6 +2,7 @@ import os
 import secrets
 
 from flask import Flask
+from flask import flash, redirect, url_for
 from dotenv import load_dotenv
 
 # Load .env as early as possible so config module sees environment variables.
@@ -28,6 +29,7 @@ from app.application.use_cases.notification_use_cases import (
     UnsubscribePushNotifications,
 )
 from app.config.settings import DevelopmentConfig, TestingConfig
+from app.domain.errors import DomainError
 from app.extensions import csrf, db, login_manager, socketio
 from app.infrastructure.auth.password_hasher import WerkzeugPasswordHasher
 from app.infrastructure.database.models import UserModel
@@ -153,6 +155,11 @@ def create_app(testing: bool = False):
     )
 
     register_socket_handlers(socketio)
+
+    @app.errorhandler(DomainError)
+    def handle_domain_error(exc):
+        flash(str(exc), "danger")
+        return redirect(url_for("dashboard.home"))
 
     return app
 

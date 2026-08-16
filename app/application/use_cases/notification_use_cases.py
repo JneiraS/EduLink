@@ -47,6 +47,4 @@ class UnsubscribePushNotifications:
     push_subscriptions: PushSubscriptionRepositoryPort
 
     def execute(self, actor: User, endpoint: str) -> None:
-        # Endpoint is globally unique; delete is idempotent.
-        _ = actor
-        self.push_subscriptions.delete_by_endpoint(endpoint)
+        self.push_subscriptions.delete_for_user(actor.id or 0, endpoint)

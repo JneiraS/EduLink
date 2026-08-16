@@ -1,7 +1,6 @@
 from flask import Blueprint, current_app, jsonify, request, send_from_directory
 from flask_login import login_required
 
-from app.extensions import csrf
 from app.interfaces.web.routes.utils import current_actor, get_use_cases
 
 push_bp = Blueprint("push", __name__)
@@ -21,7 +20,6 @@ def get_public_key():
 
 @push_bp.route("/push/subscribe", methods=["POST"])
 @login_required
-@csrf.exempt
 def subscribe_push():
     payload = request.get_json(silent=True) or {}
     endpoint = payload.get("endpoint")
@@ -43,7 +41,6 @@ def subscribe_push():
 
 @push_bp.route("/push/unsubscribe", methods=["POST"])
 @login_required
-@csrf.exempt
 def unsubscribe_push():
     payload = request.get_json(silent=True) or {}
     endpoint = payload.get("endpoint")
