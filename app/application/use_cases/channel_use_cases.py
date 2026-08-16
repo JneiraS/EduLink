@@ -74,7 +74,7 @@ class OpenDirectConversation:
         return self.channels.create_with_members(
             Channel(
                 id=None,
-                name=other.full_name,
+                name=f"{other.full_name} - {actor.full_name}",
                 created_by=actor.id or 0,
                 kind="direct",
             ),
