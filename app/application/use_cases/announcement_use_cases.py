@@ -11,6 +11,9 @@ from app.domain.ports.repositories import (
 )
 from app.domain.ports.services import RealtimeNotificationPort
 
+MAX_TITLE_LENGTH = 255
+MAX_CONTENT_LENGTH = 5000
+
 
 @dataclass(slots=True)
 class CreateAnnouncement:
@@ -26,11 +29,19 @@ class CreateAnnouncement:
             raise AuthorizationError("Only admin and teachers can create announcements")
         if not title.strip() or not content.strip():
             raise ValidationError("Title and content are required")
+        title = title.strip()
+        content = content.strip()
+        if len(title) > MAX_TITLE_LENGTH:
+            raise ValidationError(f"Title must be at most {MAX_TITLE_LENGTH} characters")
+        if len(content) > MAX_CONTENT_LENGTH:
+            raise ValidationError(
+                f"Content must be at most {MAX_CONTENT_LENGTH} characters"
+            )
 
         announcement = Announcement(
             id=None,
-            title=title.strip(),
-            content=content.strip(),
+            title=title,
+            content=content,
             created_by=actor.id or 0,
             pdf_filename=pdf_filename,
         )

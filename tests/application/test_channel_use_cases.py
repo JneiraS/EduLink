@@ -61,6 +61,12 @@ def test_create_channel_requires_name():
         use_case.execute(_actor(), "   ", [2])
 
 
+def test_create_channel_rejects_oversized_name():
+    use_case = CreateChannel(channels=InMemoryChannels())
+    with pytest.raises(ValidationError):
+        use_case.execute(_actor(), "x" * 121, [2])
+
+
 def test_create_channel_adds_creator_and_members():
     channels = InMemoryChannels()
     use_case = CreateChannel(channels=channels)

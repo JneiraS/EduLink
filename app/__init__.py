@@ -1,5 +1,7 @@
+import logging
 import os
 import secrets
+from pathlib import Path
 
 from flask import Flask
 from flask import flash, redirect, url_for
@@ -9,6 +11,8 @@ from alembic.config import Config
 
 # Load .env as early as possible so config module sees environment variables.
 load_dotenv()
+
+logger = logging.getLogger(__name__)
 
 from app.application.container import UseCaseContainer
 from app.application.use_cases.announcement_use_cases import (
@@ -33,7 +37,7 @@ from app.application.use_cases.notification_use_cases import (
 from app.application.use_cases.user_query_use_cases import FindUsersByIds, ListAllUsers
 from app.config.settings import DevelopmentConfig, TestingConfig
 from app.domain.errors import DomainError
-from app.extensions import csrf, db, login_manager, socketio
+from app.extensions import csrf, db, limiter, login_manager, socketio
 from app.infrastructure.auth.password_hasher import WerkzeugPasswordHasher
 from app.infrastructure.database.models import UserModel
 from app.infrastructure.notifications.socketio_service import (
@@ -72,12 +76,22 @@ def create_app(testing: bool = False):
     )
     app.config.from_object(TestingConfig if testing else DevelopmentConfig)
 
+    _resolve_secret_key(app)
+
+    app.config["SESSION_COOKIE_HTTPONLY"] = True
+    app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
+    app.config["SESSION_COOKIE_SECURE"] = app.config.get(
+        "SESSION_COOKIE_SECURE", False
+    )
+
     os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
 
     db.init_app(app)
     csrf.init_app(app)
     login_manager.init_app(app)
     socketio.init_app(app)
+    limiter.init_app(app)
+    limiter.enabled = app.config.get("RATE_LIMIT_ENABLED", False)
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(dashboard_bp)
@@ -168,12 +182,63 @@ def create_app(testing: bool = False):
 
     register_socket_handlers(socketio)
 
+    @app.after_request
+    def add_security_headers(response):
+        response.headers.setdefault("X-Frame-Options", "DENY")
+        response.headers.setdefault("X-Content-Type-Options", "nosniff")
+        response.headers.setdefault(
+            "Referrer-Policy", "strict-origin-when-cross-origin"
+        )
+        response.headers.setdefault(
+            "Content-Security-Policy",
+            "default-src 'self'; "
+            "script-src 'self' https://cdn.socket.io https://cdn.jsdelivr.net; "
+            "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; "
+            "font-src 'self' https://cdn.jsdelivr.net; "
+            "img-src 'self' data:; "
+            "connect-src 'self' https:; "
+            "frame-ancestors 'none'; "
+            "base-uri 'self'",
+        )
+        if app.config.get("SESSION_COOKIE_SECURE"):
+            response.headers.setdefault(
+                "Strict-Transport-Security", "max-age=31536000; includeSubDomains"
+            )
+        return response
+
     @app.errorhandler(DomainError)
     def handle_domain_error(exc):
         flash(str(exc), "danger")
         return redirect(url_for("dashboard.home"))
 
     return app
+
+
+def _resolve_secret_key(app) -> None:
+    """Resolve a strong SECRET_KEY, persisting a generated one for dev."""
+    configured = os.getenv("SECRET_KEY")
+    if configured and configured != "dev-secret-change-me":
+        app.config["SECRET_KEY"] = configured
+        return
+
+    if app.config.get("TESTING"):
+        return  # TestingConfig provides its own fixed test secret.
+
+    secret_file = Path(app.instance_path) / "secret_key"
+    if secret_file.exists():
+        existing = secret_file.read_text().strip()
+        if existing and existing != "dev-secret-change-me":
+            app.config["SECRET_KEY"] = existing
+            return
+
+    generated = secrets.token_hex(32)
+    secret_file.parent.mkdir(parents=True, exist_ok=True)
+    secret_file.write_text(generated)
+    try:
+        os.chmod(secret_file, 0o600)
+    except OSError:  # pragma: no cover - Windows/permissions edge case.
+        pass
+    app.config["SECRET_KEY"] = generated
 
 
 def _run_migrations() -> None:
@@ -198,7 +263,13 @@ def _seed_initial_admin() -> None:
 
     if not admin_password:
         admin_password = secrets.token_urlsafe(12)
-        print(f"[EduLink] Generated admin password for {admin_email}: {admin_password}")
+        if os.getenv("EDULINK_DEBUG") == "1":
+            print(f"[EduLink] Generated admin password for {admin_email}: {admin_password}")
+        else:
+            logger.warning(
+                "EDULINK_ADMIN_PASSWORD not set: generated a random admin password "
+                "for %s (shown only in console in debug mode).", admin_email
+            )
 
     hasher = WerkzeugPasswordHasher()
     admin = UserModel(

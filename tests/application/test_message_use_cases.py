@@ -1,10 +1,13 @@
 import pytest
 
-from app.application.use_cases.message_use_cases import ListChannelMessages
+from app.application.use_cases.message_use_cases import (
+    ListChannelMessages,
+    SendMessage,
+)
 from app.domain.entities.channel import Channel
 from app.domain.entities.message import Message
 from app.domain.entities.user import User, UserRole
-from app.domain.errors import AuthorizationError, NotFoundError
+from app.domain.errors import AuthorizationError, NotFoundError, ValidationError
 
 
 class InMemoryMessages:
@@ -25,6 +28,24 @@ class InMemoryMessages:
         rows = rows[:limit]
         rows.reverse()
         return rows, has_more
+
+
+class InMemoryNotifications:
+    def __init__(self):
+        self.items = []
+
+    def save(self, notification):
+        notification.id = len(self.items) + 1
+        self.items.append(notification)
+        return notification
+
+
+class FakeRealtime:
+    def notify_user(self, user_id, payload):
+        pass
+
+    def notify_channel(self, channel_id, payload):
+        pass
 
 
 class InMemoryChannels:
@@ -80,3 +101,14 @@ def test_list_messages_paginates_with_has_more():
     )
     assert len(page2) == 5
     assert has_more2 is False
+
+
+def test_send_message_rejects_oversized_content():
+    use_case = SendMessage(
+        messages=InMemoryMessages(),
+        channels=InMemoryChannels(members=(1,)),
+        notifications=InMemoryNotifications(),
+        realtime=FakeRealtime(),
+    )
+    with pytest.raises(ValidationError):
+        use_case.execute(_actor(), channel_id=1, content="x" * 5001)

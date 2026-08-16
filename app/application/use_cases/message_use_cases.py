@@ -14,6 +14,7 @@ from app.domain.ports.services import RealtimeNotificationPort
 
 CHANNEL_NOT_FOUND = "Channel not found"
 NOT_A_MEMBER = "User is not member of this channel"
+MAX_MESSAGE_LENGTH = 5000
 
 
 @dataclass(slots=True)
@@ -30,12 +31,17 @@ class SendMessage:
             raise AuthorizationError(NOT_A_MEMBER)
         if not content.strip():
             raise ValidationError("Message content is required")
+        content = content.strip()
+        if len(content) > MAX_MESSAGE_LENGTH:
+            raise ValidationError(
+                f"Message must be at most {MAX_MESSAGE_LENGTH} characters"
+            )
 
         message = Message(
             id=None,
             channel_id=channel_id,
             sender_id=actor.id or 0,
-            content=content.strip(),
+            content=content,
         )
         saved = self.messages.save(message)
 

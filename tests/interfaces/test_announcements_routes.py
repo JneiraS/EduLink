@@ -68,6 +68,22 @@ def test_create_rejects_non_pdf(client, app):
     assert b"Seuls les PDF sont autorises" in response.data
 
 
+def test_create_rejects_html_disguised_as_pdf(client, app):
+    admin_id = create_user(app, role="ADMIN", email="a6@t.local")
+    login(client, admin_id)
+    response = client.post(
+        "/announcements/new",
+        data={
+            "title": "Bad",
+            "content": "Doc",
+            "document": (io.BytesIO(b"<html><script>alert(1)</script></html>"), "cours.pdf"),
+        },
+        content_type="multipart/form-data",
+        follow_redirects=True,
+    )
+    assert b"Seuls les PDF sont autorises" in response.data
+
+
 def test_download_missing_pdf_returns_404(client, app):
     admin_id = create_user(app, role="ADMIN", email="a3@t.local")
     login(client, admin_id)

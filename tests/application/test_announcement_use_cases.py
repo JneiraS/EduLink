@@ -80,6 +80,18 @@ def test_create_announcement_requires_title_and_content():
         use_case.execute(_user(UserRole.TEACHER, 1), "", "C")
 
 
+def test_create_announcement_rejects_oversized_title():
+    use_case = _make_use_case([_user(UserRole.TEACHER, 1)])
+    with pytest.raises(ValidationError):
+        use_case.execute(_user(UserRole.TEACHER, 1), "x" * 256, "C")
+
+
+def test_create_announcement_rejects_oversized_content():
+    use_case = _make_use_case([_user(UserRole.TEACHER, 1)])
+    with pytest.raises(ValidationError):
+        use_case.execute(_user(UserRole.TEACHER, 1), "T", "x" * 5001)
+
+
 def test_create_announcement_creates_notifications_for_all_users():
     users = [_user(UserRole.TEACHER, 1), _user(UserRole.PARENT, 2)]
     use_case = _make_use_case(users)

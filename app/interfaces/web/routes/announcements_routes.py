@@ -35,6 +35,13 @@ def _allowed_file(filename: str) -> bool:
     )
 
 
+def _is_pdf_content(upload) -> bool:
+    upload.seek(0)
+    header = upload.read(4)
+    upload.seek(0)
+    return header == b"%PDF"
+
+
 @announcements_bp.route("/", methods=["GET"])
 @login_required
 def list_announcements():
@@ -69,6 +76,9 @@ def create_announcement():
 
         if upload and upload.filename:
             if not _allowed_file(upload.filename):
+                flash("Seuls les PDF sont autorises", "danger")
+                return redirect(url_for("announcements.create_announcement"))
+            if not _is_pdf_content(upload):
                 flash("Seuls les PDF sont autorises", "danger")
                 return redirect(url_for("announcements.create_announcement"))
 

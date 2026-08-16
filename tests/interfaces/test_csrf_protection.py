@@ -2,6 +2,10 @@ import re
 
 from tests.helpers import create_user, login
 
+PUSH_ENDPOINT = "https://fcm.googleapis.com/fcm/send/e1"
+P256DH = "BP0GtYpE8H4UjLm5kR8H8xk1Wq1F5Bt3jPyXN1g1a6EeK0mQ4nQrR7S0yYg2cVdWjv7I2X9zWfQbKpO9uU8V"
+AUTH = "kL5mN3pR8sT2vW6xY9zB0dF4gH1jJ7aQ"
+
 
 def _enable_csrf(app):
     app.config["WTF_CSRF_ENABLED"] = True
@@ -44,7 +48,7 @@ def test_push_subscribe_without_csrf_header_rejected(app, client):
     login(client, user_id)
     response = client.post(
         "/push/subscribe",
-        json={"endpoint": "https://e/1", "keys": {"p256dh": "a", "auth": "b"}},
+        json={"endpoint": PUSH_ENDPOINT, "keys": {"p256dh": P256DH, "auth": AUTH}},
     )
     assert response.status_code == 400
 
@@ -56,7 +60,7 @@ def test_push_subscribe_with_csrf_header_succeeds(app, client):
     token = _csrf_token(client)
     response = client.post(
         "/push/subscribe",
-        json={"endpoint": "https://e/2", "keys": {"p256dh": "a", "auth": "b"}},
+        json={"endpoint": PUSH_ENDPOINT, "keys": {"p256dh": P256DH, "auth": AUTH}},
         headers={"X-CSRFToken": token},
     )
     assert response.status_code == 200

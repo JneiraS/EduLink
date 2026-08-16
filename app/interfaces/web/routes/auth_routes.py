@@ -3,6 +3,7 @@ from flask_login import current_user, login_required, login_user, logout_user
 
 from app.domain.entities.user import UserRole
 from app.domain.errors import AuthenticationError, AuthorizationError, ValidationError
+from app.extensions import limiter
 from app.interfaces.web.routes.utils import current_actor, get_services, get_use_cases
 
 auth_bp = Blueprint("auth", __name__, url_prefix="/auth")
@@ -10,6 +11,7 @@ DASHBOARD_HOME = "dashboard.home"
 
 
 @auth_bp.route("/login", methods=["GET", "POST"])
+@limiter.limit("5 per 15 minutes", methods=["POST"])
 def login():
     if current_user.is_authenticated:
         return redirect(url_for(DASHBOARD_HOME))
