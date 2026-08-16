@@ -287,24 +287,70 @@ function initCopyButtons() {
     document.querySelectorAll("[data-copy-target]").forEach((button) => {
         button.addEventListener("click", async () => {
             const target = document.getElementById(button.dataset.copyTarget);
+
             if (!target) {
+                console.error("Élément cible introuvable :", button.dataset.copyTarget);
                 return;
             }
-            const text = target.value || target.textContent || "";
-            if (!text) {
+
+            const text = target.value ?? target.textContent ?? "";
+
+            if (!text.trim()) {
                 return;
             }
+
             try {
-                await navigator.clipboard.writeText(text);
+                // Méthode moderne
+                if (navigator.clipboard && window.isSecureContext) {
+                    await navigator.clipboard.writeText(text);
+                } else {
+                    // Fallback pour HTTP / navigateur incompatible
+                    const textarea = document.createElement("textarea");
+
+                    textarea.value = text;
+                    textarea.style.position = "fixed";
+                    textarea.style.left = "-9999px";
+                    textarea.style.top = "0";
+                    textarea.setAttribute("readonly", "");
+
+                    document.body.appendChild(textarea);
+
+                    textarea.focus();
+                    textarea.select();
+                    textarea.setSelectionRange(0, textarea.value.length);
+
+                    const success = document.execCommand("copy");
+
+                    document.body.removeChild(textarea);
+
+                    if (!success) {
+                        throw new Error("La copie a échoué");
+                    }
+                }
+
+                // Feedback visuel
                 const original = button.innerHTML;
+
                 button.innerHTML =
-                    '<i class="bi bi-check-lg me-1" aria-hidden="true"></i>Copie';
+                    '<i class="bi bi-check-lg me-1" aria-hidden="true"></i>Copié';
+
+                button.disabled = true;
+
                 setTimeout(() => {
                     button.innerHTML = original;
+                    button.disabled = false;
                 }, 1500);
-            } catch (err) {
-                target.select();
-                target.setSelectionRange(0, target.value.length);
+
+            } catch (error) {
+                console.error("Impossible de copier :", error);
+
+                // Dernier recours : sélectionner le texte
+                if ("select" in target) {
+                    target.focus();
+                    target.select();
+                }
+
+                alert("Impossible de copier automatiquement. Le texte a été sélectionné, vous pouvez faire Ctrl+C.");
             }
         });
     });
