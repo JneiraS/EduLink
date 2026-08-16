@@ -3,9 +3,7 @@ from flask_login import current_user, login_required, login_user, logout_user
 
 from app.domain.entities.user import UserRole
 from app.domain.errors import AuthenticationError, AuthorizationError, ValidationError
-from app.extensions import db
-from app.infrastructure.database.models import UserModel
-from app.interfaces.web.routes.utils import current_actor, get_use_cases
+from app.interfaces.web.routes.utils import current_actor, get_services, get_use_cases
 
 auth_bp = Blueprint("auth", __name__, url_prefix="/auth")
 DASHBOARD_HOME = "dashboard.home"
@@ -22,8 +20,7 @@ def login():
 
         try:
             user = get_use_cases().login_user.execute(email, password)
-            model = db.session.get(UserModel, user.id)
-            login_user(model)
+            login_user(get_services()["users"].get_auth_model(user.id))
             return redirect(url_for(DASHBOARD_HOME))
         except AuthenticationError as exc:
             flash(str(exc), "danger")

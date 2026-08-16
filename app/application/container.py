@@ -19,6 +19,7 @@ from app.application.use_cases.notification_use_cases import (
     SubscribePushNotifications,
     UnsubscribePushNotifications,
 )
+from app.application.use_cases.user_query_use_cases import FindUsersByIds, ListAllUsers
 
 
 @dataclass(slots=True)
@@ -38,3 +39,5 @@ class UseCaseContainer:
     unsubscribe_push_notifications: UnsubscribePushNotifications
     create_channel: CreateChannel
     add_channel_members: AddChannelMembers
+    list_all_users: ListAllUsers
+    find_users_by_ids: FindUsersByIds

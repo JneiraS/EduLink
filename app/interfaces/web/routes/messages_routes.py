@@ -3,7 +3,6 @@ from flask_login import current_user, login_required
 
 from app.domain.entities.user import UserRole
 from app.domain.errors import AuthorizationError, NotFoundError, ValidationError
-from app.infrastructure.database.models import ChannelModel, UserModel
 from app.interfaces.web.routes.presentation import (
     build_member_name_index,
     build_messages_view,
@@ -34,7 +33,10 @@ def channels():
             flash(str(exc), "danger")
 
     channels_data = get_use_cases().list_user_channels.execute(current_actor())
-    users = UserModel.query.order_by(UserModel.full_name.asc()).all()
+    users = sorted(
+        get_use_cases().list_all_users.execute(),
+        key=lambda u: u.full_name.casefold(),
+    )
     return render_template(
         "messages/channels.html",
         channels=channels_data,
@@ -82,23 +84,20 @@ def channel_detail(channel_id: int):
         channel_members = get_use_cases().list_channel_members.execute(
             actor, channel_id=channel_id
         )
-        channel_row = ChannelModel.query.filter_by(id=channel_id).first()
-        channel_name = resolve_channel_name(
-            channel_id,
-            user_channels,
-            db_channel_name=channel_row.name if channel_row else None,
-        )
+        channel_name = resolve_channel_name(channel_id, user_channels)
         member_names = build_member_name_index(
             channel_members,
             channel_messages,
-            users_lookup=lambda sender_ids: UserModel.query.filter(
-                UserModel.id.in_(sender_ids)
-            ).all(),
+            users_lookup=lambda sender_ids: get_use_cases()
+            .find_users_by_ids.execute(list(sender_ids)),
         )
         messages_view = build_messages_view(channel_messages, member_names)
 
         current_member_ids = {member.id for member in channel_members}
-        all_users = UserModel.query.order_by(UserModel.full_name.asc()).all()
+        all_users = sorted(
+            get_use_cases().list_all_users.execute(),
+            key=lambda u: u.full_name.casefold(),
+        )
         available_users = [
             user for user in all_users if user.id not in current_member_ids
         ]

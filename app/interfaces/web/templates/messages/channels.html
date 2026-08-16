@@ -22,7 +22,7 @@
                                     id="member_{{ user.id }}" {% if user.id==current_user_id %}checked disabled{% endif
                                     %}>
                                 <label class="form-check-label" for="member_{{ user.id }}">
-                                    {{ user.full_name }} ({{ user.role }}){% if user.id == current_user_id %} - vous{%
+                                    {{ user.full_name }} ({{ user.role.value }}){% if user.id == current_user_id %} - vous{%
                                     endif %}
                                 </label>
                             </div>

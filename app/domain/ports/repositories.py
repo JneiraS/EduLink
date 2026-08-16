@@ -22,6 +22,10 @@ class UserRepositoryPort(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    def find_many_by_ids(self, user_ids: list[int]) -> list[User]:
+        raise NotImplementedError
+
+    @abstractmethod
     def list_users(self) -> list[User]:
         raise NotImplementedError
 

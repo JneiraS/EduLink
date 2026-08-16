@@ -34,11 +34,21 @@ class SQLAlchemyUserRepository(UserRepositoryPort):
         model = db.session.get(UserModel, user_id)
         return self._to_entity(model) if model else None
 
+    def find_many_by_ids(self, user_ids: list[int]) -> list[User]:
+        models = UserModel.query.filter(UserModel.id.in_(user_ids)).all()
+        return [self._to_entity(model) for model in models]
+
     def list_users(self) -> list[User]:
         return [
             self._to_entity(model)
             for model in UserModel.query.order_by(UserModel.created_at.desc()).all()
         ]
+
+    def get_auth_model(self, user_id: int) -> UserModel:
+        # Adapter-specific Flask-Login handoff: login_user() needs the ORM
+        # UserMixin instance, so the concrete repo exposes it here (not on the
+        # abstract port, keeping the domain layer free of ORM types).
+        return db.session.get(UserModel, user_id)
 
     def _to_entity(self, model: UserModel) -> User:
         return User(

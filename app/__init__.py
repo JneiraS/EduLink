@@ -28,6 +28,7 @@ from app.application.use_cases.notification_use_cases import (
     SubscribePushNotifications,
     UnsubscribePushNotifications,
 )
+from app.application.use_cases.user_query_use_cases import FindUsersByIds, ListAllUsers
 from app.config.settings import DevelopmentConfig, TestingConfig
 from app.domain.errors import DomainError
 from app.extensions import csrf, db, login_manager, socketio
@@ -152,6 +153,8 @@ def create_app(testing: bool = False):
             channels=channels_repo,
             users=users_repo,
         ),
+        list_all_users=ListAllUsers(users=users_repo),
+        find_users_by_ids=FindUsersByIds(users=users_repo),
     )
 
     register_socket_handlers(socketio)

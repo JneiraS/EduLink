@@ -34,6 +34,8 @@ Hexagonal: dependencies point inward. `interfaces -> application -> domain`. Fol
 
 Use cases and repos are wired in `app/__init__.py` `create_app()` and registered on `app.extensions["use_cases"]` / `app.extensions["services"]`. Route code reaches them via `get_use_cases()` / `current_actor()` from `app/interfaces/web/routes/utils.py` — not by instantiating repos directly.
 
+Routes must not import `app.infrastructure` models or `app.extensions.db` directly. Reads (e.g. listing all users, resolving sender names) go through query use cases (`get_use_cases().list_all_users` / `.find_users_by_ids`). `current_actor()` fetches the domain `User` via the users repo (`find_by_id`), so ORM→domain mapping lives only in `_to_entity`. `get_services()` exists solely for the Flask-Login handoff (`get_services()["users"].get_auth_model(id)`), which returns the ORM `UserMixin` instance — a concrete-repo method, deliberately not on the abstract port.
+
 ## Key conventions
 
 - Roles enum `UserRole` = `PARENT` / `TEACHER` / `ADMIN` (`app/domain/entities/user.py`). "Can manage channel members" = `ADMIN` or `TEACHER`.

@@ -71,7 +71,7 @@
                             <input class="form-check-input" type="checkbox" name="members" value="{{ user.id }}"
                                 id="member_add_{{ user.id }}">
                             <label class="form-check-label" for="member_add_{{ user.id }}">
-                                {{ user.full_name }} ({{ user.role|capitalize }})
+                                {{ user.full_name }} ({{ user.role.value|capitalize }})
                             </label>
                         </div>
                         {% endfor %}
