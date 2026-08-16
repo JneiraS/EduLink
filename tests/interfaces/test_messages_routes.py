@@ -254,6 +254,29 @@ def test_channel_detail_hides_add_members_for_direct(client, app):
     assert b"Ajouter des membres" not in response.data
 
 
+def test_channel_detail_hides_members_card_for_direct(client, app):
+    teacher_id = create_user(app, role="TEACHER", email="nc14@t.local")
+    parent_id = create_user(app, role="PARENT", email="nc15@t.local")
+    login(client, teacher_id)
+    client.post("/messages/new-conversation", data={"member": str(parent_id)})
+    with app.app_context():
+        direct_id = ChannelModel.query.filter_by(kind="direct").first().id
+    response = client.get(f"/messages/channels/{direct_id}")
+    assert response.status_code == 200
+    assert b">Membres</h2>" not in response.data
+    assert b"col-lg-12" in response.data
+
+
+def test_channel_detail_shows_members_card_for_group(client, app):
+    admin_id = create_user(app, role="ADMIN", email="nc16@t.local")
+    channel_id = create_channel(app, "Classe", admin_id, [admin_id])
+    login(client, admin_id)
+    response = client.get(f"/messages/channels/{channel_id}")
+    assert response.status_code == 200
+    assert b">Membres</h2>" in response.data
+    assert b"col-lg-12" not in response.data
+
+
 def test_add_members_rejected_for_direct(client, app):
     teacher_id = create_user(app, role="TEACHER", email="nc12@t.local")
     parent_id = create_user(app, role="PARENT", email="nc13@t.local")

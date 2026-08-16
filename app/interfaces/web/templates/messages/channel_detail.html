@@ -2,7 +2,7 @@
 
 {% block content %}
 <div class="row g-4 reveal-group">
-    <div class="col-lg-8">
+    <div class="col-lg-{% if is_direct %}12{% else %}8{% endif %}">
         <div class="card shadow-sm chat-window">
             <div class="card-body">
                 <div class="chat-header">
@@ -94,6 +94,7 @@
         </div>
     </div>
 
+    {% if not is_direct %}
     <div class="col-lg-4">
         <div class="card shadow-sm">
             <div class="card-body">
@@ -181,5 +182,6 @@
         </div>
         {% endif %}
     </div>
+    {% endif %}
 </div>
 {% endblock %}

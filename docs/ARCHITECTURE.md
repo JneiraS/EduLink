@@ -251,10 +251,13 @@ Point d'entrée : `run.py` → `create_app()` + `socketio.run(...)` (host/port v
 - `Channel.kind` vaut `"group"` (défaut) ou `"direct"`. Les conversations
   directes sont **réservées à deux membres** : `AddChannelMembers` refuse
   d'ajouter qui que ce soit sur un canal `direct`, et l'UI masque le panneau
-  « Ajouter des membres ». `OpenDirectConversation` réutilise la conversation
-  existante entre deux utilisateurs (`find_direct_between`) et nomme le canal
-  **du nom de l'autre personne**. Tout utilisateur authentifié peut ouvrir une
-  conversation directe (annuaire minimal).
+  « Ajouter des membres » **et la carte « Membres »** (redondante en 1:1 : le
+  header affiche déjà le nom de l'autre personne, le compteur et les avatars).
+  Le chat passe alors en pleine largeur (`col-lg-12`). `OpenDirectConversation`
+  réutilise la conversation existante entre deux utilisateurs
+  (`find_direct_between`) et nomme le canal **du nom de l'autre personne**.
+  Tout utilisateur authentifié peut ouvrir une conversation directe (annuaire
+  minimal).
 
 ### Sécurité
 
