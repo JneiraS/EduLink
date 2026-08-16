@@ -3,6 +3,20 @@
 {% block content %}
 <div class="row justify-content-center">
     <div class="col-lg-7">
+        {% if invitation_url %}
+        <div class="alert alert-success reveal-group">
+            <div class="fw-semibold mb-1">Invitation creee</div>
+            <p class="mb-2 small text-muted">Transmettez ce lien a l'utilisateur. Valable 72 heures, a usage unique.</p>
+            <div class="input-group">
+                <input class="form-control" type="text" readonly value="{{ invitation_url }}" id="invitation-url"
+                    aria-label="Lien d'invitation">
+                <button class="btn btn-outline-secondary" type="button" data-copy-target="invitation-url">
+                    <i class="bi bi-clipboard me-1" aria-hidden="true"></i>Copier
+                </button>
+            </div>
+        </div>
+        {% endif %}
+
         <div class="card shadow-sm">
             <div class="card-body">
                 <span class="kicker">Administration</span>
@@ -17,19 +31,15 @@
                         <label class="form-label" for="email">Email</label>
                         <input class="form-control" id="email" type="email" name="email" required maxlength="254">
                     </div>
-                    <div class="mb-3">
+                    <div class="mb-4">
                         <label class="form-label" for="role">Role</label>
                         <select class="form-select" id="role" name="role" required>
                             {% for role in roles %}
                             <option value="{{ role.value }}">{{ role.value }}</option>
                             {% endfor %}
                         </select>
-                    </div>
-                    <div class="mb-4">
-                        <label class="form-label" for="password">Mot de passe</label>
-                        <input class="form-control" id="password" type="password" name="password" required
-                            minlength="8" maxlength="128" autocomplete="new-password">
-                        <small class="form-text">8 a 128 caracteres.</small>
+                        <small class="form-text">Aucun mot de passe requis : l'utilisateur definira le sien lors du
+                            premier acces via le lien d'invitation.</small>
                     </div>
                     <button class="btn btn-primary" type="submit">
                         <i class="bi bi-person-plus me-2" aria-hidden="true"></i>Creer le compte

@@ -10,6 +10,7 @@ class BaseConfig:
     VAPID_PUBLIC_KEY = os.getenv("VAPID_PUBLIC_KEY", "")
     VAPID_PRIVATE_KEY = os.getenv("VAPID_PRIVATE_KEY", "")
     VAPID_SUBJECT = os.getenv("VAPID_SUBJECT", "mailto:admin@edulink.local")
+    INVITATION_TTL_HOURS = 72
 
 
 class DevelopmentConfig(BaseConfig):

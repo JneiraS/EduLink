@@ -30,7 +30,14 @@ from app.application.use_cases.announcement_use_cases import (
     GetAnnouncementReadStatus,
     ListAnnouncements,
 )
-from app.application.use_cases.auth_use_cases import LoginUser, RegisterUser
+from app.application.use_cases.auth_use_cases import (
+    AcceptInvitation,
+    CreateInvitation,
+    CreateUserWithInvitation,
+    LoginUser,
+    RegisterUser,
+    ValidateInvitation,
+)
 from app.application.use_cases.channel_use_cases import (
     AddChannelMembers,
     CreateChannel,
@@ -69,6 +76,9 @@ from app.infrastructure.repositories.announcement_repository import (
 )
 from app.infrastructure.repositories.channel_repository import (
     SQLAlchemyChannelRepository,
+)
+from app.infrastructure.repositories.invitation_repository import (
+    SQLAlchemyInvitationRepository,
 )
 from app.infrastructure.repositories.message_repository import (
     SQLAlchemyMessageRepository,
@@ -143,6 +153,7 @@ def create_app(testing: bool = False):
     notifications_repo = SQLAlchemyNotificationRepository()
     push_subscriptions_repo = SQLAlchemyPushSubscriptionRepository()
     message_templates_repo = SQLAlchemyMessageTemplateRepository()
+    invitations_repo = SQLAlchemyInvitationRepository()
     hasher = WerkzeugPasswordHasher()
     realtime = SocketIONotificationService(
         socketio=socketio,
@@ -161,6 +172,7 @@ def create_app(testing: bool = False):
         "notifications": notifications_repo,
         "push_subscriptions": push_subscriptions_repo,
         "message_templates": message_templates_repo,
+        "invitations": invitations_repo,
         "hasher": hasher,
         "realtime_notifications": realtime,
     }
@@ -168,6 +180,22 @@ def create_app(testing: bool = False):
     app.extensions["use_cases"] = UseCaseContainer(
         register_user=RegisterUser(users=users_repo, hasher=hasher),
         login_user=LoginUser(users=users_repo, hasher=hasher),
+        create_user_with_invitation=CreateUserWithInvitation(
+            users=users_repo,
+            invitations=invitations_repo,
+            ttl_hours=app.config.get("INVITATION_TTL_HOURS", 72),
+        ),
+        validate_invitation=ValidateInvitation(
+            users=users_repo, invitations=invitations_repo
+        ),
+        accept_invitation=AcceptInvitation(
+            users=users_repo, invitations=invitations_repo, hasher=hasher
+        ),
+        create_invitation=CreateInvitation(
+            users=users_repo,
+            invitations=invitations_repo,
+            ttl_hours=app.config.get("INVITATION_TTL_HOURS", 72),
+        ),
         create_announcement=CreateAnnouncement(
             announcements=announcements_repo,
             notifications=notifications_repo,

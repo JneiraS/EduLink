@@ -45,23 +45,60 @@ def create_user():
         flash("Acces reserve a l'administration", "danger")
         return redirect(url_for(DASHBOARD_HOME))
 
+    invitation_url = None
     if request.method == "POST":
         full_name = request.form.get("full_name", "")
         email = request.form.get("email", "")
         role = request.form.get("role", "")
-        password = request.form.get("password", "")
 
         try:
-            get_use_cases().register_user.execute(
+            _, invitation = get_use_cases().create_user_with_invitation.execute(
                 actor=current_actor(),
                 full_name=full_name,
                 email=email,
                 role=role,
-                plain_password=password,
             )
             flash("Compte cree avec succes", "success")
-            return redirect(url_for("auth.create_user"))
+            invitation_url = url_for(
+                "auth.invite", token=invitation.token, _external=True
+            )
         except (ValidationError, AuthorizationError) as exc:
             flash(str(exc), "danger")
 
-    return render_template("auth/create_user.html", roles=UserRole)
+    return render_template(
+        "auth/create_user.html",
+        roles=UserRole,
+        invitation_url=invitation_url,
+    )
+
+
+@auth_bp.route("/invite/<token>", methods=["GET", "POST"])
+def invite(token: str):
+    if current_user.is_authenticated:
+        return redirect(url_for(DASHBOARD_HOME))
+
+    try:
+        user = get_use_cases().validate_invitation.execute(token)
+    except AuthenticationError as exc:
+        flash(str(exc), "danger")
+        return redirect(url_for("auth.login"))
+
+    if request.method == "POST":
+        password = request.form.get("password", "")
+        confirm = request.form.get("confirm", "")
+        if password != confirm:
+            flash("Passwords do not match", "danger")
+            return render_template("auth/set_password.html", user=user, token=token)
+        try:
+            accepted = get_use_cases().accept_invitation.execute(token, password)
+            login_user(get_services()["users"].get_auth_model(accepted.id))
+            flash("Mot de passe defini, bienvenue !", "success")
+            return redirect(url_for(DASHBOARD_HOME))
+        except AuthenticationError as exc:
+            flash(str(exc), "danger")
+            return redirect(url_for("auth.login"))
+        except ValidationError as exc:
+            flash(str(exc), "danger")
+            return render_template("auth/set_password.html", user=user, token=token)
+
+    return render_template("auth/set_password.html", user=user, token=token)

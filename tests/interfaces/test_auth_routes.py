@@ -45,12 +45,12 @@ def test_create_user_admin_success(client, app):
             "full_name": "New Teacher",
             "email": "teacher@t.local",
             "role": "TEACHER",
-            "password": "secret123",
         },
-        follow_redirects=True,
     )
     assert response.status_code == 200
     assert b"Compte cree" in response.data
+    assert b"Invitation creee" in response.data
+    assert b"/auth/invite/" in response.data
 
 
 def test_create_user_validation_error(client, app):
@@ -58,7 +58,7 @@ def test_create_user_validation_error(client, app):
     login(client, admin_id)
     response = client.post(
         "/auth/users/new",
-        data={"full_name": "", "email": "", "role": "TEACHER", "password": ""},
+        data={"full_name": "", "email": "", "role": "TEACHER"},
         follow_redirects=True,
     )
     assert response.status_code == 200

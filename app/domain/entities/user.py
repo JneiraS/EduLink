@@ -15,6 +15,6 @@ class User:
     full_name: str
     email: str
     role: UserRole
-    password_hash: str
+    password_hash: str | None
     is_active: bool
     created_at: datetime | None = None

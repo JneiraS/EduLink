@@ -73,6 +73,23 @@ def toggle_active(user_id: int):
     return redirect(url_for(ADMIN_MEMBERS))
 
 
+@admin_bp.route("/members/<int:user_id>/invite", methods=["POST"])
+@login_required
+def invite_user(user_id: int):
+    guard = _guard_admin()
+    if guard:
+        return guard
+    try:
+        invitation = get_use_cases().create_invitation.execute(
+            current_actor(), user_id
+        )
+        invite_url = url_for("auth.invite", token=invitation.token, _external=True)
+        flash(f"Lien invitation : {invite_url}", "success")
+    except DomainError as exc:
+        flash(str(exc), "danger")
+    return redirect(url_for(ADMIN_MEMBERS))
+
+
 @admin_bp.route("/announcements", methods=["GET"])
 @login_required
 def announcements():

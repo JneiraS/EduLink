@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 
 from app.domain.entities.announcement import Announcement
 from app.domain.entities.channel import Channel
+from app.domain.entities.invitation import Invitation
 from app.domain.entities.message import Message
 from app.domain.entities.message_template import MessageTemplate
 from app.domain.entities.notification import Notification
@@ -28,6 +29,24 @@ class UserRepositoryPort(ABC):
 
     @abstractmethod
     def list_users(self) -> list[User]:
+        raise NotImplementedError
+
+
+class InvitationRepositoryPort(ABC):
+    @abstractmethod
+    def create(self, invitation: Invitation) -> Invitation:
+        raise NotImplementedError
+
+    @abstractmethod
+    def find_by_token(self, token: str) -> Invitation | None:
+        raise NotImplementedError
+
+    @abstractmethod
+    def find_active_by_user(self, user_id: int) -> Invitation | None:
+        raise NotImplementedError
+
+    @abstractmethod
+    def mark_used(self, invitation_id: int) -> None:
         raise NotImplementedError
 
 

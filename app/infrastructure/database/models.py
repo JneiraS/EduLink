@@ -39,12 +39,23 @@ class UserModel(UserMixin, db.Model):
     full_name = db.Column(db.String(120), nullable=False)
     email = db.Column(db.String(255), nullable=False, unique=True, index=True)
     role = db.Column(db.String(20), nullable=False)
-    password_hash = db.Column(db.String(255), nullable=False)
+    password_hash = db.Column(db.String(255), nullable=True)
     is_active = db.Column(db.Boolean, default=True, nullable=False)
     created_at = db.Column(db.DateTime, default=utc_now, nullable=False)
     channels = db.relationship(
         "ChannelModel", secondary=channel_members, back_populates="members"
     )
+
+
+class InvitationModel(db.Model):
+    __tablename__ = "invitations"
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey(USERS_ID_FK), nullable=False, index=True)
+    token = db.Column(db.String(128), nullable=False, unique=True, index=True)
+    expires_at = db.Column(db.DateTime, nullable=False)
+    used_at = db.Column(db.DateTime, nullable=True)
+    created_at = db.Column(db.DateTime, default=utc_now, nullable=False)
 
 
 class AnnouncementModel(db.Model):

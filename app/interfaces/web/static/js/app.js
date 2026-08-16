@@ -283,6 +283,33 @@ function initConfirmDialogs() {
     });
 }
 
+function initCopyButtons() {
+    document.querySelectorAll("[data-copy-target]").forEach((button) => {
+        button.addEventListener("click", async () => {
+            const target = document.getElementById(button.dataset.copyTarget);
+            if (!target) {
+                return;
+            }
+            const text = target.value || target.textContent || "";
+            if (!text) {
+                return;
+            }
+            try {
+                await navigator.clipboard.writeText(text);
+                const original = button.innerHTML;
+                button.innerHTML =
+                    '<i class="bi bi-check-lg me-1" aria-hidden="true"></i>Copie';
+                setTimeout(() => {
+                    button.innerHTML = original;
+                }, 1500);
+            } catch (err) {
+                target.select();
+                target.setSelectionRange(0, target.value.length);
+            }
+        });
+    });
+}
+
 function initAutoGrow() {
     document.querySelectorAll("[data-auto-grow]").forEach((el) => {
         const resize = () => {
@@ -373,6 +400,8 @@ initMemberPicker();
 initAudiencePicker();
 
 initTemplateInsert();
+
+initCopyButtons();
 
 if (isAuthenticated) {
     initPushNotifications().catch((error) => {

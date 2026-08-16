@@ -63,6 +63,16 @@
                         {% endif %}
                         </td>
                         <td class="text-end">
+                            {% if u.password_hash is none %}
+                            <form method="post" action="{{ url_for('admin.invite_user', user_id=u.id) }}"
+                                class="d-inline">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button class="btn btn-sm btn-outline-primary" type="submit"
+                                    title="Generer le lien d'invitation">
+                                    <i class="bi bi-link-45deg me-1" aria-hidden="true"></i>Invitation
+                                </button>
+                            </form>
+                            {% endif %}
                             <form method="post" action="{{ url_for('admin.toggle_active', user_id=u.id) }}"
                                 class="d-inline">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">

@@ -15,7 +15,14 @@ from app.application.use_cases.announcement_use_cases import (
     GetAnnouncementReadStatus,
     ListAnnouncements,
 )
-from app.application.use_cases.auth_use_cases import LoginUser, RegisterUser
+from app.application.use_cases.auth_use_cases import (
+    AcceptInvitation,
+    CreateInvitation,
+    CreateUserWithInvitation,
+    LoginUser,
+    RegisterUser,
+    ValidateInvitation,
+)
 from app.application.use_cases.channel_use_cases import (
     AddChannelMembers,
     CreateChannel,
@@ -47,6 +54,10 @@ from app.application.use_cases.user_query_use_cases import FindUsersByIds, ListA
 class UseCaseContainer:
     register_user: RegisterUser
     login_user: LoginUser
+    create_user_with_invitation: CreateUserWithInvitation
+    validate_invitation: ValidateInvitation
+    accept_invitation: AcceptInvitation
+    create_invitation: CreateInvitation
     create_announcement: CreateAnnouncement
     list_announcements: ListAnnouncements
     confirm_announcement_read: ConfirmAnnouncementRead
