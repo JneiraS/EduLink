@@ -121,10 +121,18 @@ une violation d'architecture.
     passation Flask-Login `get_auth_model(id)`)
   - `current_actor()` → `User` domaine via `users.find_by_id(...)`
 - **`routes/presentation.py`** : helpers de mise en forme (résolution des noms
-  d'expéditeurs, construction de la vue des messages, parse des membres).
+  d'expéditeurs, construction de la vue des messages, parse des membres,
+  `group_users_by_role` pour le sélecteur de membres).
 - **`socket_events.py`** : enregistre les handlers SocketIO (rejoindre les
   rooms `user_<id>` et `channel_<id>`).
 - **`templates/`** : Jinja2. **`static/`** : CSS/JS custom, manifest PWA.
+
+Le **sélecteur de membres** (création de canal et « ajouter des membres ») est
+un composant réutilisable : recherche temps réel, regroupement par rôle
+(`group_users_by_role` dans `presentation.py`), sélection globale par groupe,
+compteur de sélection et chips supprimables. Le comportement vit dans
+`static/js/app.js` (`initMemberPicker`) via des `data-*` hooks — aucune fonction
+JS inline. Sans JS, la liste complète des cases à cocher reste fonctionnelle.
 
 ---
 

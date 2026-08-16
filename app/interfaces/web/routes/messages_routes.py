@@ -6,6 +6,7 @@ from app.domain.errors import AuthorizationError, NotFoundError, ValidationError
 from app.interfaces.web.routes.presentation import (
     build_member_name_index,
     build_messages_view,
+    group_users_by_role,
     parse_member_ids,
     resolve_channel_name,
 )
@@ -19,8 +20,11 @@ CHANNEL_DETAIL = "messages.channel_detail"
 @messages_bp.route("/channels", methods=["GET", "POST"])
 @login_required
 def channels():
+    member_ids: list[int] = []
+    form_name = ""
     if request.method == "POST":
         name = request.form.get("name", "")
+        form_name = name
         member_ids = parse_member_ids(request.form)
 
         try:
@@ -40,7 +44,9 @@ def channels():
     return render_template(
         "messages/channels.html",
         channels=channels_data,
-        users=users,
+        users_by_role=group_users_by_role(users),
+        selected_member_ids=member_ids,
+        form_name=form_name,
         current_user_id=current_user.id,
     )
 
@@ -113,7 +119,7 @@ def channel_detail(channel_id: int):
         channel_name=channel_name,
         messages=messages_view,
         members=channel_members,
-        available_users=available_users,
+        available_users_by_role=group_users_by_role(available_users),
         can_manage_members=can_manage_members,
         has_older=has_older,
         oldest_message_id=channel_messages[0].id if channel_messages else None,

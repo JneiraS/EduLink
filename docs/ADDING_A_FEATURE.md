@@ -129,6 +129,9 @@ Faites passer le test de l'étape 1 (vert).
   dans un template.
 - Boutons de suppression/confirmation : utilisez `data-confirm` (géré par
   `initConfirmDialogs` dans `app.js`).
+- Sélection multiple de personnes : réutilisez le **sélecteur de membres**
+  (`group_users_by_role` dans `presentation.py` + `initMemberPicker` dans
+  `app.js`), qui fournit recherche, regroupement par rôle et compteur.
 
 ### Étape 9 — Tests d'interface
 
@@ -211,8 +214,19 @@ câblage ne fait que de l'assemblage.
 
 ## 5. Pièges courants (rappel)
 
+- **Fonctionnalités JS / UX** : il n'y a pas de framework de test JS dans le
+  projet. Les composants `app.js` (ex. `initMemberPicker`) sont testés via le
+  **contrat DOM rendu** : les tests de route assertent la présence des
+  `data-*` hooks et de la structure que le JS attend. Tout nouveau composant JS
+  doit exposer ces hooks (`data-*`) et rester fonctionnel **sans JS**
+  (amélioration progressive), le JS allant uniquement dans `static/js/app.js`
+  (CSP).
 - **Apostrophes dans les assertions** : les templates échappent HTML, une
   apostrophe devient `&#39;`. Asserter sur des sous-chaînes sans apostrophe.
+- **Attributs multi-lignes** : un `<input>` rendu sur plusieurs lignes (retours
+  à la ligne dans le template) produit des espaces/retours dans le HTML. Pour
+  asserter sur un attribut exact (ex. `value="3" id="member_3" checked`),
+  écrire l'input sur une seule ligne dans le template.
 - **Plusieurs logins sur le même `app.test_client()`** : la session est
   partagée entre clients d'un même app. Un seul login par client, ou logout
   explicite entre deux.

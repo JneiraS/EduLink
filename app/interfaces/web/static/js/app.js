@@ -87,6 +87,102 @@ function urlBase64ToUint8Array(base64String) {
     return outputArray;
 }
 
+function initMemberPicker() {
+    document.querySelectorAll("[data-member-picker]").forEach((picker) => {
+        const boxes = Array.from(picker.querySelectorAll(".member-checkbox"));
+        const groups = Array.from(picker.querySelectorAll("[data-role-group]"));
+        const search = picker.querySelector("[data-member-search]");
+        const countEl = picker.querySelector("[data-selected-count]");
+        const summary = picker.querySelector("[data-selected-summary]");
+        const empty = picker.querySelector("[data-search-empty]");
+        const clearBtn = picker.querySelector("[data-clear-selection]");
+        if (!countEl || !summary) {
+            return;
+        }
+
+        const updateSummary = () => {
+            const selected = boxes.filter((box) => box.checked);
+            countEl.textContent = `${selected.length} selectionne${selected.length !== 1 ? "s" : ""}`;
+            summary.replaceChildren();
+            selected.forEach((box) => {
+                const option = box.closest(".member-option");
+                const nameEl = option ? option.querySelector(".member-option-name") : null;
+                const name = nameEl ? nameEl.textContent.trim() : box.value;
+                const chip = document.createElement("span");
+                chip.className = "member-chip";
+                chip.textContent = name;
+                const remove = document.createElement("button");
+                remove.type = "button";
+                remove.className = "member-chip-remove";
+                remove.setAttribute("aria-label", `Retirer ${name}`);
+                remove.innerHTML = "&times;";
+                remove.addEventListener("click", () => {
+                    box.checked = false;
+                    updateSummary();
+                });
+                chip.appendChild(remove);
+                summary.appendChild(chip);
+            });
+        };
+
+        const applyFilter = () => {
+            const term = (search ? search.value : "").trim().toLowerCase();
+            let totalVisible = 0;
+            groups.forEach((group) => {
+                let visible = 0;
+                group.querySelectorAll(".member-option").forEach((option) => {
+                    const nameEl = option.querySelector(".member-option-name");
+                    const name = nameEl ? nameEl.textContent.toLowerCase() : "";
+                    const show = !term || name.includes(term);
+                    option.hidden = !show;
+                    if (show) {
+                        visible += 1;
+                    }
+                });
+                group.hidden = visible === 0;
+                totalVisible += visible;
+            });
+            if (empty) {
+                empty.hidden = totalVisible !== 0;
+            }
+        };
+
+        boxes.forEach((box) => box.addEventListener("change", updateSummary));
+
+        groups.forEach((group) => {
+            const toggle = group.querySelector("[data-group-toggle]");
+            if (!toggle) {
+                return;
+            }
+            toggle.addEventListener("change", () => {
+                group.querySelectorAll(".member-checkbox").forEach((box) => {
+                    if (!box.hidden && !box.disabled) {
+                        box.checked = toggle.checked;
+                    }
+                });
+                updateSummary();
+            });
+        });
+
+        if (search) {
+            search.addEventListener("input", applyFilter);
+        }
+        if (clearBtn) {
+            clearBtn.addEventListener("click", () => {
+                boxes.forEach((box) => {
+                    if (!box.disabled) {
+                        box.checked = false;
+                    }
+                });
+                updateSummary();
+            });
+        }
+
+        updateSummary();
+        applyFilter();
+    });
+}
+
 function initThemeToggle() {
     const root = document.documentElement;
     const themeButton = document.getElementById("theme-toggle-btn");
@@ -235,6 +331,8 @@ initAutoGrow();
 initChatScroll();
 
 initFileZone();
+
+initMemberPicker();
 
 if (isAuthenticated) {
     initPushNotifications().catch((error) => {
