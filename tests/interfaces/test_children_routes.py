@@ -61,6 +61,27 @@ def test_admin_create_child_success(client, app):
         assert child.class_name == "CM1"
 
 
+def test_admin_create_child_links_class_channel(client, app):
+    admin_id = create_user(app, role="ADMIN", email="admin_auto@test.local")
+    parent_id = create_user(app, role="PARENT", email="parent_auto@test.local")
+    login(client, admin_id)
+    resp = client.post(
+        "/admin/children/create",
+        data={"parent_id": str(parent_id), "full_name": "Leo Auto", "class_name": "CM4"},
+        follow_redirects=True,
+    )
+    assert resp.status_code == 200
+    with app.app_context():
+        channel = ChannelModel.query.filter_by(name="CM4", kind="group").first()
+        assert channel is not None
+        rows = db.session.execute(
+            channel_members.select().where(
+                channel_members.c.channel_id == channel.id
+            )
+        ).all()
+        assert parent_id in [row.user_id for row in rows]
+
+
 def test_admin_create_child_rejects_non_parent(client, app):
     admin_id = create_user(app, role="ADMIN", email="admin_t@test.local")
     teacher_id = create_user(app, role="TEACHER", email="teacher_t@test.local")

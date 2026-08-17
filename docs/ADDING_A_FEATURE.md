@@ -212,7 +212,8 @@ classe) — second exemple complet, avec nouvelle table. Suivez ses fichiers :
    `LinkChildToClassChannels`, validation des noms (≤120), `parent_id` requis
    et doit être un `PARENT`, `DeleteChild` lève `NotFoundError` si absent,
    `LinkChildToClassChannels` ne **réutilise pas un canal `direct`** du même nom
-   (filtre `kind="group"`).
+   (filtre `kind="group"`), et **`CreateChild` relie automatiquement** le parent
+   au canal de classe (créé s'il manque, réutilisé s'il existe).
 2. **Ports** — `ChildrenRepositoryPort` (`save`, `list_by_parent`,
    `find_by_class`, `find_by_id`, `delete`) ; `ChannelRepositoryPort.find_by_name`
    gagne un paramètre `kind: str | None = None` (filtre optionnel).
@@ -232,9 +233,10 @@ classe) — second exemple complet, avec nouvelle table. Suivez ses fichiers :
    « Administration » dans `base.html` (pour `ADMIN`) et lien « Mes enfants »
    pour `PARENT`.
 8. **Tests interface** — `tests/interfaces/test_children_routes.py` : accès
-   refusé aux rôles non habilités, listing, création, suppression, lien aux
-   canaux de classe (vérifie les membres du canal via `row.user_id`), redirection
-   pour un enfant d'un autre parent.
+   refusé aux rôles non habilités, listing, création (qui **relie aussi** le
+   parent au canal de classe — vérifie les membres du canal via `row.user_id`),
+   suppression, lien manuel aux canaux de classe, redirection pour un enfant
+   d'un autre parent.
 
 **Leçon** : le filtre par `kind` sur `find_by_name` montre comment un port peut
 gagner un paramètre optionnel pour durcir une règle métier sans changer son

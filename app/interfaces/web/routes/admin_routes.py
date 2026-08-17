@@ -181,7 +181,10 @@ def create_child():
             class_name=class_name,
             parent_id=parent_id,
         )
-        flash(f"Enfant {child.full_name} cree pour la classe {child.class_name}", "success")
+        flash(
+            f"Enfant {child.full_name} cree et lie aux canaux de classe {child.class_name}",
+            "success",
+        )
     except DomainError as exc:
         flash(str(exc), "danger")
     except (ValueError, TypeError):

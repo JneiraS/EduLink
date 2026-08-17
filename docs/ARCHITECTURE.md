@@ -274,14 +274,18 @@ Point d'entrée : `run.py` → `create_app()` + `socketio.run(...)` (host/port v
 ### Enfants & canaux de classe
 
 - Les enfants sont créés par un `ADMIN` (`CreateChild`) et rattachés à un
-  compte `PARENT` (validation du rôle dans le use case). `ListChildren` ne
-  renvoie que les enfants du parent appelant (route `parent_routes.py`), ce qui
-  empêche un parent de voir les enfants d'un autre.
+  compte `PARENT` (validation du rôle dans le use case). `CreateChild` relie
+  **automatiquement** le parent au canal de classe (même logique que
+  `LinkChildToClassChannels`, factorisée dans `_link_child_to_class_channels`) :
+  plus besoin de cliquer sur « Lier aux canaux de classe » après la création.
+  `ListChildren` ne renvoie que les enfants du parent appelant (route
+  `parent_routes.py`), ce qui empêche un parent de voir les enfants d'un autre.
 - `LinkChildToClassChannels` (réservé admin) relie le parent à un canal de
   classe : il cherche un canal **`kind="group"`** par `class_name`
   (`find_by_name(name, kind="group")`) et le crée s'il n'existe pas. Le filtre
   par `kind` évite de relier le parent à un canal `direct` qui porterait le
-  même nom.
+  même nom. Il reste disponible pour rattacher manuellement un enfant existant
+  (ex. changement de classe).
 - La page parent `/parent/children/<id>/channels` liste les canaux du parent
   dont le nom correspond à la classe de l'enfant (`list_user_channels` filtré
   par `class_name`). Un enfant d'un autre parent est introuvable → redirect.
