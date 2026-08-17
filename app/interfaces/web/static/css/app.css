@@ -730,7 +730,7 @@ html[data-theme="dark"] .admin-nav-link.active {
     background: var(--brand);
     border-color: var(--brand-strong);
     color: var(--btn-primary-text);
-    box-shadow: 0 6px 16px color-mix(in srgb, var(--brand) 32%, transparent);
+    /* box-shadow: 0 6px 16px color-mix(in srgb, var(--brand) 32%, transparent); */
 }
 
 .btn-primary:hover {
