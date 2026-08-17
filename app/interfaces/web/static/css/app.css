@@ -200,6 +200,11 @@ h3 {
     letter-spacing: -0.01em;
 }
 
+.chart-box {
+    position: relative;
+    height: 260px;
+}
+
 p,
 li,
 small,

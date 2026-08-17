@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from datetime import datetime
 
 from app.domain.entities.announcement import Announcement
 from app.domain.entities.channel import Channel
@@ -30,6 +31,22 @@ class UserRepositoryPort(ABC):
 
     @abstractmethod
     def list_users(self) -> list[User]:
+        raise NotImplementedError
+
+    @abstractmethod
+    def count_total(self) -> int:
+        raise NotImplementedError
+
+    @abstractmethod
+    def count_active(self) -> int:
+        raise NotImplementedError
+
+    @abstractmethod
+    def count_by_role(self) -> dict[str, int]:
+        raise NotImplementedError
+
+    @abstractmethod
+    def count_grouped_by_date(self, since: datetime) -> list[dict]:
         raise NotImplementedError
 
 
@@ -129,6 +146,14 @@ class MessageRepositoryPort(ABC):
 
     @abstractmethod
     def list_pinned(self, channel_id: int) -> list[Message]:
+        raise NotImplementedError
+
+    @abstractmethod
+    def count_grouped_by_date(self, since: datetime) -> list[dict]:
+        raise NotImplementedError
+
+    @abstractmethod
+    def count_top_channels(self, limit: int = 5) -> list[dict]:
         raise NotImplementedError
 
 
@@ -247,6 +272,10 @@ class PushSubscriptionRepositoryPort(ABC):
 
     @abstractmethod
     def delete_for_user(self, user_id: int, endpoint: str) -> None:
+        raise NotImplementedError
+
+    @abstractmethod
+    def count_distinct_users(self) -> int:
         raise NotImplementedError
 
 

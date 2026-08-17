@@ -224,3 +224,13 @@ def link_child_channels(child_id: int):
     except DomainError as exc:
         flash(str(exc), "danger")
     return redirect(url_for(ADMIN_CHILDREN))
+
+
+@admin_bp.route("/stats", methods=["GET"])
+@login_required
+def stats():
+    guard = _guard_admin()
+    if guard:
+        return guard
+    data = get_use_cases().get_admin_stats.execute(current_actor())
+    return render_template("admin/stats.html", stats=data)

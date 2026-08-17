@@ -49,6 +49,13 @@ class SQLAlchemyPushSubscriptionRepository(PushSubscriptionRepositoryPort):
         db.session.delete(model)
         db.session.commit()
 
+    def count_distinct_users(self) -> int:
+        return (
+            db.session.query(PushSubscriptionModel.user_id)
+            .distinct()
+            .count()
+        )
+
     def _to_entity(self, model: PushSubscriptionModel) -> PushSubscription:
         return PushSubscription(
             id=model.id,

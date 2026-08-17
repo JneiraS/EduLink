@@ -258,3 +258,36 @@ def test_admin_pages_link_to_all_admin_sections(client, app):
         assert b"/admin/members" in response.data
         assert b"/admin/announcements" in response.data
         assert b"/admin/channels" in response.data
+
+
+# ---------------------------------------------------------------------------
+# Stats
+# ---------------------------------------------------------------------------
+
+def test_admin_stats_page_requires_login(client):
+    response = client.get("/admin/stats")
+    assert response.status_code == 302
+
+
+def test_admin_stats_page_requires_admin(client, app):
+    teacher_id = create_user(app, role="TEACHER", email="t6@admin.local")
+    login(client, teacher_id)
+    response = client.get("/admin/stats", follow_redirects=True)
+    assert response.status_code == 200
+    assert b"Acces reserve a l" in response.data
+
+
+def test_admin_stats_page_renders_charts(client, app):
+    admin_id = create_user(app, role="ADMIN", email="admin13@admin.local")
+    create_user(app, role="TEACHER", email="t7@admin.local")
+    login(client, admin_id)
+
+    response = client.get("/admin/stats")
+    assert response.status_code == 200
+    assert b"Statistiques" in response.data
+    assert b"chart-users-by-role" in response.data
+    assert b"chart-messages-by-day" in response.data
+    assert b"chart-registrations" in response.data
+    assert b"chart-top-channels" in response.data
+    assert b"chart-read-rates" in response.data
+    assert b"chart-push-adoption" in response.data

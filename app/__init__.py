@@ -15,6 +15,7 @@ load_dotenv()
 logger = logging.getLogger(__name__)
 
 from app.application.container import UseCaseContainer
+from app.application.use_cases.admin_stats_use_case import GetAdminStats
 from app.application.use_cases.admin_use_cases import (
     DeleteAnnouncement,
     DeleteChannel,
@@ -258,6 +259,13 @@ def create_app(testing: bool = False):
             messages=messages_repo,
             children=children_repo,
             users=users_repo,
+        ),
+        get_admin_stats=GetAdminStats(
+            users=users_repo,
+            messages=messages_repo,
+            announcements=announcements_repo,
+            channels=channels_repo,
+            push_subscriptions=push_subscriptions_repo,
         ),
         send_message=SendMessage(
             messages=messages_repo,

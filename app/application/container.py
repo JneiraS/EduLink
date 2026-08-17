@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 
+from app.application.use_cases.admin_stats_use_case import GetAdminStats
 from app.application.use_cases.admin_use_cases import (
     DeleteAnnouncement,
     DeleteChannel,
@@ -79,6 +80,7 @@ class UseCaseContainer:
     get_announcement_read_status: GetAnnouncementReadStatus
     get_announcement_pdf: GetAnnouncementPdf
     get_dashboard: GetDashboard
+    get_admin_stats: GetAdminStats
     send_message: SendMessage
     search_channel_messages: SearchChannelMessages
     list_channel_messages: ListChannelMessages

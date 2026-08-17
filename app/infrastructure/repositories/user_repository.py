@@ -1,3 +1,5 @@
+from datetime import date, datetime
+
 from app.domain.entities.user import User, UserRole
 from app.domain.ports.repositories import UserRepositoryPort
 from app.extensions import db
@@ -44,6 +46,34 @@ class SQLAlchemyUserRepository(UserRepositoryPort):
             for model in UserModel.query.order_by(UserModel.created_at.desc()).all()
         ]
 
+    def count_total(self) -> int:
+        return UserModel.query.count()
+
+    def count_active(self) -> int:
+        return UserModel.query.filter_by(is_active=True).count()
+
+    def count_by_role(self) -> dict[str, int]:
+        rows = (
+            db.session.query(UserModel.role, db.func.count(UserModel.id))
+            .group_by(UserModel.role)
+            .all()
+        )
+        return {role: count for role, count in rows}
+
+    def count_grouped_by_date(self, since: datetime) -> list[dict]:
+        rows = (
+            db.session.query(
+                db.func.date(UserModel.created_at).label("day"),
+                db.func.count(UserModel.id),
+            )
+            .filter(UserModel.created_at >= since)
+            .group_by(db.func.date(UserModel.created_at))
+            .all()
+        )
+        return [
+            {"date": _parse_date(row[0]), "count": row[1]} for row in rows
+        ]
+
     def get_auth_model(self, user_id: int) -> UserModel:
         # Adapter-specific Flask-Login handoff: login_user() needs the ORM
         # UserMixin instance, so the concrete repo exposes it here (not on the
@@ -60,3 +90,10 @@ class SQLAlchemyUserRepository(UserRepositoryPort):
             is_active=model.is_active,
             created_at=model.created_at,
         )
+
+
+def _parse_date(value) -> date:
+    """Normalize a SQL date string into a date object for chart labels."""
+    if isinstance(value, date):
+        return value
+    return datetime.strptime(str(value), "%Y-%m-%d").date()

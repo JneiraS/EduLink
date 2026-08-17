@@ -1,7 +1,9 @@
+from datetime import date, datetime
+
 from app.domain.entities.message import Message
 from app.domain.ports.repositories import MessageRepositoryPort
 from app.extensions import db
-from app.infrastructure.database.models import MessageModel
+from app.infrastructure.database.models import ChannelModel, MessageModel
 
 
 class SQLAlchemyMessageRepository(MessageRepositoryPort):
@@ -86,6 +88,38 @@ class SQLAlchemyMessageRepository(MessageRepositoryPort):
             if message_id in by_id
         }
 
+    def count_grouped_by_date(self, since: datetime) -> list[dict]:
+        rows = (
+            db.session.query(
+                db.func.date(MessageModel.created_at).label("day"),
+                db.func.count(MessageModel.id),
+            )
+            .filter(MessageModel.created_at >= since)
+            .group_by(db.func.date(MessageModel.created_at))
+            .all()
+        )
+        return [
+            {"date": _parse_date(row[0]), "count": row[1]} for row in rows
+        ]
+
+    def count_top_channels(self, limit: int = 5) -> list[dict]:
+        rows = (
+            db.session.query(
+                MessageModel.channel_id,
+                ChannelModel.name,
+                db.func.count(MessageModel.id),
+            )
+            .join(ChannelModel, ChannelModel.id == MessageModel.channel_id)
+            .group_by(MessageModel.channel_id, ChannelModel.name)
+            .order_by(db.func.count(MessageModel.id).desc())
+            .limit(limit)
+            .all()
+        )
+        return [
+            {"channel_id": channel_id, "channel_name": name, "count": count}
+            for channel_id, name, count in rows
+        ]
+
     def _to_entity(self, model: MessageModel) -> Message:
         return Message(
             id=model.id,
@@ -95,3 +129,10 @@ class SQLAlchemyMessageRepository(MessageRepositoryPort):
             created_at=model.created_at,
             is_pinned=model.is_pinned,
         )
+
+
+def _parse_date(value) -> date:
+    """Normalize a SQL date string into a date object for chart labels."""
+    if isinstance(value, date):
+        return value
+    return datetime.strptime(str(value), "%Y-%m-%d").date()

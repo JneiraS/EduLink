@@ -43,6 +43,7 @@ sécurité — ne pas revenir en arrière).
 | Push web (abonnement PWA) | `push_routes.py` | `SubscribePushNotifications`, `UnsubscribePushNotifications` | `push_subscription_repository.py` |
 | **Administration** (création de comptes, rôles, activ./désactiv., suppression) | `admin_routes.py` + lien vers `auth_routes.py` (`/auth/users/new`) | `ListUsersForAdmin`, `UpdateUserRole`, `ToggleUserActive`, `ListAnnouncementsForAdmin`, `DeleteAnnouncement`, `ListChannelsForAdmin`, `DeleteChannel` + `RegisterUser` | `user_repository.py`, `announcement_repository.py`, `channel_repository.py` |
 | **Enfants** (rattachement à un parent, lien aux canaux de classe) | `admin_routes.py` (`/admin/children...`) + `parent_routes.py` (`/parent/children...`) | `CreateChild`, `ListChildren`, `ListClassNames`, `DeleteChild`, `LinkChildToClassChannels` | `children_repository.py`, `channel_repository.py` |
+| **Statistiques admin** (graphiques Chart.js) | `admin_routes.py` (`/admin/stats`) | `GetAdminStats` (agrégations ; read-rates d'annonces calculés dans le use case) | `user_repository.py`, `message_repository.py`, `announcement_repository.py`, `channel_repository.py`, `push_subscription_repository.py` |
 | Requêtes utilitaires (lecture) | routes diverses | `ListAllUsers`, `FindUsersByIds` (renvoient des `UserSummary` : `id`/`full_name`/`role` — **jamais** `email`/`password_hash`), `ListChannelMembers` (idem) | `user_repository.py` |
 
 Le temps réel n'apparaît pas dans un blueprint : `SocketIONotificationService`
@@ -92,7 +93,9 @@ une violation d'architecture.
     `MessageRepositoryPort` (dont `search_by_channel`, `set_pinned` et
     `list_pinned` pour la recherche et les épinglés, `find_by_id` pour la garde
     d'appartenance de `PinMessage`, et `list_latest_by_channels`
-    — dernier message par canal, une requête groupée, pour l'aperçu du dashboard),
+    — dernier message par canal, une requête groupée, pour l'aperçu du dashboard,
+    plus `count_grouped_by_date(since)` et `count_top_channels(limit)` pour les
+    statistiques admin),
     `NotificationRepositoryPort` (dont `count_unread` pour la stat « non lus » et
     `mark_channel_read` — marque lues les notifications d'un canal quand on
     l'ouvre),
@@ -102,10 +105,14 @@ une violation d'architecture.
     `ChannelRepositoryPort` (dont `find_direct_between` pour les 1:1 et
     `find_by_name(name, kind)` pour résoudre un canal par nom, optionnellement
     filtré par type — utilisé par le lien enfant → canaux de classe),
-    `PushSubscriptionRepositoryPort`, `MessageTemplateRepositoryPort`
+    `PushSubscriptionRepositoryPort` (dont `count_distinct_users` pour
+    l'adoption push), `MessageTemplateRepositoryPort`
     (dont `update` pour modifier un modèle existant), `ChildrenRepositoryPort`
     (`save`, `list_by_parent`, `find_by_class`, `find_by_id`, `delete`,
-    `list_class_names` pour les classes distinctes du formulaire).
+    `list_class_names` pour les classes distinctes du formulaire). Les compteurs
+    d'agrégation des stats admin (`UserRepositoryPort.count_total / count_active /
+    count_by_role / count_grouped_by_date`) font des `GROUP BY date(created_at)`
+    bruts — le padding des jours/semaines vides est fait dans `GetAdminStats`.
   - `services.py` : `PasswordHasherPort`, `RealtimeNotificationPort`.
 - **`errors.py`** — hiérarchie d'erreurs métier :
   `DomainError` → `AuthenticationError`, `AuthorizationError`, `NotFoundError`,

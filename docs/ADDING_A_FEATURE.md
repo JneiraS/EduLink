@@ -430,6 +430,49 @@ valeur — la lecture effective se fait à l'ouverture du canal :
 `UPDATE ... WHERE channel_id AND user_id AND is_read=False`), appelé dans le GET
 de `channel_detail`, avec la même garde `_assert_channel_access`.
 
+### Exemple fil rouge n°7 : statistiques admin (graphiques Chart.js)
+
+Une page `/admin/stats` (lien « Statistiques » dans le menu d'admin) présente
+6 graphiques : **inscriptions par semaine** (30 j), **utilisateurs par rôle**,
+**messages par jour** (14 j), **canaux les plus actifs**, **lecture des annonces**
+(5 dernières), **adoption push**.
+
+1. **Tests use cases** — `tests/application/test_admin_stats_use_cases.py`
+   (fakes `FakeUsers/Messages/Channels/Announcements/PushSubscriptions`) :
+   garde ADMIN, présence des 6 sections, agrégations par rôle, padding des
+   14 jours à zéro, buckets hebdomadaires (lundi ISO), top canaux ordonné et
+   limité, read-rates global (audience = tous les users) et ciblé (audience =
+   union des membres des canaux ciblés), adoption push distincte.
+2. **Ports** — quatre méthodes d'agrégation : `UserRepositoryPort.count_total /
+   count_active / count_by_role / count_grouped_by_date(since)`,
+   `MessageRepositoryPort.count_grouped_by_date(since) / count_top_channels(limit)`,
+   `PushSubscriptionRepositoryPort.count_distinct_users()`. Les read-rates
+   d'annonces restent calculés dans le **use case** (audience via
+   `channels.list_member_ids`), pas dans le repo — cohérent avec
+   `GetAnnouncementReadStatus`.
+3. **Adapters** — requêtes `GROUP BY date(created_at)` (`func.date`) ; les
+   lignes SQL sont normalisées en `date` via un helper `_parse_date`.
+4. **Use case** — `GetAdminStats` reçoit 5 repos ; fenêtres hardcodées
+   (`REGISTRATIONS_WINDOW_DAYS = 30`, `MESSAGES_WINDOW_DAYS = 14`) ; le padding
+   des jours/semaines vides se fait dans le use case (dict `{date: count}` + boucle).
+5. **Câblage** — `get_admin_stats` déclaré dans `container.py` et instancié
+   dans `create_app()` ; route `GET /admin/stats` avec la garde `_guard_admin`.
+6. **Template + JS** — `admin/stats.html` : les données JSON sont injectées via
+   `data-chart="{{ ...|tojson }}"` sur chaque `<canvas>` (jamais de script
+   inline, CSP) ; `static/js/admin-charts.js` lit `canvas.dataset.chart`,
+   `JSON.parse`, et construit les 6 graphiques (Chart.js 4 via CDN jsdelivr,
+   déjà présent dans le `script-src` CSP). `.chart-box` fixe la hauteur des
+   canevas.
+7. **Tests interface** — `tests/interfaces/test_admin_routes.py` : accès
+   restreint (login + ADMIN), rendu de la page avec les 6 ids de canevas.
+
+**Leçons** : (1) pour rester compatible CSP sans `'unsafe-inline'`, on passe les
+données aux graphiques via des **attributs `data-*`** et non un `<script>`
+inline ; (2) les fenêtres de temps et le **padding** vivent dans le use case,
+les repos ne savent faire qu'un `GROUP BY` brut ; (3) l'audience d'une annonce
+est re-calculée (union des membres) plutôt que stockée — évite une dérive quand
+les membres changent.
+
 ---
 
 ## 4. Checklist finale avant de considérer une fonctionnalité terminée
