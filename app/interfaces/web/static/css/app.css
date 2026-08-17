@@ -1132,8 +1132,57 @@ textarea.form-control:focus {
     margin-left: 0.5rem;
 }
 
-.notif-global-toggle .form-switch {
-    line-height: 1;
+.notif-btn {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--r-full);
+    border: 1px solid transparent;
+    transition: background-color var(--dur-fast) ease, color var(--dur-fast) ease,
+        border-color var(--dur-fast) ease;
+}
+
+.notif-btn--on {
+    background: color-mix(in srgb, var(--brand) 8%, transparent);
+    color: var(--brand);
+    border-color: color-mix(in srgb, var(--brand) 40%, var(--line));
+}
+
+.notif-btn--on:hover {
+    background: color-mix(in srgb, var(--brand) 14%, transparent);
+}
+
+.notif-btn--off {
+    background: color-mix(in srgb, var(--warn) 8%, transparent);
+    color: var(--warn);
+    border-color: color-mix(in srgb, var(--warn) 40%, var(--line));
+}
+
+.notif-btn--off:hover {
+    background: color-mix(in srgb, var(--warn) 14%, transparent);
+}
+
+.channel-item--muted {
+    opacity: 0.55;
+}
+
+.channel-item--muted .channel-name {
+    font-weight: 500;
+}
+
+.card .list-group > .list-group-item:hover {
+    background: var(--list-hover-bg);
+}
+
+.notif-global-toggle .form-check-input:checked {
+    background-color: var(--brand);
+}
+
+.notif-global-toggle .form-check-input:checked:focus {
+    box-shadow: 0 0 0 0.2rem color-mix(in srgb, var(--brand) 25%, transparent);
 }
 
 /* ============================================================
@@ -1402,10 +1451,11 @@ textarea.form-control:focus {
 
 .pinned-section {
     border: 1px solid var(--line);
-    border-radius: var(--radius, 0.5rem);
-    padding: 0.5rem 0.75rem;
-    margin-bottom: 0.75rem;
-    background: color-mix(in srgb, var(--accent, #0d6efd) 6%, transparent);
+    border-radius: var(--r-md);
+    padding: var(--space-3) var(--space-4);
+    margin-bottom: var(--space-4);
+    background: color-mix(in srgb, var(--brand) 6%, var(--surface));
+    box-shadow: var(--shadow-inset);
 }
 
 .pinned-header {
@@ -1416,8 +1466,8 @@ textarea.form-control:focus {
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.04em;
-    color: var(--muted, #6c757d);
-    margin-bottom: 0.4rem;
+    color: var(--text-soft);
+    margin-bottom: var(--space-3);
 }
 
 .pinned-section .chat-message {
@@ -1427,12 +1477,6 @@ textarea.form-control:focus {
 .chat-message .pin-form {
     display: flex;
     align-items: center;
-}
-
-.chat-message .pin-form .btn {
-    padding: 0.15rem 0.35rem;
-    font-size: 0.8rem;
-    line-height: 1;
 }
 
 .chat-message--mine {

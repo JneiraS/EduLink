@@ -97,43 +97,54 @@
     <div class="col-lg-7">
         <div class="card shadow-sm">
             <div class="card-body">
-                <div class="d-flex align-items-center justify-content-between mb-3">
-                    <h2 class="h5 mb-0">Conversations</h2>
-                    <form method="post" action="{{ url_for('messages.set_global_notifications') }}"
-                        class="notif-global-toggle" title="Activer ou desactiver toutes les notifications"
-                        data-global-notif-form>
-                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                        <input type="hidden" name="enabled" value="0">
-                        <div class="form-check form-switch mb-0">
-                            <input class="form-check-input" type="checkbox" role="switch" id="global-notif"
-                                name="enabled" value="1" {% if notif_global_enabled %}checked{% endif %}>
-                            <label class="form-check-label small text-muted" for="global-notif">
-                                Recevoir toutes les notifications
-                            </label>
-                        </div>
-                    </form>
+                <div class="d-flex flex-column gap-1 mb-3">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <h2 class="h5 mb-0">Conversations</h2>
+                        <form method="post" action="{{ url_for('messages.set_global_notifications') }}"
+                            class="notif-global-toggle" title="Activer ou desactiver toutes les notifications"
+                            data-global-notif-form>
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <div class="form-check form-switch mb-0">
+                                <input class="form-check-input" type="checkbox" role="switch" id="global-notif"
+                                    name="enabled" value="1" {% if notif_global_enabled %}checked{% endif %}>
+                                <label class="form-check-label small text-muted" for="global-notif">
+                                    Recevoir toutes les notifications
+                                </label>
+                            </div>
+                        </form>
+                    </div>
+                    <small class="text-muted">Lorsque desactive, aucune notification (sonnerie ou push) n'est emise.</small>
                 </div>
                 {% if direct_channels %}
                 <div class="list-group">
                     {% for channel in direct_channels %}
-                    <div class="list-group-item border rounded-3 mb-2">
+                    {% set channel_enabled = notif_channel_states.get(channel.id, True) %}
+                    <div class="list-group-item {% if not channel_enabled %}channel-item--muted{% endif %}"
+                        data-channel-id="{{ channel.id }}">
                         <div class="channel-row">
                             <a class="channel-link d-flex align-items-center flex-grow-1 text-decoration-none"
                                 href="{{ url_for('messages.channel_detail', channel_id=channel.id) }}">
                                 <span class="channel-icon" aria-hidden="true"><i class="bi bi-person"></i></span>
                                 <span class="channel-name">{{ channel.name }}</span>
                             </a>
-                            <span class="channel-chevron" aria-hidden="true"><i class="bi bi-chevron-right"></i></span>
                             <form method="post"
                                 action="{{ url_for('messages.toggle_channel_notifications', channel_id=channel.id) }}"
-                                class="notif-channel-toggle" title="Activer ou desactiver les notifications">
+                                class="notif-channel-toggle">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                <button type="submit"
-                                    class="btn btn-sm {% if notif_channel_states.get(channel.id, True) %}btn-outline-secondary{% else %}btn-secondary{% endif %}"
-                                    aria-label="{% if notif_channel_states.get(channel.id, True) %}Desactiver les notifications{% else %}Activer les notifications{% endif %}">
-                                    <i class="bi {% if notif_channel_states.get(channel.id, True) %}bi-bell{% else %}bi-bell-slash{% endif %}"
-                                        aria-hidden="true"></i>
+                                {% if channel_enabled %}
+                                <button type="submit" class="notif-btn notif-btn--on"
+                                    data-confirm="Desactiver les notifications de cette conversation ?"
+                                    aria-pressed="true" aria-label="Desactiver les notifications"
+                                    title="Notifications actives">
+                                    <i class="bi bi-bell" aria-hidden="true"></i>
                                 </button>
+                                {% else %}
+                                <button type="submit" class="notif-btn notif-btn--off"
+                                    aria-pressed="false" aria-label="Activer les notifications"
+                                    title="Notifications desactivees">
+                                    <i class="bi bi-bell-slash" aria-hidden="true"></i>
+                                </button>
+                                {% endif %}
                             </form>
                         </div>
                     </div>
@@ -155,24 +166,33 @@
                 {% if group_channels %}
                 <div class="list-group">
                     {% for channel in group_channels %}
-                    <div class="list-group-item border rounded-3 mb-2">
+                    {% set channel_enabled = notif_channel_states.get(channel.id, True) %}
+                    <div class="list-group-item {% if not channel_enabled %}channel-item--muted{% endif %}"
+                        data-channel-id="{{ channel.id }}">
                         <div class="channel-row">
                             <a class="channel-link d-flex align-items-center flex-grow-1 text-decoration-none"
                                 href="{{ url_for('messages.channel_detail', channel_id=channel.id) }}">
                                 <span class="channel-icon" aria-hidden="true"><i class="bi bi-hash"></i></span>
                                 <span class="channel-name">{{ channel.name }}</span>
                             </a>
-                            <span class="channel-chevron" aria-hidden="true"><i class="bi bi-chevron-right"></i></span>
                             <form method="post"
                                 action="{{ url_for('messages.toggle_channel_notifications', channel_id=channel.id) }}"
-                                class="notif-channel-toggle" title="Activer ou desactiver les notifications">
+                                class="notif-channel-toggle">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                <button type="submit"
-                                    class="btn btn-sm {% if notif_channel_states.get(channel.id, True) %}btn-outline-secondary{% else %}btn-secondary{% endif %}"
-                                    aria-label="{% if notif_channel_states.get(channel.id, True) %}Desactiver les notifications{% else %}Activer les notifications{% endif %}">
-                                    <i class="bi {% if notif_channel_states.get(channel.id, True) %}bi-bell{% else %}bi-bell-slash{% endif %}"
-                                        aria-hidden="true"></i>
+                                {% if channel_enabled %}
+                                <button type="submit" class="notif-btn notif-btn--on"
+                                    data-confirm="Desactiver les notifications de cette conversation ?"
+                                    aria-pressed="true" aria-label="Desactiver les notifications"
+                                    title="Notifications actives">
+                                    <i class="bi bi-bell" aria-hidden="true"></i>
                                 </button>
+                                {% else %}
+                                <button type="submit" class="notif-btn notif-btn--off"
+                                    aria-pressed="false" aria-label="Activer les notifications"
+                                    title="Notifications desactivees">
+                                    <i class="bi bi-bell-slash" aria-hidden="true"></i>
+                                </button>
+                                {% endif %}
                             </form>
                         </div>
                     </div>

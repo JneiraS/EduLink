@@ -6,23 +6,29 @@
         <div class="card shadow-sm chat-window">
             <div class="card-body">
                 <div class="chat-header">
-                    <div>
+                    <div class="flex-grow-1 min-w-0">
                         <h1 class="h5 mb-0">{{ channel_name or ('Canal #' ~ channel_id) }}</h1>
                         <small class="text-muted">{{ members|length }} membre{{ 's' if members|length != 1 else ''
                             }}</small>
                     </div>
+                    {% if members %}
                     <form method="post" class="notif-channel-toggle"
                         title="Activer ou desactiver les notifications de cette conversation">
                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <input type="hidden" name="action" value="toggle_notifications">
-                        <button type="submit"
-                            class="btn btn-sm {% if notifications_enabled %}btn-outline-secondary{% else %}btn-secondary{% endif %}"
-                            aria-label="{% if notifications_enabled %}Desactiver les notifications{% else %}Activer les notifications{% endif %}">
-                            <i class="bi {% if notifications_enabled %}bi-bell{% else %}bi-bell-slash{% endif %}"
-                                aria-hidden="true"></i>
+                        {% if notifications_enabled %}
+                        <button type="submit" class="notif-btn notif-btn--on"
+                            data-confirm="Desactiver les notifications de cette conversation ?"
+                            aria-pressed="true" aria-label="Desactiver les notifications">
+                            <i class="bi bi-bell" aria-hidden="true"></i>
                         </button>
+                        {% else %}
+                        <button type="submit" class="notif-btn notif-btn--off"
+                            aria-pressed="false" aria-label="Activer les notifications">
+                            <i class="bi bi-bell-slash" aria-hidden="true"></i>
+                        </button>
+                        {% endif %}
                     </form>
-                    {% if members %}
                     <div class="avatar-stack" aria-hidden="true">
                         {% for member in members[:5] %}
                         {% set name_parts = member.full_name.split()[:2] %}
