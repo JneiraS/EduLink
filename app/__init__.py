@@ -60,9 +60,12 @@ from app.application.use_cases.message_template_use_cases import (
     UpdateMessageTemplate,
 )
 from app.application.use_cases.notification_use_cases import (
+    GetNotificationSettings,
     ListNotifications,
     MarkNotificationRead,
+    SetGlobalNotifications,
     SubscribePushNotifications,
+    ToggleChannelNotifications,
     UnsubscribePushNotifications,
 )
 from app.application.use_cases.user_query_use_cases import FindUsersByIds, ListAllUsers
@@ -98,6 +101,9 @@ from app.infrastructure.repositories.message_template_repository import (
 )
 from app.infrastructure.repositories.notification_repository import (
     SQLAlchemyNotificationRepository,
+)
+from app.infrastructure.repositories.notification_preferences_repository import (
+    SQLAlchemyNotificationPreferencesRepository,
 )
 from app.infrastructure.repositories.push_subscription_repository import (
     SQLAlchemyPushSubscriptionRepository,
@@ -164,6 +170,7 @@ def create_app(testing: bool = False):
     messages_repo = SQLAlchemyMessageRepository()
     channels_repo = SQLAlchemyChannelRepository()
     notifications_repo = SQLAlchemyNotificationRepository()
+    notification_prefs_repo = SQLAlchemyNotificationPreferencesRepository()
     push_subscriptions_repo = SQLAlchemyPushSubscriptionRepository()
     message_templates_repo = SQLAlchemyMessageTemplateRepository()
     children_repo = SQLAlchemyChildrenRepository()
@@ -184,6 +191,7 @@ def create_app(testing: bool = False):
         "messages": messages_repo,
         "channels": channels_repo,
         "notifications": notifications_repo,
+        "notification_preferences": notification_prefs_repo,
         "push_subscriptions": push_subscriptions_repo,
         "message_templates": message_templates_repo,
         "children": children_repo,
@@ -235,6 +243,7 @@ def create_app(testing: bool = False):
             channels=channels_repo,
             notifications=notifications_repo,
             realtime=realtime,
+            preferences=notification_prefs_repo,
         ),
         search_channel_messages=SearchChannelMessages(
             messages=messages_repo, channels=channels_repo
@@ -252,6 +261,15 @@ def create_app(testing: bool = False):
         list_user_channels=ListUserChannels(channels=channels_repo),
         list_notifications=ListNotifications(notifications=notifications_repo),
         mark_notification_read=MarkNotificationRead(notifications=notifications_repo),
+        get_notification_settings=GetNotificationSettings(
+            preferences=notification_prefs_repo, channels=channels_repo
+        ),
+        set_global_notifications=SetGlobalNotifications(
+            preferences=notification_prefs_repo
+        ),
+        toggle_channel_notifications=ToggleChannelNotifications(
+            preferences=notification_prefs_repo, channels=channels_repo
+        ),
         subscribe_push_notifications=SubscribePushNotifications(
             push_subscriptions=push_subscriptions_repo
         ),

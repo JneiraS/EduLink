@@ -1116,6 +1116,26 @@ textarea.form-control:focus {
     transform: translateX(3px);
 }
 
+.channel-row .channel-link {
+    min-width: 0;
+}
+
+.channel-row .channel-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.channel-row .notif-channel-toggle {
+    display: inline-flex;
+    align-items: center;
+    margin-left: 0.5rem;
+}
+
+.notif-global-toggle .form-switch {
+    line-height: 1;
+}
+
 /* ============================================================
    Activity timeline
    ============================================================ */

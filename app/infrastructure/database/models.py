@@ -151,3 +151,18 @@ class ChildModel(db.Model):
     full_name = db.Column(db.String(120), nullable=False)
     class_name = db.Column(db.String(120), nullable=False)
     created_at = db.Column(db.DateTime, default=utc_now, nullable=False)
+
+
+class UserNotificationSettingModel(db.Model):
+    __tablename__ = "user_notification_settings"
+
+    user_id = db.Column(db.Integer, db.ForeignKey(USERS_ID_FK), primary_key=True)
+    global_enabled = db.Column(db.Boolean, default=True, nullable=False)
+
+
+class ChannelNotificationSettingModel(db.Model):
+    __tablename__ = "channel_notification_settings"
+
+    user_id = db.Column(db.Integer, db.ForeignKey(USERS_ID_FK), primary_key=True)
+    channel_id = db.Column(db.Integer, db.ForeignKey("channels.id"), primary_key=True)
+    enabled = db.Column(db.Boolean, default=True, nullable=False)

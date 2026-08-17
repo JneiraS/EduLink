@@ -535,3 +535,92 @@ def test_edit_template_rejects_other_owner(client, app):
 
         template = db.session.get(MessageTemplateModel, template_id)
         assert template.label == "Autre"
+
+
+def test_channels_page_renders_notification_toggles(client, app):
+    teacher_id = create_user(app, role="TEACHER", email="notif1@t.local")
+    channel_id = create_channel(app, "Canal", teacher_id, [teacher_id])
+    login(client, teacher_id)
+    resp = client.get("/messages/channels")
+    assert resp.status_code == 200
+    assert b"notif-global-toggle" in resp.data
+    assert b"Recevoir toutes les notifications" in resp.data
+    assert f"/messages/channels/{channel_id}/notifications".encode() in resp.data
+    assert b"bi-bell" in resp.data
+
+
+def test_global_notifications_toggle_persists(client, app):
+    teacher_id = create_user(app, role="TEACHER", email="notif2@t.local")
+    login(client, teacher_id)
+    resp = client.post(
+        "/messages/notifications/global",
+        data={"enabled": "0"},
+        follow_redirects=True,
+    )
+    assert b"Notifications globales desactivees" in resp.data
+    with app.app_context():
+        from app.extensions import db
+        from app.infrastructure.database.models import UserNotificationSettingModel
+
+        row = db.session.get(UserNotificationSettingModel, teacher_id)
+        assert row is not None and row.global_enabled is False
+
+
+def test_channel_notifications_toggle_persists(client, app):
+    teacher_id = create_user(app, role="TEACHER", email="notif3@t.local")
+    channel_id = create_channel(app, "Canal", teacher_id, [teacher_id])
+    login(client, teacher_id)
+    resp = client.post(
+        f"/messages/channels/{channel_id}/notifications",
+        follow_redirects=True,
+    )
+    assert b"Notifications desactivees" in resp.data
+    with app.app_context():
+        from app.extensions import db
+        from app.infrastructure.database.models import ChannelNotificationSettingModel
+
+        row = db.session.get(
+            ChannelNotificationSettingModel, (teacher_id, channel_id)
+        )
+        assert row is not None and row.enabled is False
+
+
+def test_channel_notifications_toggle_requires_membership(client, app):
+    owner_id = create_user(app, role="TEACHER", email="notif4@t.local")
+    outsider_id = create_user(app, role="PARENT", email="notif5@t.local")
+    channel_id = create_channel(app, "Canal", owner_id, [owner_id])
+    login(client, outsider_id)
+    resp = client.post(
+        f"/messages/channels/{channel_id}/notifications",
+        follow_redirects=True,
+    )
+    assert b"User is not member of this channel" in resp.data
+    with app.app_context():
+        from app.extensions import db
+        from app.infrastructure.database.models import ChannelNotificationSettingModel
+
+        row = db.session.get(
+            ChannelNotificationSettingModel, (outsider_id, channel_id)
+        )
+        assert row is None
+
+
+def test_channel_detail_toggle_notifications(client, app):
+    teacher_id = create_user(app, role="TEACHER", email="notif6@t.local")
+    channel_id = create_channel(app, "Canal", teacher_id, [teacher_id])
+    add_message(app, channel_id, teacher_id, "Bonjour")
+    login(client, teacher_id)
+    resp = client.post(
+        f"/messages/channels/{channel_id}",
+        data={"action": "toggle_notifications"},
+        follow_redirects=True,
+    )
+    assert b"Notifications desactivees" in resp.data
+    with app.app_context():
+        from app.extensions import db
+        from app.infrastructure.database.models import ChannelNotificationSettingModel
+
+        row = db.session.get(
+            ChannelNotificationSettingModel, (teacher_id, channel_id)
+        )
+        assert row is not None and row.enabled is False

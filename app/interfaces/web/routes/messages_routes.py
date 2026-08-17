@@ -40,6 +40,7 @@ def channels():
     channels_data = get_use_cases().list_user_channels.execute(actor)
     direct_channels = [c for c in channels_data if c.kind == "direct"]
     group_channels = [c for c in channels_data if c.kind != "direct"]
+    notif_settings = get_use_cases().get_notification_settings.execute(actor)
     users = sorted(
         get_use_cases().list_all_users.execute(),
         key=lambda u: u.full_name.casefold(),
@@ -54,7 +55,40 @@ def channels():
         form_name=form_name,
         current_user_id=current_user.id,
         can_manage=can_manage,
+        notif_global_enabled=notif_settings["global_enabled"],
+        notif_channel_states=notif_settings["channel_states"],
     )
+
+
+@messages_bp.route("/channels/<int:channel_id>/notifications", methods=["POST"])
+@login_required
+def toggle_channel_notifications(channel_id: int):
+    actor = current_actor()
+    try:
+        enabled = get_use_cases().toggle_channel_notifications.execute(
+            actor, channel_id
+        )
+        flash(
+            "Notifications activees" if enabled else "Notifications desactivees",
+            "success",
+        )
+    except (NotFoundError, AuthorizationError) as exc:
+        flash(str(exc), "danger")
+    return redirect(url_for(MESSAGES_CHANNELS))
+
+
+@messages_bp.route("/notifications/global", methods=["POST"])
+@login_required
+def set_global_notifications():
+    enabled = request.form.get("enabled") == "1"
+    get_use_cases().set_global_notifications.execute(current_actor(), enabled)
+    flash(
+        "Notifications globales activees"
+        if enabled
+        else "Notifications globales desactivees",
+        "success",
+    )
+    return redirect(url_for(MESSAGES_CHANNELS))
 
 
 @messages_bp.route("/new-conversation", methods=["GET", "POST"])
@@ -190,6 +224,21 @@ def channel_detail(channel_id: int):
                 flash(str(exc), "danger")
 
             return redirect(url_for(CHANNEL_DETAIL, channel_id=channel_id))
+        if action == "toggle_notifications":
+            try:
+                enabled = get_use_cases().toggle_channel_notifications.execute(
+                    actor, channel_id
+                )
+                flash(
+                    "Notifications activees"
+                    if enabled
+                    else "Notifications desactivees",
+                    "success",
+                )
+            except (NotFoundError, AuthorizationError) as exc:
+                flash(str(exc), "danger")
+
+            return redirect(url_for(CHANNEL_DETAIL, channel_id=channel_id))
         content = request.form.get("content", "")
         try:
             get_use_cases().send_message.execute(
@@ -224,6 +273,8 @@ def channel_detail(channel_id: int):
         ]
         can_manage_members = actor.role in {UserRole.ADMIN, UserRole.TEACHER}
         message_templates = use_cases.list_message_templates.execute(actor)
+        notif_settings = use_cases.get_notification_settings.execute(actor)
+        notifications_enabled = notif_settings["channel_states"].get(channel_id, True)
 
         if search_query is not None and search_query.strip():
             messages = use_cases.search_channel_messages.execute(
@@ -279,4 +330,5 @@ def channel_detail(channel_id: int):
         oldest_message_id=oldest_message_id,
         search_mode=search_mode,
         search_query=search_query,
+        notifications_enabled=notifications_enabled,
     )

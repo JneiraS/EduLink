@@ -94,6 +94,30 @@ def _actor(uid=1, role=UserRole.TEACHER):
     )
 
 
+class _AllEnabledPrefs:
+    def get_global_enabled(self, user_id):
+        return True
+
+    def set_global_enabled(self, user_id, enabled):
+        pass
+
+    def is_channel_enabled(self, user_id, channel_id):
+        return True
+
+    def set_channel_enabled(self, user_id, channel_id, enabled):
+        pass
+
+    def list_channel_states(self, user_id):
+        return {}
+
+    def is_enabled(self, user_id, channel_id):
+        return True
+
+
+def _all_enabled_prefs():
+    return _AllEnabledPrefs()
+
+
 def test_list_messages_raises_not_found():
     use_case = ListChannelMessages(
         messages=InMemoryMessages(), channels=InMemoryChannels()
@@ -136,6 +160,7 @@ def test_send_message_rejects_oversized_content():
         channels=InMemoryChannels(members=(1,)),
         notifications=InMemoryNotifications(),
         realtime=FakeRealtime(),
+        preferences=_all_enabled_prefs(),
     )
     with pytest.raises(ValidationError):
         use_case.execute(_actor(), channel_id=1, content="x" * 5001)

@@ -125,6 +125,32 @@ class NotificationRepositoryPort(ABC):
         raise NotImplementedError
 
 
+class NotificationPreferencesPort(ABC):
+    @abstractmethod
+    def get_global_enabled(self, user_id: int) -> bool:
+        raise NotImplementedError
+
+    @abstractmethod
+    def set_global_enabled(self, user_id: int, enabled: bool) -> None:
+        raise NotImplementedError
+
+    @abstractmethod
+    def is_channel_enabled(self, user_id: int, channel_id: int) -> bool:
+        raise NotImplementedError
+
+    @abstractmethod
+    def set_channel_enabled(self, user_id: int, channel_id: int, enabled: bool) -> None:
+        raise NotImplementedError
+
+    @abstractmethod
+    def list_channel_states(self, user_id: int) -> dict[int, bool]:
+        raise NotImplementedError
+
+    @abstractmethod
+    def is_enabled(self, user_id: int, channel_id: int) -> bool:
+        raise NotImplementedError
+
+
 class ChannelRepositoryPort(ABC):
     @abstractmethod
     def create(self, channel: Channel) -> Channel:
