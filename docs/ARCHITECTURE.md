@@ -33,7 +33,7 @@ publique pour l'instant.
 | Accusé de réception des annonces (X/Y) | `announcements_routes.py` | `ConfirmAnnouncementRead`, `GetAnnouncementReadStatus` | `announcement_repository.py` |
 | Canaux de messagerie (liste/création) | `messages_routes.py` | `CreateChannel`, `AddChannelMembers`, `ListUserChannels` | `channel_repository.py` |
 | Conversations directes 1:1 | `messages_routes.py` (`/new-conversation`) | `OpenDirectConversation` | `channel_repository.py` |
-| Messages en canal (chat + pagination + recherche ?) | `messages_routes.py` | `SendMessage`, `ListChannelMessages`, `ListChannelMembers`, `SearchChannelMessages` | `message_repository.py` (`save`, `list_by_channel`, `search_by_channel`), `channel_repository.py` |
+| Messages en canal (chat + pagination + recherche + épinglés) | `messages_routes.py` | `SendMessage`, `ListChannelMessages`, `ListChannelMembers`, `SearchChannelMessages`, `PinMessage`, `ListPinnedMessages` | `message_repository.py` (`save`, `list_by_channel`, `search_by_channel`, `set_pinned`, `list_pinned`), `channel_repository.py` |
 | Modèles de messages | `messages_routes.py` (`/templates`, `/templates/<id>/edit`) | `ListMessageTemplates`, `CreateMessageTemplate`, `UpdateMessageTemplate`, `DeleteMessageTemplate` | `message_template_repository.py` |
 | Notifications (liste / lecture) | `notifications_routes.py` | `ListNotifications`, `MarkNotificationRead` | `notification_repository.py` |
 | Push web (abonnement PWA) | `push_routes.py` | `SubscribePushNotifications`, `UnsubscribePushNotifications` | `push_subscription_repository.py` |
@@ -71,9 +71,10 @@ une violation d'architecture.
 ### 2.1 `app/domain/` — le cœur métier
 
 - **`entities/`** — entités **dataclass** (`slots=True`), `id: int | None` :
-  `User`, `Channel` (avec `kind` : `"group"` ou `"direct"`), `Message`,
-  `Announcement` (avec `target_channel_ids` pour le ciblage), `Notification`,
-  `PushSubscription`, `MessageTemplate`, `Child` (enfant rattaché à un parent,
+  `User`, `Channel` (avec `kind` : `"group"` ou `"direct"`), `Message`
+  (avec `is_pinned`), `Announcement` (avec `target_channel_ids` pour le
+  ciblage), `Notification`, `PushSubscription`, `MessageTemplate`, `Child`
+  (enfant rattaché à un parent,
   avec `parent_id` et `class_name`). Exemple :
   `app/domain/entities/user.py`.
   - `UserRole` (enum) : `PARENT` / `TEACHER` / `ADMIN`.
@@ -81,7 +82,8 @@ une violation d'architecture.
 - **`ports/`** — contrats **abstraits** (ABC) :
   - `repositories.py` : `UserRepositoryPort`, `AnnouncementRepositoryPort`
     (dont `mark_read` / `is_read` / `count_read` pour les accusés de réception),
-    `MessageRepositoryPort`, `NotificationRepositoryPort`,
+    `MessageRepositoryPort` (dont `search_by_channel`, `set_pinned` et
+    `list_pinned` pour la recherche et les épinglés), `NotificationRepositoryPort`,
     `ChannelRepositoryPort` (dont `find_direct_between` pour les 1:1 et
     `find_by_name(name, kind)` pour résoudre un canal par nom, optionnellement
     filtré par type — utilisé par le lien enfant → canaux de classe),
@@ -326,7 +328,11 @@ Point d'entrée : `run.py` → `create_app()` + `socketio.run(...)` (host/port v
   `?page=`).
 - Messages de canal : pattern chat — `limit` (défaut 50) des derniers messages
   + lien « charger plus anciens » via `?before=<message_id>`
-  (`list_by_channel(...)` retourne `(messages, has_more)`).
+  (`list_by_channel(...)` retourne `(messages, has_more)`). Les **messages
+  épinglés** (`is_pinned`, `set_pinned` / `list_pinned`) s'affichent dans une
+  section « Épinglés » en tête du canal (hors conversations directes) ; le
+  toggle épingler/désépingler est réservé à `ADMIN`/`TEACHER` (garde dans
+  `PinMessage`).
 
 ### Accès aux dépendances dans les routes
 

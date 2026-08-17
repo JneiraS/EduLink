@@ -26,6 +26,26 @@
                 </div>
 
                 <div class="chat-messages" id="messages-container" aria-live="polite">
+                    {% if pinned_messages and not is_direct and not search_mode %}
+                    <div class="pinned-section">
+                        <div class="pinned-header">
+                            <i class="bi bi-pin-angle-fill me-1" aria-hidden="true"></i>Epingles
+                        </div>
+                        {% for pm in pinned_messages %}
+                        <div class="chat-message chat-message--pinned">
+                            <span class="avatar avatar-sm" aria-hidden="true">
+                                {% set pm_name_parts = pm.sender_name.split()[:2] %}
+                                {{ ((pm_name_parts[0][0] if pm_name_parts else '') ~ (pm_name_parts[1][0] if pm_name_parts|length > 1 else ''))|upper }}
+                            </span>
+                            <div class="bubble">
+                                <div class="bubble-text">{{ pm.content }}</div>
+                                <span class="bubble-time">{{ pm.created_at.strftime('%d/%m/%Y %H:%M') if pm.created_at else
+                                    '' }}</span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
                     {% if has_older %}
                     <div class="load-older text-center">
                         <a class="btn btn-outline-secondary btn-sm"
@@ -53,6 +73,20 @@
                             <span class="bubble-time">{{ m.created_at.strftime('%d/%m/%Y %H:%M') if m.created_at else
                                 '' }}</span>
                         </div>
+                        {% if not is_direct and can_manage_members %}
+                        <form method="post" class="pin-form" data-confirm="{% if m.is_pinned %}Desepingler ce message ?{% else %}Epingler ce message ?{% endif %}">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <input type="hidden" name="action" value="toggle_pin">
+                            <input type="hidden" name="message_id" value="{{ m.id }}">
+                            <input type="hidden" name="pinned" value="{{ '0' if m.is_pinned else '1' }}">
+                            <button type="submit"
+                                class="btn btn-sm {% if m.is_pinned %}btn-warning{% else %}btn-outline-secondary{% endif %}"
+                                title="{% if m.is_pinned %}Desepingler{% else %}Epingler{% endif %}"
+                                aria-label="{% if m.is_pinned %}Desepingler{% else %}Epingler{% endif %}">
+                                <i class="bi bi-pin-angle" aria-hidden="true"></i>
+                            </button>
+                        </form>
+                        {% endif %}
                     </div>
                     {% endfor %}
                     {% else %}

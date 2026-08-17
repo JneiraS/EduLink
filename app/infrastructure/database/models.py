@@ -102,6 +102,7 @@ class MessageModel(db.Model):
     sender_id = db.Column(db.Integer, db.ForeignKey(USERS_ID_FK), nullable=False)
     content = db.Column(db.Text, nullable=False)
     created_at = db.Column(db.DateTime, default=utc_now, nullable=False)
+    is_pinned = db.Column(db.Boolean, default=False, nullable=False)
 
 
 class NotificationModel(db.Model):

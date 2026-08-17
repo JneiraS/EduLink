@@ -2,6 +2,8 @@ import pytest
 
 from app.application.use_cases.message_use_cases import (
     ListChannelMessages,
+    ListPinnedMessages,
+    PinMessage,
     SearchChannelMessages,
     SendMessage,
 )
@@ -38,6 +40,19 @@ class InMemoryMessages:
         ]
         rows.sort(key=lambda m: m.id, reverse=True)
         rows = rows[:limit]
+        rows.reverse()
+        return rows
+
+    def set_pinned(self, message_id, pinned):
+        for m in self.items:
+            if m.id == message_id:
+                m.is_pinned = pinned
+                return m
+        return None
+
+    def list_pinned(self, channel_id):
+        rows = [m for m in self.items if m.channel_id == channel_id and m.is_pinned]
+        rows.sort(key=lambda m: m.id, reverse=True)
         rows.reverse()
         return rows
 
@@ -165,3 +180,70 @@ def test_search_messages_rejects_empty_query():
     )
     with pytest.raises(ValidationError):
         use_case.execute(_actor(), channel_id=1, query="   ")
+
+
+def _add_message(repo, content, channel_id=1):
+    return repo.save(
+        Message(id=None, channel_id=channel_id, sender_id=1, content=content)
+    )
+
+
+def test_list_pinned_requires_membership():
+    use_case = ListPinnedMessages(
+        messages=InMemoryMessages(), channels=InMemoryChannels(members=(1,))
+    )
+    with pytest.raises(AuthorizationError):
+        use_case.execute(_actor(uid=2), channel_id=1)
+
+
+def test_list_pinned_returns_only_pinned():
+    repo = InMemoryMessages()
+    _add_message(repo, "a")
+    pinned = _add_message(repo, "b")
+    _add_message(repo, "c")
+    repo.set_pinned(pinned.id, True)
+    use_case = ListPinnedMessages(
+        messages=repo, channels=InMemoryChannels(members=(1,))
+    )
+    results = use_case.execute(_actor(), channel_id=1)
+    assert [m.id for m in results] == [pinned.id]
+
+
+def test_pin_requires_teacher_or_admin():
+    repo = InMemoryMessages()
+    msg = _add_message(repo, "a")
+    use_case = PinMessage(
+        messages=repo, channels=InMemoryChannels(members=(1,))
+    )
+    with pytest.raises(AuthorizationError):
+        use_case.execute(
+            _actor(role=UserRole.PARENT), channel_id=1, message_id=msg.id, pinned=True
+        )
+
+
+def test_pin_toggles_state():
+    repo = InMemoryMessages()
+    msg = _add_message(repo, "a")
+    use_case = PinMessage(
+        messages=repo, channels=InMemoryChannels(members=(1,))
+    )
+    use_case.execute(_actor(), channel_id=1, message_id=msg.id, pinned=True)
+    assert repo.items[0].is_pinned is True
+    use_case.execute(_actor(), channel_id=1, message_id=msg.id, pinned=False)
+    assert repo.items[0].is_pinned is False
+
+
+def test_pin_message_not_found():
+    use_case = PinMessage(
+        messages=InMemoryMessages(), channels=InMemoryChannels(members=(1,))
+    )
+    with pytest.raises(NotFoundError):
+        use_case.execute(_actor(), channel_id=1, message_id=999, pinned=True)
+
+
+def test_pin_requires_membership():
+    use_case = PinMessage(
+        messages=InMemoryMessages(), channels=InMemoryChannels(members=(1,))
+    )
+    with pytest.raises(AuthorizationError):
+        use_case.execute(_actor(uid=2), channel_id=1, message_id=1, pinned=True)

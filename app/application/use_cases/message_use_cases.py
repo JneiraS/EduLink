@@ -2,7 +2,7 @@ from dataclasses import dataclass
 
 from app.domain.entities.message import Message
 from app.domain.entities.notification import Notification
-from app.domain.entities.user import User
+from app.domain.entities.user import User, UserRole
 from app.domain.errors import AuthorizationError, NotFoundError, ValidationError
 from app.domain.ports.repositories import (
     ChannelRepositoryPort,
@@ -15,6 +15,15 @@ from app.domain.ports.services import RealtimeNotificationPort
 CHANNEL_NOT_FOUND = "Channel not found"
 NOT_A_MEMBER = "User is not member of this channel"
 MAX_MESSAGE_LENGTH = 5000
+
+
+def _assert_channel_access(
+    channels: ChannelRepositoryPort, actor: User, channel_id: int
+) -> None:
+    if not channels.find_by_id(channel_id):
+        raise NotFoundError(CHANNEL_NOT_FOUND)
+    if not channels.is_member(channel_id, actor.id or 0):
+        raise AuthorizationError(NOT_A_MEMBER)
 
 
 @dataclass(slots=True)
@@ -96,10 +105,7 @@ class ListChannelMessages:
         limit: int = 50,
         before_id: int | None = None,
     ):
-        if not self.channels.find_by_id(channel_id):
-            raise NotFoundError(CHANNEL_NOT_FOUND)
-        if not self.channels.is_member(channel_id, actor.id or 0):
-            raise AuthorizationError(NOT_A_MEMBER)
+        _assert_channel_access(self.channels, actor, channel_id)
         return self.messages.list_by_channel(channel_id, limit, before_id)
 
 
@@ -111,10 +117,7 @@ class SearchChannelMessages:
     def execute(
         self, actor: User, channel_id: int, query: str, limit: int = 50
     ) -> list[Message]:
-        if not self.channels.find_by_id(channel_id):
-            raise NotFoundError(CHANNEL_NOT_FOUND)
-        if not self.channels.is_member(channel_id, actor.id or 0):
-            raise AuthorizationError(NOT_A_MEMBER)
+        _assert_channel_access(self.channels, actor, channel_id)
         term = query.strip()
         if not term:
             raise ValidationError("Search query is required")
@@ -123,6 +126,34 @@ class SearchChannelMessages:
                 f"Search query must be at most {MAX_MESSAGE_LENGTH} characters"
             )
         return self.messages.search_by_channel(channel_id, term, limit)
+
+
+@dataclass(slots=True)
+class ListPinnedMessages:
+    messages: MessageRepositoryPort
+    channels: ChannelRepositoryPort
+
+    def execute(self, actor: User, channel_id: int) -> list[Message]:
+        _assert_channel_access(self.channels, actor, channel_id)
+        return self.messages.list_pinned(channel_id)
+
+
+@dataclass(slots=True)
+class PinMessage:
+    messages: MessageRepositoryPort
+    channels: ChannelRepositoryPort
+
+    def execute(
+        self, actor: User, channel_id: int, message_id: int, pinned: bool
+    ) -> None:
+        _assert_channel_access(self.channels, actor, channel_id)
+        if actor.role not in {UserRole.ADMIN, UserRole.TEACHER}:
+            raise AuthorizationError(
+                "Only admins and teachers can pin messages"
+            )
+        message = self.messages.set_pinned(message_id, pinned)
+        if message is None:
+            raise NotFoundError("Message not found")
 
 
 @dataclass(slots=True)

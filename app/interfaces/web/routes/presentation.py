@@ -95,10 +95,12 @@ def resolve_sender_name(member_names, sender_id):
 def build_messages_view(channel_messages, member_names):
     return [
         {
+            "id": message.id,
             "sender_id": message.sender_id,
             "sender_name": resolve_sender_name(member_names, message.sender_id),
             "created_at": message.created_at,
             "content": message.content,
+            "is_pinned": message.is_pinned,
         }
         for message in channel_messages
     ]

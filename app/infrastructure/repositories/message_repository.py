@@ -42,6 +42,23 @@ class SQLAlchemyMessageRepository(MessageRepositoryPort):
         rows.reverse()
         return [self._to_entity(row) for row in rows]
 
+    def set_pinned(self, message_id: int, pinned: bool) -> Message | None:
+        model = db.session.get(MessageModel, message_id)
+        if model is None:
+            return None
+        model.is_pinned = pinned
+        db.session.commit()
+        return self._to_entity(model)
+
+    def list_pinned(self, channel_id: int) -> list[Message]:
+        rows = (
+            MessageModel.query.filter_by(channel_id=channel_id, is_pinned=True)
+            .order_by(MessageModel.created_at.desc())
+            .all()
+        )
+        rows.reverse()
+        return [self._to_entity(row) for row in rows]
+
     def _to_entity(self, model: MessageModel) -> Message:
         return Message(
             id=model.id,
@@ -49,4 +66,5 @@ class SQLAlchemyMessageRepository(MessageRepositoryPort):
             sender_id=model.sender_id,
             content=model.content,
             created_at=model.created_at,
+            is_pinned=model.is_pinned,
         )

@@ -9,3 +9,4 @@ class Message:
     sender_id: int
     content: str
     created_at: datetime | None = None
+    is_pinned: bool = False

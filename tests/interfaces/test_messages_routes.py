@@ -1,5 +1,53 @@
-from app.infrastructure.database.models import ChannelModel, MessageTemplateModel
+from app.infrastructure.database.models import ChannelModel, MessageModel, MessageTemplateModel
 from tests.helpers import add_message, create_channel, create_user, login
+
+
+def test_teacher_can_pin_message(client, app):
+    teacher_id = create_user(app, role="TEACHER", email="pin1@t.local")
+    channel_id = create_channel(app, "Canal", teacher_id, [teacher_id])
+    msg_id = add_message(app, channel_id, teacher_id, "Reglement important")
+    login(client, teacher_id)
+    resp = client.post(
+        f"/messages/channels/{channel_id}",
+        data={"action": "toggle_pin", "message_id": str(msg_id), "pinned": "1"},
+        follow_redirects=True,
+    )
+    assert resp.status_code == 200
+    assert b"Epingles" in resp.data
+    assert b"Reglement important" in resp.data
+    with app.app_context():
+        from app.extensions import db
+
+        assert db.session.get(MessageModel, msg_id).is_pinned is True
+
+
+def test_pin_message_requires_admin_or_teacher(client, app):
+    admin_id = create_user(app, role="ADMIN", email="pin2@t.local")
+    parent_id = create_user(app, role="PARENT", email="pin3@t.local")
+    channel_id = create_channel(app, "Canal", admin_id, [admin_id, parent_id])
+    msg_id = add_message(app, channel_id, admin_id, "Reglement")
+    login(client, parent_id)
+    resp = client.post(
+        f"/messages/channels/{channel_id}",
+        data={"action": "toggle_pin", "message_id": str(msg_id), "pinned": "1"},
+        follow_redirects=True,
+    )
+    assert b"Only admins and teachers can pin messages" in resp.data
+    with app.app_context():
+        from app.extensions import db
+
+        assert db.session.get(MessageModel, msg_id).is_pinned is False
+
+
+def test_channel_detail_hides_pin_for_parent(client, app):
+    admin_id = create_user(app, role="ADMIN", email="pin4@t.local")
+    parent_id = create_user(app, role="PARENT", email="pin5@t.local")
+    channel_id = create_channel(app, "Canal", admin_id, [admin_id, parent_id])
+    add_message(app, channel_id, admin_id, "Bonjour")
+    login(client, parent_id)
+    resp = client.get(f"/messages/channels/{channel_id}")
+    assert resp.status_code == 200
+    assert b'name="action" value="toggle_pin"' not in resp.data
 
 
 def test_channel_detail_search_results(client, app):

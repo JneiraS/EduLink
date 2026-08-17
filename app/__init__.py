@@ -47,7 +47,9 @@ from app.application.use_cases.dashboard_use_case import GetDashboard
 from app.application.use_cases.message_use_cases import (
     ListChannelMembers,
     ListChannelMessages,
+    ListPinnedMessages,
     ListUserChannels,
+    PinMessage,
     SearchChannelMessages,
     SendMessage,
 )
@@ -237,6 +239,10 @@ def create_app(testing: bool = False):
         search_channel_messages=SearchChannelMessages(
             messages=messages_repo, channels=channels_repo
         ),
+        list_pinned_messages=ListPinnedMessages(
+            messages=messages_repo, channels=channels_repo
+        ),
+        pin_message=PinMessage(messages=messages_repo, channels=channels_repo),
         list_channel_messages=ListChannelMessages(
             messages=messages_repo, channels=channels_repo
         ),
