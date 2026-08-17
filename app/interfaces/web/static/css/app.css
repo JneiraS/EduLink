@@ -1748,4 +1748,9 @@ hr {
     .container.py-4 {
         min-height: auto;
     }
+
+    .theme-toggle-btn, .btn.btn-outline-light {
+        width: 100%;
+        border-radius: var(--r-full);
+    }
 }
