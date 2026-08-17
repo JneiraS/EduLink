@@ -218,9 +218,9 @@ class LoginUser:
         if user is None:
             raise AuthenticationError("Invalid credentials")
         if user.password_hash is None:
-            raise AuthenticationError("Account has no password; use the invitation link")
+            raise AuthenticationError("Invalid credentials")
         if not self.hasher.verify_password(plain_password, user.password_hash):
             raise AuthenticationError("Invalid credentials")
         if not user.is_active:
-            raise AuthenticationError("Account disabled")
+            raise AuthenticationError("Invalid credentials")
         return user

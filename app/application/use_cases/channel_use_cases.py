@@ -9,6 +9,7 @@ from app.domain.ports.repositories import ChannelRepositoryPort, UserRepositoryP
 @dataclass(slots=True)
 class CreateChannel:
     channels: ChannelRepositoryPort
+    users: UserRepositoryPort
 
     def execute(self, actor: User, name: str, members: list[int]) -> Channel:
         if actor.role not in {UserRole.ADMIN, UserRole.TEACHER}:
@@ -20,6 +21,11 @@ class CreateChannel:
             raise ValidationError("Channel name must be at most 120 characters")
 
         member_ids = [actor.id or 0, *members]
+        unique_members = sorted(set(member_ids))
+        for member_id in unique_members:
+            if not self.users.find_by_id(member_id):
+                raise ValidationError(f"User {member_id} does not exist")
+
         return self.channels.create_with_members(
             Channel(id=None, name=name, created_by=actor.id or 0),
             member_ids=member_ids,

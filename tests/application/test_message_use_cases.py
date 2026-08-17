@@ -43,6 +43,9 @@ class InMemoryMessages:
         rows.reverse()
         return rows
 
+    def find_by_id(self, message_id):
+        return next((m for m in self.items if m.id == message_id), None)
+
     def set_pinned(self, message_id, pinned):
         for m in self.items:
             if m.id == message_id:
@@ -272,3 +275,15 @@ def test_pin_requires_membership():
     )
     with pytest.raises(AuthorizationError):
         use_case.execute(_actor(uid=2), channel_id=1, message_id=1, pinned=True)
+
+
+def test_pin_rejects_message_from_another_channel():
+    repo = InMemoryMessages()
+    msg = repo.save(
+        Message(id=None, channel_id=999, sender_id=1, content="in other channel")
+    )
+    use_case = PinMessage(
+        messages=repo, channels=InMemoryChannels(members=(1,))
+    )
+    with pytest.raises(AuthorizationError):
+        use_case.execute(_actor(), channel_id=1, message_id=msg.id, pinned=True)

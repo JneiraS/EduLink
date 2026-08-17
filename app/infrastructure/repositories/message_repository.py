@@ -31,16 +31,21 @@ class SQLAlchemyMessageRepository(MessageRepositoryPort):
     def search_by_channel(
         self, channel_id: int, query: str, limit: int = 50
     ) -> list[Message]:
-        pattern = f"%{query}%"
+        escaped = query.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+        pattern = f"%{escaped}%"
         rows = (
             MessageModel.query.filter_by(channel_id=channel_id)
-            .filter(MessageModel.content.ilike(pattern))
+            .filter(MessageModel.content.ilike(pattern, escape="\\"))
             .order_by(MessageModel.id.desc())
             .limit(limit)
             .all()
         )
         rows.reverse()
         return [self._to_entity(row) for row in rows]
+
+    def find_by_id(self, message_id: int) -> Message | None:
+        model = db.session.get(MessageModel, message_id)
+        return self._to_entity(model) if model else None
 
     def set_pinned(self, message_id: int, pinned: bool) -> Message | None:
         model = db.session.get(MessageModel, message_id)

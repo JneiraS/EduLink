@@ -492,6 +492,22 @@ de `channel_detail`, avec la même garde `_assert_channel_access`.
   case, pas dans la route.
 - **Web push / SocketIO** : ne pas bloquer la requête HTTP sur le push ; les
   écritures DB et les émissions socket restent dans la requête, le push part en
-  arrière-plan (`ThreadPoolExecutor`).
-- **Allowlist push** (`endpoint` HTTPS + hôtes FCM/Mozilla/Apple) : ne pas
-  l'élargir sans revue sécurité.
+  arrière-plan (`ThreadPoolExecutor`, borné).
+- **Allowlist push** (`endpoint` HTTPS + hôtes FCM/Mozilla/Apple, **port 443
+  uniquement**) : ne pas l'élargir sans revue sécurité. La clé `p256dh` doit
+  être **exactement 65 octets** (clé publique ECDH P-256 décompressée) et `auth`
+  un secret de 16 octets en base64url — toute autre taille est rejetée par
+  pywebpush et donc rejetée dès la validation (`push_routes.py`). Si vous
+  modifiez ces constantes dans les tests, utilisez une vraie clé P-256 65 octets.
+- **Lecture scopée par appartenance** : quand un use case de lecture expose des
+  données ciblées (annonces, PDF), la garde doit être côté **serveur** dans le
+  use case, pas seulement côté UI. `ListAnnouncements`/`GetAnnouncementPdf`/
+  `ConfirmAnnouncementRead` renvoient 404 hors périmètre. Les listings
+  d'utilisateurs passent par des **`UserSummary`** (`id`/`full_name`/`role`) —
+  ne jamais renvoyer une entité `User` complète (`email`, `password_hash`) dans
+  un contexte template non-admin.
+- **Erreurs de login uniformes** : tout échec de connexion (compte inconnu, pas
+  de mot de passe, mauvais mot de passe, compte désactivé) lève le **même**
+  `AuthenticationError("Invalid credentials")` — ne pas distinguer les cas dans
+  les messages (énumération de comptes). Après authentification réussie :
+  `session.clear()` puis `session.permanent = True` avant `login_user()`.

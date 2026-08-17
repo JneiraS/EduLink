@@ -46,11 +46,14 @@ def _is_pdf_content(upload) -> bool:
 @announcements_bp.route("/", methods=["GET"])
 @login_required
 def list_announcements():
+    actor = current_actor()
     page = max(request.args.get("page", 1, type=int), 1)
-    announcements, total = get_use_cases().list_announcements.execute(page=page)
+    announcements, total = get_use_cases().list_announcements.execute(
+        actor=actor, page=page
+    )
     total_pages = max((total + 9) // 10, 1)
     read_status = get_use_cases().get_announcement_read_status.execute(
-        current_actor(), announcements
+        actor, announcements
     )
     return render_template(
         "announcements/list.html",
@@ -80,6 +83,10 @@ def confirm_read(announcement_id: int):
 def download_announcement_pdf(filename: str):
     safe_name = secure_filename(filename)
     if safe_name != filename or not _allowed_file(safe_name):
+        abort(404)
+    try:
+        get_use_cases().get_announcement_pdf.execute(current_actor(), safe_name)
+    except NotFoundError:
         abort(404)
     return send_from_directory(_uploads_dir(), safe_name, as_attachment=True)
 

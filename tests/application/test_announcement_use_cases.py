@@ -3,6 +3,7 @@ import pytest
 from app.application.use_cases.announcement_use_cases import (
     ConfirmAnnouncementRead,
     CreateAnnouncement,
+    GetAnnouncementPdf,
     GetAnnouncementReadStatus,
     ListAnnouncements,
 )
@@ -24,9 +25,23 @@ class InMemoryAnnouncements:
     def list_all(self):
         return list(self.items)
 
-    def paginate(self, page, per_page):
+    def paginate(self, page, per_page, channel_ids=None):
+        if channel_ids is None:
+            visible = self.items
+        else:
+            visible = [
+                a for a in self.items
+                if not a.target_channel_ids
+                or any(cid in channel_ids for cid in a.target_channel_ids)
+            ]
+        ordered = list(reversed(visible))
         start = (page - 1) * per_page
-        return self.items[start : start + per_page], len(self.items)
+        return ordered[start : start + per_page], len(ordered)
+
+    def find_by_pdf_filename(self, pdf_filename):
+        return next(
+            (a for a in self.items if a.pdf_filename == pdf_filename), None
+        )
 
     def find_by_id(self, announcement_id):
         return next((a for a in self.items if a.id == announcement_id), None)
@@ -59,6 +74,11 @@ class InMemoryUsers:
         return self.users
 
 
+class _ChannelLike:
+    def __init__(self, channel_id):
+        self.id = channel_id
+
+
 class InMemoryChannels:
     def __init__(self):
         self.channels = {}
@@ -70,11 +90,21 @@ class InMemoryChannels:
     def add_channel(self, channel_id):
         self.channels[channel_id] = True
 
+    def is_member(self, channel_id, user_id):
+        return user_id in self.members.get(channel_id, set())
+
     def add_member(self, channel_id, user_id):
         self.members.setdefault(channel_id, set()).add(user_id)
 
     def list_member_ids(self, channel_id):
         return list(self.members.get(channel_id, set()))
+
+    def list_for_user(self, user_id):
+        return [
+            _ChannelLike(channel_id)
+            for channel_id, members in self.members.items()
+            if user_id in members
+        ]
 
 
 class FakeRealtime:
@@ -164,6 +194,7 @@ def test_create_announcement_targets_union_of_channels():
     channels.add_member(10, 1)
     channels.add_member(10, 2)
     channels.add_channel(11)
+    channels.add_member(11, 1)
     channels.add_member(11, 2)
     channels.add_member(11, 3)
     use_case = _make_use_case(users, channels)
@@ -181,12 +212,37 @@ def test_create_announcement_rejects_unknown_channel():
         )
 
 
+def test_create_announcement_teacher_must_be_member_of_target_channel():
+    users = [_user(UserRole.TEACHER, 1), _user(UserRole.PARENT, 2)]
+    channels = InMemoryChannels()
+    channels.add_channel(10)
+    channels.add_member(10, 2)
+    use_case = _make_use_case(users, channels)
+    with pytest.raises(AuthorizationError):
+        use_case.execute(
+            _user(UserRole.TEACHER, 1), "Titre", "Contenu", target_channel_ids=[10]
+        )
+
+
+def test_create_announcement_teacher_member_of_target_channel_allowed():
+    users = [_user(UserRole.TEACHER, 1), _user(UserRole.PARENT, 2)]
+    channels = InMemoryChannels()
+    channels.add_channel(10)
+    channels.add_member(10, 1)
+    channels.add_member(10, 2)
+    use_case = _make_use_case(users, channels)
+    announcement = use_case.execute(
+        _user(UserRole.TEACHER, 1), "Titre", "Contenu", target_channel_ids=[10]
+    )
+    assert announcement.target_channel_ids == [10]
+
+
 def test_confirm_announcement_read_marks_as_read():
     repo = InMemoryAnnouncements()
     announcement = repo.save(
         Announcement(id=None, title="T", content="C", created_by=1, pdf_filename=None)
     )
-    use_case = ConfirmAnnouncementRead(announcements=repo)
+    use_case = ConfirmAnnouncementRead(announcements=repo, channels=InMemoryChannels())
     result = use_case.execute(_user(UserRole.PARENT, 2), announcement.id)
     assert repo.is_read(announcement.id, 2) is True
     assert repo.count_read(announcement.id) == 1
@@ -198,7 +254,7 @@ def test_confirm_announcement_read_is_idempotent():
     announcement = repo.save(
         Announcement(id=None, title="T", content="C", created_by=1, pdf_filename=None)
     )
-    use_case = ConfirmAnnouncementRead(announcements=repo)
+    use_case = ConfirmAnnouncementRead(announcements=repo, channels=InMemoryChannels())
     use_case.execute(_user(UserRole.PARENT, 2), announcement.id)
     use_case.execute(_user(UserRole.PARENT, 2), announcement.id)
     assert repo.count_read(announcement.id) == 1
@@ -206,9 +262,77 @@ def test_confirm_announcement_read_is_idempotent():
 
 def test_confirm_announcement_read_rejects_missing():
     repo = InMemoryAnnouncements()
-    use_case = ConfirmAnnouncementRead(announcements=repo)
+    use_case = ConfirmAnnouncementRead(announcements=repo, channels=InMemoryChannels())
     with pytest.raises(NotFoundError):
         use_case.execute(_user(UserRole.PARENT, 2), 999)
+
+
+def test_confirm_announcement_read_rejects_nonmember_targeted():
+    repo = InMemoryAnnouncements()
+    announcement = repo.save(
+        Announcement(
+            id=None,
+            title="Ciblee",
+            content="C",
+            created_by=1,
+            pdf_filename=None,
+            target_channel_ids=[10],
+        )
+    )
+    channels = InMemoryChannels()
+    channels.add_channel(10)
+    channels.add_member(10, 1)
+    use_case = ConfirmAnnouncementRead(announcements=repo, channels=channels)
+    with pytest.raises(NotFoundError):
+        use_case.execute(_user(UserRole.PARENT, 2), announcement.id)
+
+
+def test_get_announcement_pdf_returns_targeted_for_member():
+    repo = InMemoryAnnouncements()
+    announcement = repo.save(
+        Announcement(
+            id=None,
+            title="Ciblee",
+            content="C",
+            created_by=1,
+            pdf_filename="abc_cours.pdf",
+            target_channel_ids=[10],
+        )
+    )
+    channels = InMemoryChannels()
+    channels.add_channel(10)
+    channels.add_member(10, 2)
+    use_case = GetAnnouncementPdf(announcements=repo, channels=channels)
+    result = use_case.execute(_user(UserRole.PARENT, 2), "abc_cours.pdf")
+    assert result.id == announcement.id
+
+
+def test_get_announcement_pdf_rejects_nonmember():
+    repo = InMemoryAnnouncements()
+    repo.save(
+        Announcement(
+            id=None,
+            title="Ciblee",
+            content="C",
+            created_by=1,
+            pdf_filename="abc_cours.pdf",
+            target_channel_ids=[10],
+        )
+    )
+    channels = InMemoryChannels()
+    channels.add_channel(10)
+    channels.add_member(10, 1)
+    use_case = GetAnnouncementPdf(announcements=repo, channels=channels)
+    with pytest.raises(NotFoundError):
+        use_case.execute(_user(UserRole.PARENT, 3), "abc_cours.pdf")
+
+
+def test_get_announcement_pdf_rejects_unknown():
+    use_case = GetAnnouncementPdf(
+        announcements=InMemoryAnnouncements(), channels=InMemoryChannels()
+    )
+    with pytest.raises(NotFoundError):
+        use_case.execute(_user(UserRole.PARENT, 2), "nope.pdf")
 
 
 def test_get_announcement_read_status_uses_channel_audience():
@@ -270,9 +394,75 @@ def test_list_announcements_paginates():
     repo = InMemoryAnnouncements()
     for i in range(12):
         repo.save(Announcement(id=None, title=f"A{i}", content="c", created_by=1, pdf_filename=None))
-    use_case = ListAnnouncements(announcements=repo)
-    page1, total = use_case.execute(page=1)
+    use_case = ListAnnouncements(announcements=repo, channels=InMemoryChannels())
+    page1, total = use_case.execute(actor=_user(UserRole.PARENT, 2), page=1)
     assert len(page1) == 10
     assert total == 12
-    page2, _ = use_case.execute(page=2)
+    page2, _ = use_case.execute(actor=_user(UserRole.PARENT, 2), page=2)
     assert len(page2) == 2
+
+
+def test_list_announcements_filters_by_actor_channel_membership():
+    repo = InMemoryAnnouncements()
+    global_ann = repo.save(
+        Announcement(id=None, title="Global", content="c", created_by=1, pdf_filename=None)
+    )
+    targeted_ann = repo.save(
+        Announcement(
+            id=None,
+            title="Ciblee",
+            content="c",
+            created_by=1,
+            pdf_filename=None,
+            target_channel_ids=[10],
+        )
+    )
+    channels = InMemoryChannels()
+    channels.add_channel(10)
+    channels.add_member(10, 2)
+    use_case = ListAnnouncements(announcements=repo, channels=channels)
+    visible, total = use_case.execute(actor=_user(UserRole.PARENT, 2), page=1)
+    assert [a.id for a in visible] == [targeted_ann.id, global_ann.id]
+    assert total == 2
+
+
+def test_list_announcements_hides_nonmember_targeted():
+    repo = InMemoryAnnouncements()
+    repo.save(
+        Announcement(
+            id=None,
+            title="Ciblee",
+            content="c",
+            created_by=1,
+            pdf_filename=None,
+            target_channel_ids=[10],
+        )
+    )
+    repo.save(
+        Announcement(id=None, title="Global", content="c", created_by=1, pdf_filename=None)
+    )
+    use_case = ListAnnouncements(announcements=repo, channels=InMemoryChannels())
+    visible, total = use_case.execute(actor=_user(UserRole.PARENT, 3), page=1)
+    assert [a.title for a in visible] == ["Global"]
+    assert total == 1
+
+
+def test_list_announcements_keeps_member_targeted_when_member():
+    repo = InMemoryAnnouncements()
+    repo.save(
+        Announcement(
+            id=None,
+            title="Ciblee",
+            content="c",
+            created_by=1,
+            pdf_filename=None,
+            target_channel_ids=[10],
+        )
+    )
+    channels = InMemoryChannels()
+    channels.add_channel(10)
+    channels.add_member(10, 2)
+    use_case = ListAnnouncements(announcements=repo, channels=channels)
+    visible, total = use_case.execute(actor=_user(UserRole.PARENT, 2), page=1)
+    assert [a.title for a in visible] == ["Ciblee"]
+    assert total == 1

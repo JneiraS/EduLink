@@ -9,7 +9,9 @@ PUBLIC_DEFAULT_SECRET = "dev-secret-change-me"
 
 
 def _forge_session_cookie(secret: str, user_id: int) -> str:
-    app = SimpleNamespace(secret_key=secret)
+    app = SimpleNamespace(
+        secret_key=secret, config={"SECRET_KEY_FALLBACKS": []}
+    )
     serializer = SecureCookieSessionInterface().get_signing_serializer(app)
     return serializer.dumps({"_user_id": str(user_id), "_fresh": True})
 

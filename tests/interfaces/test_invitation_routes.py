@@ -132,7 +132,7 @@ def test_login_without_password_rejected(client, app):
         "/auth/login", data={"email": "nopass@t.local", "password": "whatever"}
     )
     assert response.status_code == 200
-    assert b"Account has no password" in response.data
+    assert b"Invalid credentials" in response.data
 
 
 def test_login_works_after_acceptance(client, app):
@@ -183,3 +183,22 @@ def test_admin_regenerate_requires_admin(client, app):
     login(client, parent_id)
     response = client.post(f"/admin/members/{user_id2}/invite", follow_redirects=True)
     assert b"Acces reserve" in response.data
+
+
+def test_invite_post_rate_limited(client, app):
+    from app.extensions import limiter
+
+    app.config["RATE_LIMIT_ENABLED"] = True
+    limiter.enabled = True
+    limiter.reset()
+    _, token = _make_invited_user(app, email="rl-invite@t.local")
+    for _ in range(10):
+        client.post(
+            f"/auth/invite/{token}",
+            data={"password": "newpass123", "confirm": "newpass123"},
+        )
+    response = client.post(
+        f"/auth/invite/{token}",
+        data={"password": "newpass123", "confirm": "newpass123"},
+    )
+    assert response.status_code == 429

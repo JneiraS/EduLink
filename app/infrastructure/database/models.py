@@ -112,7 +112,7 @@ class NotificationModel(db.Model):
     user_id = db.Column(
         db.Integer, db.ForeignKey(USERS_ID_FK), nullable=False, index=True
     )
-    content = db.Column(db.String(255), nullable=False)
+    content = db.Column(db.Text, nullable=False)
     is_read = db.Column(db.Boolean, default=False, nullable=False)
     channel_id = db.Column(
         db.Integer, db.ForeignKey("channels.id"), nullable=True, index=True

@@ -2,7 +2,7 @@ import pytest
 
 from app.application.use_cases.auth_use_cases import LoginUser, RegisterUser
 from app.domain.entities.user import User, UserRole
-from app.domain.errors import AuthorizationError, ValidationError
+from app.domain.errors import AuthenticationError, AuthorizationError, ValidationError
 
 
 class InMemoryUsers:
@@ -110,3 +110,39 @@ def test_login_user_success():
     user = use_case.execute("admin@test.local", "secret")
 
     assert user.email == "admin@test.local"
+
+
+def test_login_failure_messages_are_generic():
+    repo = InMemoryUsers()
+    hasher = FakeHasher()
+    repo.save(
+        User(
+            id=1,
+            full_name="Invited",
+            email="invited@test.local",
+            role=UserRole.PARENT,
+            password_hash=None,
+            is_active=True,
+        )
+    )
+    repo.save(
+        User(
+            id=2,
+            full_name="Disabled",
+            email="disabled@test.local",
+            role=UserRole.PARENT,
+            password_hash=hasher.hash_password("secret"),
+            is_active=False,
+        )
+    )
+    use_case = LoginUser(users=repo, hasher=hasher)
+
+    for email, password in [
+        ("ghost@test.local", "secret"),
+        ("invited@test.local", "secret"),
+        ("disabled@test.local", "secret"),
+        ("disabled@test.local", "nope"),
+    ]:
+        with pytest.raises(AuthenticationError) as excinfo:
+            use_case.execute(email, password)
+        assert str(excinfo.value) == "Invalid credentials"

@@ -1,5 +1,5 @@
 from sqlalchemy import delete as sa_delete
-from sqlalchemy import select
+from sqlalchemy import or_, select
 
 from app.domain.entities.announcement import Announcement
 from app.domain.ports.repositories import AnnouncementRepositoryPort
@@ -59,14 +59,30 @@ class SQLAlchemyAnnouncementRepository(AnnouncementRepositoryPort):
         ).all()
         return [self._to_entity(row) for row in rows]
 
-    def paginate(self, page: int, per_page: int) -> tuple[list[Announcement], int]:
-        total = AnnouncementModel.query.count()
-        rows = (
-            AnnouncementModel.query.order_by(AnnouncementModel.created_at.desc())
-            .offset((page - 1) * per_page)
-            .limit(per_page)
-            .all()
-        )
+    def find_by_pdf_filename(self, pdf_filename: str) -> Announcement | None:
+        model = AnnouncementModel.query.filter_by(pdf_filename=pdf_filename).first()
+        return self._to_entity(model) if model else None
+
+    def paginate(
+        self,
+        page: int,
+        per_page: int,
+        channel_ids: list[int] | None = None,
+    ) -> tuple[list[Announcement], int]:
+        query = AnnouncementModel.query.order_by(AnnouncementModel.created_at.desc())
+        if channel_ids is not None:
+            targeted_subquery = select(announcement_channels.c.announcement_id)
+            visible_targeted = select(announcement_channels.c.announcement_id).where(
+                announcement_channels.c.channel_id.in_(channel_ids)
+            )
+            query = query.filter(
+                or_(
+                    AnnouncementModel.id.notin_(targeted_subquery),
+                    AnnouncementModel.id.in_(visible_targeted),
+                )
+            )
+        total = query.count()
+        rows = query.offset((page - 1) * per_page).limit(per_page).all()
         return [self._to_entity(row) for row in rows], total
 
     def _target_channel_ids(self, announcement_id: int) -> list[int]:

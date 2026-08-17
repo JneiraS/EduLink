@@ -12,6 +12,7 @@ from app.application.use_cases.admin_use_cases import (
 from app.application.use_cases.announcement_use_cases import (
     ConfirmAnnouncementRead,
     CreateAnnouncement,
+    GetAnnouncementPdf,
     GetAnnouncementReadStatus,
     ListAnnouncements,
 )
@@ -76,6 +77,7 @@ class UseCaseContainer:
     list_announcements: ListAnnouncements
     confirm_announcement_read: ConfirmAnnouncementRead
     get_announcement_read_status: GetAnnouncementReadStatus
+    get_announcement_pdf: GetAnnouncementPdf
     get_dashboard: GetDashboard
     send_message: SendMessage
     search_channel_messages: SearchChannelMessages

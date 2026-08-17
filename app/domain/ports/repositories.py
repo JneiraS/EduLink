@@ -69,7 +69,16 @@ class AnnouncementRepositoryPort(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def paginate(self, page: int, per_page: int) -> tuple[list[Announcement], int]:
+    def find_by_pdf_filename(self, pdf_filename: str) -> Announcement | None:
+        raise NotImplementedError
+
+    @abstractmethod
+    def paginate(
+        self,
+        page: int,
+        per_page: int,
+        channel_ids: list[int] | None = None,
+    ) -> tuple[list[Announcement], int]:
         raise NotImplementedError
 
     @abstractmethod
@@ -108,6 +117,10 @@ class MessageRepositoryPort(ABC):
 
     @abstractmethod
     def list_latest_by_channels(self, channel_ids: list[int]) -> dict[int, Message]:
+        raise NotImplementedError
+
+    @abstractmethod
+    def find_by_id(self, message_id: int) -> Message | None:
         raise NotImplementedError
 
     @abstractmethod

@@ -14,15 +14,21 @@ ALLOWED_PUSH_HOSTS = {
     "web.push.apple.com",
 }
 
+ALLOWED_PUSH_PORTS = {443, None}
 
-def _is_valid_base64url(value: str) -> bool:
+
+def _is_valid_base64url(value: str, expected_length: int | None = None) -> bool:
     if not value or len(value) > 255:
         return False
     try:
         decoded = base64.urlsafe_b64decode(value + "=" * (-len(value) % 4))
     except (ValueError, TypeError):
         return False
-    return len(decoded) >= 16
+    if expected_length is not None and len(decoded) != expected_length:
+        return False
+    if expected_length is None and len(decoded) < 16:
+        return False
+    return True
 
 
 def _validate_subscription_payload(payload: dict) -> bool:
@@ -39,8 +45,14 @@ def _validate_subscription_payload(payload: dict) -> bool:
         return False
     if parsed.hostname not in ALLOWED_PUSH_HOSTS:
         return False
+    if parsed.port not in ALLOWED_PUSH_PORTS:
+        return False
 
-    return _is_valid_base64url(p256dh_key) and _is_valid_base64url(auth_key)
+    # ECDH P-256 public key is exactly 65 bytes (0x04 || X || Y);
+    # pywebpush rejects anything else, so be strict here.
+    return _is_valid_base64url(p256dh_key, expected_length=65) and _is_valid_base64url(
+        auth_key
+    )
 
 
 @push_bp.route("/service-worker.js", methods=["GET"])

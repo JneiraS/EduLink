@@ -23,13 +23,16 @@ publique pour l'instant.
 - Web Push (pywebpush + VAPID) pour la PWA
 - Bootstrap 5 (CDN) + CSS custom dans `app/interfaces/web/static/`
 
+Versions critiques : Flask ≥ 3.1.3 et Werkzeug ≥ 3.1.5 (correctifs de
+sécurité — ne pas revenir en arrière).
+
 ### Fonctionnalités et mapping (route → use case → repository)
 
 | Fonctionnalité | Blueprint (`interfaces/web/routes/`) | Use case (`application/use_cases/`) | Adapter principal (`infrastructure/`) |
 |---|---|---|---|
 | Login / logout / création de comptes | `auth_routes.py` | `LoginUser`, `RegisterUser` | `user_repository.py`, `auth/password_hasher.py` |
 | Dashboard adapté au rôle | `dashboard_routes.py` | `GetDashboard` | `announcement_repository.py`, `notification_repository.py`, `channel_repository.py`, `message_repository.py`, `children_repository.py`, `user_repository.py` |
-| Annonces (liste, création ciblée, PDF) | `announcements_routes.py` | `CreateAnnouncement` (audience = « Tous » ou canaux de l'auteur), `ListAnnouncements` | `announcement_repository.py`, `channel_repository.py` |
+| Annonces (liste, création ciblée, PDF) | `announcements_routes.py` | `CreateAnnouncement` (audience = « Tous » ou canaux de l'auteur), `ListAnnouncements` (visibilité scopée par appartenance), `GetAnnouncementPdf` | `announcement_repository.py` (`paginate`, `find_by_pdf_filename`), `channel_repository.py` |
 | Accusé de réception des annonces (X/Y) | `announcements_routes.py` | `ConfirmAnnouncementRead`, `GetAnnouncementReadStatus` | `announcement_repository.py` |
 | Canaux de messagerie (liste/création) | `messages_routes.py` | `CreateChannel`, `AddChannelMembers`, `ListUserChannels` | `channel_repository.py` |
 | Conversations directes 1:1 | `messages_routes.py` (`/new-conversation`) | `OpenDirectConversation` | `channel_repository.py` |
@@ -40,7 +43,7 @@ publique pour l'instant.
 | Push web (abonnement PWA) | `push_routes.py` | `SubscribePushNotifications`, `UnsubscribePushNotifications` | `push_subscription_repository.py` |
 | **Administration** (création de comptes, rôles, activ./désactiv., suppression) | `admin_routes.py` + lien vers `auth_routes.py` (`/auth/users/new`) | `ListUsersForAdmin`, `UpdateUserRole`, `ToggleUserActive`, `ListAnnouncementsForAdmin`, `DeleteAnnouncement`, `ListChannelsForAdmin`, `DeleteChannel` + `RegisterUser` | `user_repository.py`, `announcement_repository.py`, `channel_repository.py` |
 | **Enfants** (rattachement à un parent, lien aux canaux de classe) | `admin_routes.py` (`/admin/children...`) + `parent_routes.py` (`/parent/children...`) | `CreateChild`, `ListChildren`, `ListClassNames`, `DeleteChild`, `LinkChildToClassChannels` | `children_repository.py`, `channel_repository.py` |
-| Requêtes utilitaires (lecture) | routes diverses | `ListAllUsers`, `FindUsersByIds` | `user_repository.py` |
+| Requêtes utilitaires (lecture) | routes diverses | `ListAllUsers`, `FindUsersByIds` (renvoient des `UserSummary` : `id`/`full_name`/`role` — **jamais** `email`/`password_hash`), `ListChannelMembers` (idem) | `user_repository.py` |
 
 Le temps réel n'apparaît pas dans un blueprint : `SocketIONotificationService`
 (`infrastructure/notifications/socketio_service.py`) implémente
@@ -76,16 +79,19 @@ une violation d'architecture.
   (avec `is_pinned`), `Announcement` (avec `target_channel_ids` pour le
   ciblage), `Notification`, `PushSubscription`, `MessageTemplate`, `Child`
   (enfant rattaché à un parent,
-  avec `parent_id` et `class_name`). Exemple :
+  avec `parent_id` et `class_name`), et `UserSummary` (DTO de lecture :
+  `id`/`full_name`/`role` uniquement). Exemple :
   `app/domain/entities/user.py`.
   - `UserRole` (enum) : `PARENT` / `TEACHER` / `ADMIN`.
   - « Peut gérer les membres d'un canal » = `ADMIN` ou `TEACHER`.
 - **`ports/`** — contrats **abstraits** (ABC) :
-  - `repositories.py` : `UserRepositoryPort`, `AnnouncementRepositoryPort`
-    (dont `mark_read` / `is_read` / `count_read` pour les accusés de réception et
-    `count_unread_for_user` pour le compteur « annonces non lues » du dashboard),
+  - `repositories.py` : `UserRepositoryPort`, `AnnouncementRepositoryPort` (dont `mark_read` / `is_read` / `count_read` pour les accusés de réception,
+    `count_unread_for_user` pour le compteur « annonces non lues » du dashboard,
+    `paginate(page, per_page, channel_ids=None)` pour la liste scopée par
+    appartenance, et `find_by_pdf_filename` pour servir le PDF),
     `MessageRepositoryPort` (dont `search_by_channel`, `set_pinned` et
-    `list_pinned` pour la recherche et les épinglés, et `list_latest_by_channels`
+    `list_pinned` pour la recherche et les épinglés, `find_by_id` pour la garde
+    d'appartenance de `PinMessage`, et `list_latest_by_channels`
     — dernier message par canal, une requête groupée, pour l'aperçu du dashboard),
     `NotificationRepositoryPort` (dont `count_unread` pour la stat « non lus » et
     `mark_channel_read` — marque lues les notifications d'un canal quand on
@@ -219,7 +225,10 @@ ait connaissance.
 Tout est assemblé dans **`app/__init__.py` → `create_app()`** :
 
 1. Configuration : `TestingConfig` si `testing=True`, sinon
-   `DevelopmentConfig` (depuis `app/config/settings.py`).
+   `ProductionConfig` si `APP_ENV=production`, sinon `DevelopmentConfig`
+   (depuis `app/config/settings.py`). `ProductionConfig` force
+   `SESSION_COOKIE_SECURE`, `HTTPONLY`, `SameSite=Lax` et une
+   `PERMANENT_SESSION_LIFETIME` (défaut 12 h).
 2. `_resolve_secret_key(app)` : `SECRET_KEY` = env var, sinon clé aléatoire
    persistée dans `instance/secret_key` (0600, gitignoré). Le défaut public
    `dev-secret-change-me` n'est **jamais** utilisé.
@@ -262,8 +271,16 @@ Point d'entrée : `run.py` → `create_app()` + `socketio.run(...)` (host/port v
 - `CreateAnnouncement` notifie **tous** les utilisateurs sauf si
   `target_channel_ids` est renseigné : l'audience est alors l'**union des
   membres des canaux ciblés** (chaque canal doit exister → `NotFoundError`).
-  Le sélecteur de la page ne propose que **les canaux de l'auteur**
-  (`list_user_channels`) ; « Tous » reste disponible.
+  Un `TEACHER` ne peut cibler que des canaux **dont il est membre**
+  (`AuthorizationError` sinon) ; l'`ADMIN` peut tout cibler. Le sélecteur de la
+  page ne propose que **les canaux de l'auteur** (`list_user_channels`) ;
+  « Tous » reste disponible.
+- **Visibilité en lecture** : `ListAnnouncements` ne renvoie que les annonces
+  globales **ou** ciblées vers un canal dont l'acteur est membre
+  (`paginate(..., channel_ids)` filtre via `announcement_channels`). Le
+  téléchargement du PDF (`GetAnnouncementPdf` + route `/files/<filename>`)
+  applique la même garde : un non-membre reçoit un 404. `ConfirmAnnouncementRead`
+  refuse aussi les annonces hors périmètre (404).
 - Les accusés de réception sont idempotents (`mark_read`). `GetAnnouncementReadStatus`
   calcule le dénominateur « X/Y » : union des membres des canaux ciblés pour une
   annonce ciblée, sinon le nombre total d'utilisateurs. Le compteur « Vu par
@@ -307,18 +324,32 @@ Point d'entrée : `run.py` → `create_app()` + `socketio.run(...)` (host/port v
 - CSRF activé en dev, désactivé en test (`TestingConfig.WTF_CSRF_ENABLED =
   False`).
 - Login POST rate-limité (5/15 min/IP) via Flask-Limiter en dev
-  (`RATE_LIMIT_ENABLED`).
+  (`RATE_LIMIT_ENABLED`) ; `/auth/invite/<token>` POST est limité à
+  10/heure/IP. Tous les échecs de login lèvent le **même** message
+  « Invalid credentials » (pas d'énumération de comptes), et la session est
+  `session.clear()` + `session.permanent = True` avant `login_user()`.
 - CSP `script-src 'self'` + CDNs (pas de `'unsafe-inline'` pour scripts) → tout
   JS custom doit vivre dans `static/js/app.js`.
-- Uploads : dossier `UPLOAD_FOLDER` (défaut `uploads/`), **uniquement PDF**
+- Uploads : dossier `UPLOAD_FOLDER` (défaut `uploads/`, gitignoré), **uniquement PDF**
   (`ALLOWED_EXTENSIONS = {"pdf"}`), **max 5 MB** (`MAX_CONTENT_LENGTH`), plus
   vérification des octets magiques `%PDF` avant sauvegarde.
-- Push : `endpoint` dans une allowlist (HTTPS + hôtes FCM/Mozilla/Apple) et clés
-  `p256dh`/`auth` en base64url valide (garde SSRF dans `push_routes.py`). Ne
-  pas élargir l'allowlist sans revue sécurité.
+- Push : `endpoint` dans une allowlist (HTTPS + hôtes FCM/Mozilla/Apple, port 443
+  uniquement) et clés `p256dh` **exactement 65 octets** (clé publique ECDH P-256
+  décompressée — pywebpush rejette toute autre taille) / `auth` en base64url
+  valide (garde SSRF + validation stricte dans `push_routes.py`). Ne
+  pas élargir l'allowlist sans revue sécurité. L'envoi push part d'un
+  `ThreadPoolExecutor` borné (`_WEB_PUSH_WORKERS = 4`).
 - Secrets : `.env` gitignoré ; ne jamais commiter ni logger les clés VAPID ni le
   mot de passe admin. L'admin seed n'est imprimé en console **que** si
   `EDULINK_DEBUG=1`.
+- Sessions : `SESSION_COOKIE_HTTPONLY`, `SameSite=Lax` ; `Secure` + HSTS en
+  production. `session.permanent` étend le cookie à `PERMANENT_SESSION_LIFETIME`.
+- Canaux : `CreateChannel` vérifie que chaque membre existe (pas de membres
+  fantômes) ; `CreateAnnouncement` impose qu'un `TEACHER` ne cible que des
+  canaux dont il est membre (l'`ADMIN` peut tout cibler). `PinMessage` vérifie
+  que le message appartient bien au canal (anti-BOLA inter-canaux).
+- Recherche : les wildcards SQL `%`/`_` dans la requête de recherche de messages
+  sont échappés (`escape="\\"`) pour rester littéraux.
 
 ### Données & migrations
 
@@ -327,7 +358,9 @@ Point d'entrée : `run.py` → `create_app()` + `socketio.run(...)` (host/port v
   explicite. En test, c'est `db.create_all()` sur la base `:memory:` (Alembic
   ne peut pas partager une connexion `:memory:`). **Tout changement de schéma
   passe par une nouvelle migration Alembic**, pas par `create_all`.
-- Notifications : la colonne `channel_id` (nullable) relie les notifications de
+- Notifications : la colonne `content` est un **`Text`** (les titres d'annonce
+  vont jusqu'à 255 caractères, « Nouvelle annonce: … » pourrait déborder un
+  `String(255)`). La colonne `channel_id` (nullable) relie les notifications de
   message à un canal ; les notifications d'annonce la laissent `NULL`. L'UI
   navigue via `n.channel_id` — ne **pas** parser la chaîne `content`.
 - **Préférences de notification** : deux tables — `user_notification_settings`
@@ -341,8 +374,8 @@ Point d'entrée : `run.py` → `create_app()` + `socketio.run(...)` (host/port v
 
 ### Pagination
 
-- Annonces : pagination par page (`paginate(page, per_page)`, défaut 10,
-  `?page=`).
+- Annonces : pagination par page (`paginate(page, per_page, channel_ids)`,
+  défaut 10, `?page=`) — la liste est scopée par appartenance.
 - Messages de canal : pattern chat — `limit` (défaut 50) des derniers messages
   + lien « charger plus anciens » via `?before=<message_id>`
   (`list_by_channel(...)` retourne `(messages, has_more)`). Les **messages
@@ -372,6 +405,8 @@ Point d'entrée : `run.py` → `create_app()` + `socketio.run(...)` (host/port v
 | `UPLOAD_FOLDER` | Dossier des PDF (défaut `uploads/`) |
 | `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` / `VAPID_SUBJECT` | Web push (tests : vides et hermétiques) |
 | `SESSION_COOKIE_SECURE` | Cookie session en HTTPS |
+| `APP_ENV=production` | Bascule sur `ProductionConfig` (cookie Secure, HSTS, expiration de session) |
+| `SESSION_LIFETIME_SECONDS` | Durée de session en production (défaut 43200 = 12 h) |
 
 ---
 

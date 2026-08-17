@@ -48,10 +48,17 @@ class CreateAnnouncement:
         target_channel_ids = sorted(set(int(cid) for cid in (target_channel_ids or [])))
 
         if target_channel_ids:
-            audience: set[int] = set()
             for channel_id in target_channel_ids:
                 if not self.channels.find_by_id(channel_id):
                     raise NotFoundError(f"Channel {channel_id} not found")
+                if actor.role != UserRole.ADMIN and not self.channels.is_member(
+                    channel_id, actor.id or 0
+                ):
+                    raise AuthorizationError(
+                        "Teachers can only target channels they belong to"
+                    )
+            audience: set[int] = set()
+            for channel_id in target_channel_ids:
                 audience.update(self.channels.list_member_ids(channel_id))
         else:
             audience = {user.id or 0 for user in self.users.list_users()}
@@ -90,20 +97,57 @@ class CreateAnnouncement:
 @dataclass(slots=True)
 class ListAnnouncements:
     announcements: AnnouncementRepositoryPort
+    channels: ChannelRepositoryPort
 
-    def execute(self, page: int = 1, per_page: int = 10):
-        return self.announcements.paginate(page, per_page)
+    def execute(self, actor: User, page: int = 1, per_page: int = 10):
+        channel_ids = [c.id or 0 for c in self.channels.list_for_user(actor.id or 0)]
+        return self.announcements.paginate(page, per_page, channel_ids)
 
 
 @dataclass(slots=True)
 class ConfirmAnnouncementRead:
     announcements: AnnouncementRepositoryPort
+    channels: ChannelRepositoryPort
 
     def execute(self, actor: User, announcement_id: int) -> Announcement:
         announcement = self.announcements.find_by_id(announcement_id)
         if announcement is None:
             raise NotFoundError("Announcement not found")
+        if not self._can_view(actor, announcement):
+            raise NotFoundError("Announcement not found")
         self.announcements.mark_read(announcement_id, actor.id or 0)
+        return announcement
+
+    def _can_view(self, actor: User, announcement: Announcement) -> bool:
+        if not announcement.target_channel_ids:
+            return True
+        channel_ids = {
+            channel.id or 0
+            for channel in self.channels.list_for_user(actor.id or 0)
+        }
+        return any(
+            target in channel_ids for target in announcement.target_channel_ids
+        )
+
+
+@dataclass(slots=True)
+class GetAnnouncementPdf:
+    announcements: AnnouncementRepositoryPort
+    channels: ChannelRepositoryPort
+
+    def execute(self, actor: User, pdf_filename: str) -> Announcement:
+        announcement = self.announcements.find_by_pdf_filename(pdf_filename)
+        if announcement is None:
+            raise NotFoundError("Announcement not found")
+        if announcement.target_channel_ids:
+            channel_ids = {
+                channel.id or 0
+                for channel in self.channels.list_for_user(actor.id or 0)
+            }
+            if not any(
+                target in channel_ids for target in announcement.target_channel_ids
+            ):
+                raise NotFoundError("Announcement not found")
         return announcement
 
 

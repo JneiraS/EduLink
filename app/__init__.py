@@ -27,6 +27,7 @@ from app.application.use_cases.admin_use_cases import (
 from app.application.use_cases.announcement_use_cases import (
     ConfirmAnnouncementRead,
     CreateAnnouncement,
+    GetAnnouncementPdf,
     GetAnnouncementReadStatus,
     ListAnnouncements,
 )
@@ -77,7 +78,11 @@ from app.application.use_cases.children_use_cases import (
     ListChildren,
     ListClassNames,
 )
-from app.config.settings import DevelopmentConfig, TestingConfig
+from app.config.settings import (
+    DevelopmentConfig,
+    ProductionConfig,
+    TestingConfig,
+)
 from app.domain.errors import DomainError
 from app.extensions import csrf, db, limiter, login_manager, socketio
 from app.infrastructure.auth.password_hasher import WerkzeugPasswordHasher
@@ -128,7 +133,12 @@ def create_app(testing: bool = False):
         template_folder="interfaces/web/templates",
         static_folder="interfaces/web/static",
     )
-    app.config.from_object(TestingConfig if testing else DevelopmentConfig)
+    if testing:
+        app.config.from_object(TestingConfig)
+    elif os.getenv("APP_ENV") == "production":
+        app.config.from_object(ProductionConfig)
+    else:
+        app.config.from_object(DevelopmentConfig)
 
     _resolve_secret_key(app)
 
@@ -227,9 +237,14 @@ def create_app(testing: bool = False):
             channels=channels_repo,
             realtime=realtime,
         ),
-        list_announcements=ListAnnouncements(announcements=announcements_repo),
+        list_announcements=ListAnnouncements(
+            announcements=announcements_repo, channels=channels_repo
+        ),
         confirm_announcement_read=ConfirmAnnouncementRead(
-            announcements=announcements_repo
+            announcements=announcements_repo, channels=channels_repo
+        ),
+        get_announcement_pdf=GetAnnouncementPdf(
+            announcements=announcements_repo, channels=channels_repo
         ),
         get_announcement_read_status=GetAnnouncementReadStatus(
             announcements=announcements_repo,
@@ -297,7 +312,7 @@ def create_app(testing: bool = False):
         update_message_template=UpdateMessageTemplate(
             templates=message_templates_repo
         ),
-        create_channel=CreateChannel(channels=channels_repo),
+        create_channel=CreateChannel(channels=channels_repo, users=users_repo),
         add_channel_members=AddChannelMembers(
             channels=channels_repo,
             users=users_repo,

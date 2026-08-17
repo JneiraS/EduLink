@@ -3,7 +3,7 @@ import re
 from tests.helpers import create_user, login
 
 PUSH_ENDPOINT = "https://fcm.googleapis.com/fcm/send/e1"
-P256DH = "BP0GtYpE8H4UjLm5kR8H8xk1Wq1F5Bt3jPyXN1g1a6EeK0mQ4nQrR7S0yYg2cVdWjv7I2X9zWfQbKpO9uU8V"
+P256DH = "BMEGka7yiRJ2WSoP3fYnVZbe73HGxq_ss3XLmRW_N2MhwPumjZaejBEWq81Qkk3ciBKfJTVBoFSccKxWXsZvqSo"
 AUTH = "kL5mN3pR8sT2vW6xY9zB0dF4gH1jJ7aQ"
 
 

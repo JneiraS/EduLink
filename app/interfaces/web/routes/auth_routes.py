@@ -1,4 +1,12 @@
-from flask import Blueprint, flash, redirect, render_template, request, url_for
+from flask import (
+    Blueprint,
+    flash,
+    redirect,
+    render_template,
+    request,
+    session,
+    url_for,
+)
 from flask_login import current_user, login_required, login_user, logout_user
 
 from app.domain.entities.user import UserRole
@@ -22,6 +30,8 @@ def login():
 
         try:
             user = get_use_cases().login_user.execute(email, password)
+            session.clear()
+            session.permanent = True
             login_user(get_services()["users"].get_auth_model(user.id))
             return redirect(url_for(DASHBOARD_HOME))
         except AuthenticationError as exc:
@@ -73,6 +83,7 @@ def create_user():
 
 
 @auth_bp.route("/invite/<token>", methods=["GET", "POST"])
+@limiter.limit("10 per hour", methods=["POST"])
 def invite(token: str):
     if current_user.is_authenticated:
         return redirect(url_for(DASHBOARD_HOME))
@@ -91,6 +102,8 @@ def invite(token: str):
             return render_template("auth/set_password.html", user=user, token=token)
         try:
             accepted = get_use_cases().accept_invitation.execute(token, password)
+            session.clear()
+            session.permanent = True
             login_user(get_services()["users"].get_auth_model(accepted.id))
             flash("Mot de passe defini, bienvenue !", "success")
             return redirect(url_for(DASHBOARD_HOME))

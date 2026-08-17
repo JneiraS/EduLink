@@ -133,7 +133,7 @@ def test_admin_toggle_active_success_blocks_login(client, app):
         data={"email": "victime@admin.local", "password": "secret"},
     )
     assert login_response.status_code == 200
-    assert b"Account disabled" in login_response.data
+    assert b"Invalid credentials" in login_response.data
 
 
 def test_admin_toggle_active_rejects_self(client, app):

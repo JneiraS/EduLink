@@ -54,6 +54,10 @@ class InMemoryUsers:
     def __init__(self):
         self.users = []
 
+    def add(self, user):
+        self.users.append(user)
+        return user
+
     def find_by_id(self, user_id):
         return next((u for u in self.users if u.id == user_id), None)
 
@@ -66,28 +70,50 @@ def _actor(role=UserRole.TEACHER, uid=1):
 
 
 def test_create_channel_requires_admin_or_teacher():
-    use_case = CreateChannel(channels=InMemoryChannels())
+    users = InMemoryUsers()
+    users.add(_actor(UserRole.TEACHER, 1))
+    users.add(_actor(UserRole.PARENT, 2))
+    use_case = CreateChannel(channels=InMemoryChannels(), users=users)
     with pytest.raises(AuthorizationError):
         use_case.execute(_actor(UserRole.PARENT, 1), "C", [2])
 
 
 def test_create_channel_requires_name():
-    use_case = CreateChannel(channels=InMemoryChannels())
+    users = InMemoryUsers()
+    users.add(_actor(UserRole.TEACHER, 1))
+    users.add(_actor(UserRole.PARENT, 2))
+    use_case = CreateChannel(channels=InMemoryChannels(), users=users)
     with pytest.raises(ValidationError):
         use_case.execute(_actor(), "   ", [2])
 
 
 def test_create_channel_rejects_oversized_name():
-    use_case = CreateChannel(channels=InMemoryChannels())
+    users = InMemoryUsers()
+    users.add(_actor(UserRole.TEACHER, 1))
+    users.add(_actor(UserRole.PARENT, 2))
+    use_case = CreateChannel(channels=InMemoryChannels(), users=users)
     with pytest.raises(ValidationError):
         use_case.execute(_actor(), "x" * 121, [2])
 
 
 def test_create_channel_adds_creator_and_members():
     channels = InMemoryChannels()
-    use_case = CreateChannel(channels=channels)
+    users = InMemoryUsers()
+    users.add(_actor(UserRole.TEACHER, 1))
+    users.add(_actor(UserRole.PARENT, 2))
+    users.add(_actor(UserRole.PARENT, 3))
+    use_case = CreateChannel(channels=channels, users=users)
     channel = use_case.execute(_actor(UserRole.TEACHER, 1), "Classe", [2, 3])
     assert channels.members[channel.id] == [1, 2, 3]
+
+
+def test_create_channel_rejects_unknown_member():
+    channels = InMemoryChannels()
+    users = InMemoryUsers()
+    users.add(_actor(UserRole.TEACHER, 1))
+    use_case = CreateChannel(channels=channels, users=users)
+    with pytest.raises(ValidationError):
+        use_case.execute(_actor(UserRole.TEACHER, 1), "Classe", [999])
 
 
 def test_add_channel_members_requires_manager():

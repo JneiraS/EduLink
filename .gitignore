@@ -30,6 +30,7 @@ wheels/
 
 # Flask
 instance/
+uploads/
 .webassets-cache
 
 # IDE

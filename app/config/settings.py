@@ -19,6 +19,15 @@ class DevelopmentConfig(BaseConfig):
     SESSION_COOKIE_SECURE = os.getenv("SESSION_COOKIE_SECURE", "0") == "1"
 
 
+class ProductionConfig(BaseConfig):
+    SQLALCHEMY_DATABASE_URI = os.getenv("DATABASE_URL", "sqlite:///edulink.db")
+    RATE_LIMIT_ENABLED = True
+    SESSION_COOKIE_SECURE = True
+    SESSION_COOKIE_HTTPONLY = True
+    SESSION_COOKIE_SAMESITE = "Lax"
+    PERMANENT_SESSION_LIFETIME = int(os.getenv("SESSION_LIFETIME_SECONDS", "43200"))
+
+
 class TestingConfig(BaseConfig):
     TESTING = True
     WTF_CSRF_ENABLED = False

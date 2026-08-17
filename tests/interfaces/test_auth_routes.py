@@ -11,6 +11,7 @@ def test_login_success_redirects_to_dashboard(client, app):
 
     with client.session_transaction() as sess:
         assert sess["_user_id"] == str(user_id)
+        assert sess.permanent is True
 
 
 def test_login_invalid_credentials_rerenders(client, app):

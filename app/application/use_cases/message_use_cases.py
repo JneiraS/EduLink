@@ -2,7 +2,7 @@ from dataclasses import dataclass
 
 from app.domain.entities.message import Message
 from app.domain.entities.notification import Notification
-from app.domain.entities.user import User, UserRole
+from app.domain.entities.user import User, UserRole, UserSummary
 from app.domain.errors import AuthorizationError, NotFoundError, ValidationError
 from app.domain.ports.repositories import (
     ChannelRepositoryPort,
@@ -155,9 +155,12 @@ class PinMessage:
             raise AuthorizationError(
                 "Only admins and teachers can pin messages"
             )
-        message = self.messages.set_pinned(message_id, pinned)
+        message = self.messages.find_by_id(message_id)
         if message is None:
             raise NotFoundError("Message not found")
+        if message.channel_id != channel_id:
+            raise AuthorizationError(NOT_A_MEMBER)
+        self.messages.set_pinned(message_id, pinned)
 
 
 @dataclass(slots=True)
@@ -173,7 +176,7 @@ class ListChannelMembers:
     channels: ChannelRepositoryPort
     users: UserRepositoryPort
 
-    def execute(self, actor: User, channel_id: int) -> list[User]:
+    def execute(self, actor: User, channel_id: int) -> list[UserSummary]:
         if not self.channels.find_by_id(channel_id):
             raise NotFoundError(CHANNEL_NOT_FOUND)
         if not self.channels.is_member(channel_id, actor.id or 0):
@@ -183,5 +186,11 @@ class ListChannelMembers:
         for user_id in self.channels.list_member_ids(channel_id):
             user = self.users.find_by_id(user_id)
             if user:
-                members.append(user)
+                members.append(
+                    UserSummary(
+                        id=user.id,
+                        full_name=user.full_name,
+                        role=user.role,
+                    )
+                )
         return members
