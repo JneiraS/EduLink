@@ -33,7 +33,7 @@ publique pour l'instant.
 | Accusé de réception des annonces (X/Y) | `announcements_routes.py` | `ConfirmAnnouncementRead`, `GetAnnouncementReadStatus` | `announcement_repository.py` |
 | Canaux de messagerie (liste/création) | `messages_routes.py` | `CreateChannel`, `AddChannelMembers`, `ListUserChannels` | `channel_repository.py` |
 | Conversations directes 1:1 | `messages_routes.py` (`/new-conversation`) | `OpenDirectConversation` | `channel_repository.py` |
-| Messages en canal (chat + pagination) | `messages_routes.py` | `SendMessage`, `ListChannelMessages`, `ListChannelMembers` | `message_repository.py`, `channel_repository.py` |
+| Messages en canal (chat + pagination + recherche ?) | `messages_routes.py` | `SendMessage`, `ListChannelMessages`, `ListChannelMembers`, `SearchChannelMessages` | `message_repository.py` (`save`, `list_by_channel`, `search_by_channel`), `channel_repository.py` |
 | Modèles de messages | `messages_routes.py` (`/templates`, `/templates/<id>/edit`) | `ListMessageTemplates`, `CreateMessageTemplate`, `UpdateMessageTemplate`, `DeleteMessageTemplate` | `message_template_repository.py` |
 | Notifications (liste / lecture) | `notifications_routes.py` | `ListNotifications`, `MarkNotificationRead` | `notification_repository.py` |
 | Push web (abonnement PWA) | `push_routes.py` | `SubscribePushNotifications`, `UnsubscribePushNotifications` | `push_subscription_repository.py` |

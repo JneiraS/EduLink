@@ -30,9 +30,10 @@ from app.application.use_cases.channel_use_cases import (
 )
 from app.application.use_cases.dashboard_use_case import GetDashboard
 from app.application.use_cases.message_use_cases import (
-    ListChannelMessages,
     ListChannelMembers,
+    ListChannelMessages,
     ListUserChannels,
+    SearchChannelMessages,
     SendMessage,
 )
 from app.application.use_cases.message_template_use_cases import (
@@ -71,6 +72,7 @@ class UseCaseContainer:
     get_announcement_read_status: GetAnnouncementReadStatus
     get_dashboard: GetDashboard
     send_message: SendMessage
+    search_channel_messages: SearchChannelMessages
     list_channel_messages: ListChannelMessages
     list_channel_members: ListChannelMembers
     list_user_channels: ListUserChannels

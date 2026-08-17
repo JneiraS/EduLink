@@ -185,38 +185,52 @@ def channel_detail(channel_id: int):
             flash(str(exc), "danger")
             return redirect(url_for(MESSAGES_CHANNELS))
 
+    use_cases = get_use_cases()
+    search_query = request.args.get("q", type=str)
+
     try:
-        before_id = request.args.get("before", type=int)
-        channel_messages, has_older = get_use_cases().list_channel_messages.execute(
-            actor, channel_id=channel_id, before_id=before_id
-        )
-        user_channels = get_use_cases().list_user_channels.execute(actor)
-        channel_members = get_use_cases().list_channel_members.execute(
+        user_channels = use_cases.list_user_channels.execute(actor)
+        channel_members = use_cases.list_channel_members.execute(
             actor, channel_id=channel_id
         )
         channel_name = resolve_channel_name(channel_id, user_channels)
         channel_obj = next(
-            (channel for channel in user_channels if channel.id == channel_id), None
+            (channel for channel in user_channels if channel.id == channel_id),
+            None,
         )
         is_direct = bool(channel_obj and channel_obj.kind == "direct")
-        member_names = build_member_name_index(
-            channel_members,
-            channel_messages,
-            users_lookup=lambda sender_ids: get_use_cases()
-            .find_users_by_ids.execute(list(sender_ids)),
-        )
-        messages_view = build_messages_view(channel_messages, member_names)
-
         current_member_ids = {member.id for member in channel_members}
         all_users = sorted(
-            get_use_cases().list_all_users.execute(),
+            use_cases.list_all_users.execute(),
             key=lambda u: u.full_name.casefold(),
         )
         available_users = [
             user for user in all_users if user.id not in current_member_ids
         ]
         can_manage_members = actor.role in {UserRole.ADMIN, UserRole.TEACHER}
-        message_templates = get_use_cases().list_message_templates.execute(actor)
+        message_templates = use_cases.list_message_templates.execute(actor)
+
+        if search_query is not None and search_query.strip():
+            messages = use_cases.search_channel_messages.execute(
+                actor, channel_id=channel_id, query=search_query
+            )
+            has_older = False
+            search_mode = True
+        else:
+            before_id = request.args.get("before", type=int)
+            messages, has_older = use_cases.list_channel_messages.execute(
+                actor, channel_id=channel_id, before_id=before_id
+            )
+            search_mode = False
+
+        member_names = build_member_name_index(
+            channel_members,
+            messages,
+            users_lookup=lambda sender_ids: use_cases
+            .find_users_by_ids.execute(list(sender_ids)),
+        )
+        messages_view = build_messages_view(messages, member_names)
+        oldest_message_id = messages[0].id if messages else None
     except (AuthorizationError, NotFoundError) as exc:
         flash(str(exc), "danger")
         return redirect(url_for(MESSAGES_CHANNELS))
@@ -232,5 +246,7 @@ def channel_detail(channel_id: int):
         is_direct=is_direct,
         message_templates=message_templates,
         has_older=has_older,
-        oldest_message_id=channel_messages[0].id if channel_messages else None,
+        oldest_message_id=oldest_message_id,
+        search_mode=search_mode,
+        search_query=search_query,
     )

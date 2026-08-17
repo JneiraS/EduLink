@@ -1372,6 +1372,14 @@ textarea.form-control:focus {
     animation: bubble-in var(--dur-med) var(--ease) both;
 }
 
+.search-form {
+    margin-top: 0.5rem;
+}
+
+.search-form input[type="search"] {
+    border-color: var(--line);
+}
+
 .chat-message--mine {
     justify-content: flex-end;
 }

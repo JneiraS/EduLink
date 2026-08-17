@@ -96,6 +96,12 @@ class MessageRepositoryPort(ABC):
     ) -> tuple[list[Message], bool]:
         raise NotImplementedError
 
+    @abstractmethod
+    def search_by_channel(
+        self, channel_id: int, query: str, limit: int = 50
+    ) -> list[Message]:
+        raise NotImplementedError
+
 
 class NotificationRepositoryPort(ABC):
     @abstractmethod

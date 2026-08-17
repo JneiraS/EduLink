@@ -104,6 +104,28 @@ class ListChannelMessages:
 
 
 @dataclass(slots=True)
+class SearchChannelMessages:
+    messages: MessageRepositoryPort
+    channels: ChannelRepositoryPort
+
+    def execute(
+        self, actor: User, channel_id: int, query: str, limit: int = 50
+    ) -> list[Message]:
+        if not self.channels.find_by_id(channel_id):
+            raise NotFoundError(CHANNEL_NOT_FOUND)
+        if not self.channels.is_member(channel_id, actor.id or 0):
+            raise AuthorizationError(NOT_A_MEMBER)
+        term = query.strip()
+        if not term:
+            raise ValidationError("Search query is required")
+        if len(term) > MAX_MESSAGE_LENGTH:
+            raise ValidationError(
+                f"Search query must be at most {MAX_MESSAGE_LENGTH} characters"
+            )
+        return self.messages.search_by_channel(channel_id, term, limit)
+
+
+@dataclass(slots=True)
 class ListUserChannels:
     channels: ChannelRepositoryPort
 

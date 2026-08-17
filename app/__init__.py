@@ -45,9 +45,10 @@ from app.application.use_cases.channel_use_cases import (
 )
 from app.application.use_cases.dashboard_use_case import GetDashboard
 from app.application.use_cases.message_use_cases import (
-    ListChannelMessages,
     ListChannelMembers,
+    ListChannelMessages,
     ListUserChannels,
+    SearchChannelMessages,
     SendMessage,
 )
 from app.application.use_cases.message_template_use_cases import (
@@ -232,6 +233,9 @@ def create_app(testing: bool = False):
             channels=channels_repo,
             notifications=notifications_repo,
             realtime=realtime,
+        ),
+        search_channel_messages=SearchChannelMessages(
+            messages=messages_repo, channels=channels_repo
         ),
         list_channel_messages=ListChannelMessages(
             messages=messages_repo, channels=channels_repo
