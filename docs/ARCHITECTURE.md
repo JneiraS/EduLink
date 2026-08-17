@@ -38,7 +38,7 @@ publique pour l'instant.
 | Notifications (liste / lecture) | `notifications_routes.py` | `ListNotifications`, `MarkNotificationRead` | `notification_repository.py` |
 | Push web (abonnement PWA) | `push_routes.py` | `SubscribePushNotifications`, `UnsubscribePushNotifications` | `push_subscription_repository.py` |
 | **Administration** (création de comptes, rôles, activ./désactiv., suppression) | `admin_routes.py` + lien vers `auth_routes.py` (`/auth/users/new`) | `ListUsersForAdmin`, `UpdateUserRole`, `ToggleUserActive`, `ListAnnouncementsForAdmin`, `DeleteAnnouncement`, `ListChannelsForAdmin`, `DeleteChannel` + `RegisterUser` | `user_repository.py`, `announcement_repository.py`, `channel_repository.py` |
-| **Enfants** (rattachement à un parent, lien aux canaux de classe) | `admin_routes.py` (`/admin/children...`) + `parent_routes.py` (`/parent/children...`) | `CreateChild`, `ListChildren`, `DeleteChild`, `LinkChildToClassChannels` | `children_repository.py`, `channel_repository.py` |
+| **Enfants** (rattachement à un parent, lien aux canaux de classe) | `admin_routes.py` (`/admin/children...`) + `parent_routes.py` (`/parent/children...`) | `CreateChild`, `ListChildren`, `ListClassNames`, `DeleteChild`, `LinkChildToClassChannels` | `children_repository.py`, `channel_repository.py` |
 | Requêtes utilitaires (lecture) | routes diverses | `ListAllUsers`, `FindUsersByIds` | `user_repository.py` |
 
 Le temps réel n'apparaît pas dans un blueprint : `SocketIONotificationService`
@@ -87,7 +87,8 @@ une violation d'architecture.
     filtré par type — utilisé par le lien enfant → canaux de classe),
     `PushSubscriptionRepositoryPort`, `MessageTemplateRepositoryPort`
     (dont `update` pour modifier un modèle existant), `ChildrenRepositoryPort`
-    (`save`, `list_by_parent`, `find_by_class`, `find_by_id`, `delete`).
+    (`save`, `list_by_parent`, `find_by_class`, `find_by_id`, `delete`,
+    `list_class_names` pour les classes distinctes du formulaire).
   - `services.py` : `PasswordHasherPort`, `RealtimeNotificationPort`.
 - **`errors.py`** — hiérarchie d'erreurs métier :
   `DomainError` → `AuthenticationError`, `AuthorizationError`, `NotFoundError`,

@@ -162,7 +162,13 @@ def children():
             children = get_use_cases().list_children.execute(parent)
             if children:
                 parent_children[parent.id] = children
-    return render_template("admin/children.html", parents=parents, parent_children=parent_children)
+    class_names = get_use_cases().list_class_names.execute()
+    return render_template(
+        "admin/children.html",
+        parents=parents,
+        parent_children=parent_children,
+        class_names=class_names,
+    )
 
 
 @admin_bp.route("/children/create", methods=["POST"])

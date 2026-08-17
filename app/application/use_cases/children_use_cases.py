@@ -99,6 +99,14 @@ class ListChildren:
 
 
 @dataclass(slots=True)
+class ListClassNames:
+    children: ChildrenRepositoryPort
+
+    def execute(self) -> list[str]:
+        return self.children.list_class_names()
+
+
+@dataclass(slots=True)
 class DeleteChild:
     children: ChildrenRepositoryPort
 

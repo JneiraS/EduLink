@@ -32,7 +32,12 @@
             </div>
             <div class="col-md-3">
                 <label for="class_name" class="form-label">Classe <span class="text-danger">*</span></label>
-                <input type="text" class="form-control" id="class_name" name="class_name" maxlength="120" required placeholder="ex: CM2, 6ème A">
+                <input type="text" class="form-control" id="class_name" name="class_name" list="class-list" maxlength="120" required placeholder="ex: CM2, 6ème A" autocomplete="off">
+                <datalist id="class-list">
+                    {% for class_name in class_names %}
+                    <option value="{{ class_name }}"></option>
+                    {% endfor %}
+                </datalist>
             </div>
             <div class="col-md-1 d-flex align-items-end">
                 <button type="submit" class="btn btn-primary w-100">

@@ -3,8 +3,9 @@ import pytest
 from app.application.use_cases.children_use_cases import (
     CreateChild,
     DeleteChild,
-    ListChildren,
     LinkChildToClassChannels,
+    ListChildren,
+    ListClassNames,
 )
 from app.domain.entities.child import Child
 from app.domain.entities.user import User, UserRole
@@ -34,6 +35,9 @@ class InMemoryChildren:
             if child.id == child_id:
                 return self.children.pop(i)
         return None
+
+    def list_class_names(self) -> list[str]:
+        return sorted({c.class_name for c in self.children})
 
 
 class InMemoryUsers:
@@ -238,6 +242,24 @@ def test_list_children_empty():
     use_case = ListChildren(children=InMemoryChildren())
     children = use_case.execute(_parent_actor(UserRole.PARENT))
     assert children == []
+
+
+# ---------------------------------------------------------------------------
+# ListClassNames
+# ---------------------------------------------------------------------------
+
+def test_list_class_names_returns_distinct_sorted():
+    repo = InMemoryChildren()
+    repo.save(_child(1, "Élève A", "CM1"))
+    repo.save(_child(1, "Élève B", "CM2"))
+    repo.save(_child(2, "Élève C", "CM1"))
+    use_case = ListClassNames(children=repo)
+    assert use_case.execute() == ["CM1", "CM2"]
+
+
+def test_list_class_names_empty():
+    use_case = ListClassNames(children=InMemoryChildren())
+    assert use_case.execute() == []
 
 
 # ---------------------------------------------------------------------------

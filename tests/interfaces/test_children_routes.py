@@ -29,11 +29,15 @@ def test_admin_children_page_lists_children(client, app):
     admin_id = create_user(app, role="ADMIN", email="admin_child@test.local")
     parent_id = create_user(app, role="PARENT", email="parent_child@test.local")
     _add_child(app, parent_id, full_name="Enfant Test", class_name="CM2")
+    _add_child(app, parent_id, full_name="Enfant B", class_name="6eme A")
     login(client, admin_id)
     resp = client.get("/admin/children")
     assert resp.status_code == 200
     assert b"Enfant Test" in resp.data
     assert b"CM2" in resp.data
+    assert b'<datalist id="class-list">' in resp.data
+    assert b'<option value="CM2"></option>' in resp.data
+    assert b'<option value="6eme A"></option>' in resp.data
 
 
 def test_admin_children_page_requires_admin(client, app):
