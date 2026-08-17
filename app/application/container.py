@@ -47,6 +47,12 @@ from app.application.use_cases.notification_use_cases import (
     SubscribePushNotifications,
     UnsubscribePushNotifications,
 )
+from app.application.use_cases.children_use_cases import (
+    CreateChild,
+    DeleteChild,
+    LinkChildToClassChannels,
+    ListChildren,
+)
 from app.application.use_cases.user_query_use_cases import FindUsersByIds, ListAllUsers
 
 
@@ -83,6 +89,10 @@ class UseCaseContainer:
     list_users_for_admin: ListUsersForAdmin
     list_announcements_for_admin: ListAnnouncementsForAdmin
     list_channels_for_admin: ListChannelsForAdmin
+    create_child: CreateChild
+    list_children: ListChildren
+    delete_child: DeleteChild
+    link_child_to_class_channels: LinkChildToClassChannels
     update_user_role: UpdateUserRole
     toggle_user_active: ToggleUserActive
     delete_announcement: DeleteAnnouncement

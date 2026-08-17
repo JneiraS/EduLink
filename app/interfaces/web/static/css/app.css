@@ -1519,9 +1519,22 @@ textarea.form-control:focus {
 .border-bottom,
 .list-group-item,
 .form-check-input,
-.table,
 hr {
     border-color: var(--line) !important;
+}
+
+.table {
+    --bs-table-bg: var(--surface);
+    --bs-table-color: var(--text);
+    --bs-table-border-color: var(--line);
+    --bs-table-hover-bg: var(--list-hover-bg);
+    --bs-table-hover-color: var(--text);
+    --bs-table-active-bg: var(--list-hover-bg);
+    --bs-table-active-color: var(--text);
+    --bs-table-striped-bg: var(--surface-muted);
+    --bs-table-striped-color: var(--text);
+    border-color: var(--line) !important;
+    color: var(--text);
 }
 
 .member-list .badge {

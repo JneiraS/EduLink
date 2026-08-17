@@ -238,15 +238,15 @@ def test_admin_nav_link_visible_for_admin(client, app):
     admin_id = create_user(app, role="ADMIN", email="admin10@admin.local")
     login(client, admin_id)
     admin_page = client.get("/").data
-    assert b"Administration" in admin_page
+    assert b"Membres" in admin_page
 
 
 def test_admin_nav_link_hidden_for_parent(client, app):
     parent_id = create_user(app, role="PARENT", email="p10@admin.local")
     login(client, parent_id)
     parent_page = client.get("/").data
-    assert b"Administration" not in parent_page
-    assert b"User PARENT" in parent_page
+    assert b"Membres" not in parent_page
+    assert b"Mes enfants" in parent_page
 
 
 def test_admin_pages_link_to_all_admin_sections(client, app):

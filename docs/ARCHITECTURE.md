@@ -38,6 +38,7 @@ publique pour l'instant.
 | Notifications (liste / lecture) | `notifications_routes.py` | `ListNotifications`, `MarkNotificationRead` | `notification_repository.py` |
 | Push web (abonnement PWA) | `push_routes.py` | `SubscribePushNotifications`, `UnsubscribePushNotifications` | `push_subscription_repository.py` |
 | **Administration** (création de comptes, rôles, activ./désactiv., suppression) | `admin_routes.py` + lien vers `auth_routes.py` (`/auth/users/new`) | `ListUsersForAdmin`, `UpdateUserRole`, `ToggleUserActive`, `ListAnnouncementsForAdmin`, `DeleteAnnouncement`, `ListChannelsForAdmin`, `DeleteChannel` + `RegisterUser` | `user_repository.py`, `announcement_repository.py`, `channel_repository.py` |
+| **Enfants** (rattachement à un parent, lien aux canaux de classe) | `admin_routes.py` (`/admin/children...`) + `parent_routes.py` (`/parent/children...`) | `CreateChild`, `ListChildren`, `DeleteChild`, `LinkChildToClassChannels` | `children_repository.py`, `channel_repository.py` |
 | Requêtes utilitaires (lecture) | routes diverses | `ListAllUsers`, `FindUsersByIds` | `user_repository.py` |
 
 Le temps réel n'apparaît pas dans un blueprint : `SocketIONotificationService`
@@ -72,7 +73,8 @@ une violation d'architecture.
 - **`entities/`** — entités **dataclass** (`slots=True`), `id: int | None` :
   `User`, `Channel` (avec `kind` : `"group"` ou `"direct"`), `Message`,
   `Announcement` (avec `target_channel_ids` pour le ciblage), `Notification`,
-  `PushSubscription`, `MessageTemplate`. Exemple :
+  `PushSubscription`, `MessageTemplate`, `Child` (enfant rattaché à un parent,
+  avec `parent_id` et `class_name`). Exemple :
   `app/domain/entities/user.py`.
   - `UserRole` (enum) : `PARENT` / `TEACHER` / `ADMIN`.
   - « Peut gérer les membres d'un canal » = `ADMIN` ou `TEACHER`.
@@ -80,9 +82,12 @@ une violation d'architecture.
   - `repositories.py` : `UserRepositoryPort`, `AnnouncementRepositoryPort`
     (dont `mark_read` / `is_read` / `count_read` pour les accusés de réception),
     `MessageRepositoryPort`, `NotificationRepositoryPort`,
-    `ChannelRepositoryPort` (dont `find_direct_between` pour les 1:1),
+    `ChannelRepositoryPort` (dont `find_direct_between` pour les 1:1 et
+    `find_by_name(name, kind)` pour résoudre un canal par nom, optionnellement
+    filtré par type — utilisé par le lien enfant → canaux de classe),
     `PushSubscriptionRepositoryPort`, `MessageTemplateRepositoryPort`
-    (dont `update` pour modifier un modèle existant).
+    (dont `update` pour modifier un modèle existant), `ChildrenRepositoryPort`
+    (`save`, `list_by_parent`, `find_by_class`, `find_by_id`, `delete`).
   - `services.py` : `PasswordHasherPort`, `RealtimeNotificationPort`.
 - **`errors.py`** — hiérarchie d'erreurs métier :
   `DomainError` → `AuthenticationError`, `AuthorizationError`, `NotFoundError`,
@@ -108,8 +113,8 @@ une violation d'architecture.
 - **`database/models.py`** : modèles SQLAlchemy (`UserModel`,
   `AnnouncementModel`, `AnnouncementReadModel`, `ChannelModel` (avec `kind`),
   `MessageModel`, `NotificationModel`, `PushSubscriptionModel`,
-  `MessageTemplateModel`, tables d'association `channel_members` et
-  `announcement_channels`).
+  `MessageTemplateModel`, `ChildModel` (table `children`), tables
+  d'association `channel_members` et `announcement_channels`).
 - **`repositories/`** : implémentations SQLAlchemy des ports. Chaque repo a une
   méthode privée **`_to_entity(model) -> Entity`** : c'est le **seul endroit**
   où se fait le mapping ORM → domaine. Un repo expose parfois une méthode
@@ -124,7 +129,8 @@ une violation d'architecture.
 ### 2.4 `app/interfaces/web/` — l'entrée HTTP
 
 - **`routes/`** : blueprints Flask (`auth_bp`, `dashboard_bp`, `admin_bp`,
-  `announcements_bp`, `messages_bp`, `notifications_bp`, `push_bp`).
+  `announcements_bp`, `messages_bp`, `notifications_bp`, `push_bp`,
+  `parent_bp`).
 - **`routes/utils.py`** : les **seuls** accès autorisés aux dépendances :
   - `get_use_cases()` → `app.extensions["use_cases"]`
   - `get_services()` → `app.extensions["services"]` (uniquement pour la
@@ -136,8 +142,10 @@ une violation d'architecture.
 - **`socket_events.py`** : enregistre les handlers SocketIO (rejoindre les
   rooms `user_<id>` et `channel_<id>`).
 - **`templates/`** : Jinja2. **`static/`** : CSS/JS custom, manifest PWA.
-  La section Administration partage une sous-navigation (`admin/_nav.html`)
-  entre ses trois pages : Membres, Annonces et Canaux.
+  La navigation principale vit dans `base.html` (nav-pills) : les liens
+  d'administration (Membres, Enfants, Annonces, Canaux) ne sont visibles que
+  pour `ADMIN`, le lien « Mes enfants » pour `PARENT` — il n'y a plus de
+  sous-navigation `admin/_nav.html`.
 
 Le **sélecteur de membres** (création de canal, « ajouter des membres ») est
 un composant réutilisable : recherche temps réel, regroupement par rôle
@@ -258,6 +266,21 @@ Point d'entrée : `run.py` → `create_app()` + `socketio.run(...)` (host/port v
   (`find_direct_between`) et nomme le canal **du nom de l'autre personne**.
   Tout utilisateur authentifié peut ouvrir une conversation directe (annuaire
   minimal).
+
+### Enfants & canaux de classe
+
+- Les enfants sont créés par un `ADMIN` (`CreateChild`) et rattachés à un
+  compte `PARENT` (validation du rôle dans le use case). `ListChildren` ne
+  renvoie que les enfants du parent appelant (route `parent_routes.py`), ce qui
+  empêche un parent de voir les enfants d'un autre.
+- `LinkChildToClassChannels` (réservé admin) relie le parent à un canal de
+  classe : il cherche un canal **`kind="group"`** par `class_name`
+  (`find_by_name(name, kind="group")`) et le crée s'il n'existe pas. Le filtre
+  par `kind` évite de relier le parent à un canal `direct` qui porterait le
+  même nom.
+- La page parent `/parent/children/<id>/channels` liste les canaux du parent
+  dont le nom correspond à la classe de l'enfant (`list_user_channels` filtré
+  par `class_name`). Un enfant d'un autre parent est introuvable → redirect.
 
 ### Sécurité
 

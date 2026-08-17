@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><i class="bi bi-people-fill me-2"></i>Mes enfants</h1>
+</div>
+
+<div class="card mb-4">
+    <div class="card-body">
+        {% if children %}
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead>
+                        <tr>
+                            <th>Enfant</th>
+                            <th>Classe</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for child in children %}
+                        <tr>
+                            <td>{{ child.full_name }}</td>
+                            <td>{{ child.class_name }}</td>
+                            <td class="text-end">
+                                <a href="{{ url_for('parent.child_channels', child_id=child.id) }}" class="btn btn-sm btn-primary">
+                                    <i class="bi bi-chat-dots me-1"></i> Voir les canaux
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="text-center py-5 text-muted">
+                <i class="bi bi-people" style="font-size: 3rem;"></i>
+                <p class="mt-2">Aucun enfant rattaché à votre compte.</p>
+                <p class="small">Contactez l'administration pour ajouter vos enfants.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -140,3 +140,13 @@ class MessageTemplateModel(db.Model):
     label = db.Column(db.String(80), nullable=False)
     content = db.Column(db.Text, nullable=False)
     created_at = db.Column(db.DateTime, default=utc_now, nullable=False)
+
+
+class ChildModel(db.Model):
+    __tablename__ = "children"
+
+    id = db.Column(db.Integer, primary_key=True)
+    parent_id = db.Column(db.Integer, db.ForeignKey(USERS_ID_FK), nullable=False, index=True)
+    full_name = db.Column(db.String(120), nullable=False)
+    class_name = db.Column(db.String(120), nullable=False)
+    created_at = db.Column(db.DateTime, default=utc_now, nullable=False)

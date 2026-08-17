@@ -63,6 +63,12 @@ from app.application.use_cases.notification_use_cases import (
     UnsubscribePushNotifications,
 )
 from app.application.use_cases.user_query_use_cases import FindUsersByIds, ListAllUsers
+from app.application.use_cases.children_use_cases import (
+    CreateChild,
+    DeleteChild,
+    LinkChildToClassChannels,
+    ListChildren,
+)
 from app.config.settings import DevelopmentConfig, TestingConfig
 from app.domain.errors import DomainError
 from app.extensions import csrf, db, limiter, login_manager, socketio
@@ -93,6 +99,7 @@ from app.infrastructure.repositories.push_subscription_repository import (
     SQLAlchemyPushSubscriptionRepository,
 )
 from app.infrastructure.repositories.user_repository import SQLAlchemyUserRepository
+from app.infrastructure.repositories.children_repository import SQLAlchemyChildrenRepository
 from app.interfaces.web.routes.announcements_routes import announcements_bp
 from app.interfaces.web.routes.admin_routes import admin_bp
 from app.interfaces.web.routes.auth_routes import auth_bp
@@ -100,6 +107,7 @@ from app.interfaces.web.routes.dashboard_routes import dashboard_bp
 from app.interfaces.web.routes.messages_routes import messages_bp
 from app.interfaces.web.routes.notifications_routes import notifications_bp
 from app.interfaces.web.routes.push_routes import push_bp
+from app.interfaces.web.routes.parent_routes import parent_bp
 from app.interfaces.web.socket_events import register_socket_handlers
 
 
@@ -135,6 +143,7 @@ def create_app(testing: bool = False):
     app.register_blueprint(messages_bp)
     app.register_blueprint(notifications_bp)
     app.register_blueprint(push_bp)
+    app.register_blueprint(parent_bp)
 
     with app.app_context():
         if app.config["TESTING"]:
@@ -153,6 +162,7 @@ def create_app(testing: bool = False):
     notifications_repo = SQLAlchemyNotificationRepository()
     push_subscriptions_repo = SQLAlchemyPushSubscriptionRepository()
     message_templates_repo = SQLAlchemyMessageTemplateRepository()
+    children_repo = SQLAlchemyChildrenRepository()
     invitations_repo = SQLAlchemyInvitationRepository()
     hasher = WerkzeugPasswordHasher()
     realtime = SocketIONotificationService(
@@ -172,6 +182,7 @@ def create_app(testing: bool = False):
         "notifications": notifications_repo,
         "push_subscriptions": push_subscriptions_repo,
         "message_templates": message_templates_repo,
+        "children": children_repo,
         "invitations": invitations_repo,
         "hasher": hasher,
         "realtime_notifications": realtime,
@@ -268,6 +279,12 @@ def create_app(testing: bool = False):
         toggle_user_active=ToggleUserActive(users=users_repo),
         delete_announcement=DeleteAnnouncement(announcements=announcements_repo),
         delete_channel=DeleteChannel(channels=channels_repo),
+        create_child=CreateChild(children=children_repo, users=users_repo),
+        list_children=ListChildren(children=children_repo),
+        delete_child=DeleteChild(children=children_repo),
+        link_child_to_class_channels=LinkChildToClassChannels(
+            children=children_repo, channels=channels_repo
+        ),
     )
 
     register_socket_handlers(socketio)
