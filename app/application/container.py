@@ -47,6 +47,7 @@ from app.application.use_cases.message_template_use_cases import (
 from app.application.use_cases.notification_use_cases import (
     GetNotificationSettings,
     ListNotifications,
+    MarkChannelNotificationsRead,
     MarkNotificationRead,
     SetGlobalNotifications,
     SubscribePushNotifications,
@@ -85,6 +86,7 @@ class UseCaseContainer:
     list_user_channels: ListUserChannels
     list_notifications: ListNotifications
     mark_notification_read: MarkNotificationRead
+    mark_channel_notifications_read: MarkChannelNotificationsRead
     get_notification_settings: GetNotificationSettings
     set_global_notifications: SetGlobalNotifications
     toggle_channel_notifications: ToggleChannelNotifications

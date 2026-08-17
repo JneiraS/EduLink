@@ -28,14 +28,14 @@ publique pour l'instant.
 | Fonctionnalité | Blueprint (`interfaces/web/routes/`) | Use case (`application/use_cases/`) | Adapter principal (`infrastructure/`) |
 |---|---|---|---|
 | Login / logout / création de comptes | `auth_routes.py` | `LoginUser`, `RegisterUser` | `user_repository.py`, `auth/password_hasher.py` |
-| Dashboard adapté au rôle | `dashboard_routes.py` | `GetDashboard` | `announcement_repository.py`, `notification_repository.py` |
+| Dashboard adapté au rôle | `dashboard_routes.py` | `GetDashboard` | `announcement_repository.py`, `notification_repository.py`, `channel_repository.py`, `message_repository.py`, `children_repository.py`, `user_repository.py` |
 | Annonces (liste, création ciblée, PDF) | `announcements_routes.py` | `CreateAnnouncement` (audience = « Tous » ou canaux de l'auteur), `ListAnnouncements` | `announcement_repository.py`, `channel_repository.py` |
 | Accusé de réception des annonces (X/Y) | `announcements_routes.py` | `ConfirmAnnouncementRead`, `GetAnnouncementReadStatus` | `announcement_repository.py` |
 | Canaux de messagerie (liste/création) | `messages_routes.py` | `CreateChannel`, `AddChannelMembers`, `ListUserChannels` | `channel_repository.py` |
 | Conversations directes 1:1 | `messages_routes.py` (`/new-conversation`) | `OpenDirectConversation` | `channel_repository.py` |
 | Messages en canal (chat + pagination + recherche + épinglés) | `messages_routes.py` | `SendMessage`, `ListChannelMessages`, `ListChannelMembers`, `SearchChannelMessages`, `PinMessage`, `ListPinnedMessages` | `message_repository.py` (`save`, `list_by_channel`, `search_by_channel`, `set_pinned`, `list_pinned`), `channel_repository.py` |
 | Modèles de messages | `messages_routes.py` (`/templates`, `/templates/<id>/edit`) | `ListMessageTemplates`, `CreateMessageTemplate`, `UpdateMessageTemplate`, `DeleteMessageTemplate` | `message_template_repository.py` |
-| Notifications (liste / lecture) | `notifications_routes.py` | `ListNotifications`, `MarkNotificationRead` | `notification_repository.py` |
+| Notifications (liste / lecture / lu à l'ouverture du canal) | `notifications_routes.py`, `messages_routes.py` (`/channels/<id>`) | `ListNotifications`, `MarkNotificationRead`, `MarkChannelNotificationsRead` | `notification_repository.py` |
 | Préférences de notification (toggle global + par canal) | `messages_routes.py` (`/channels`, `/channels/<id>`) | `GetNotificationSettings`, `SetGlobalNotifications`, `ToggleChannelNotifications` | `notification_preferences_repository.py` (`get_global_enabled`, `is_channel_enabled`, `set_*`, `is_enabled`), `channel_repository.py` |
 | Push web (abonnement PWA) | `push_routes.py` | `SubscribePushNotifications`, `UnsubscribePushNotifications` | `push_subscription_repository.py` |
 | **Administration** (création de comptes, rôles, activ./désactiv., suppression) | `admin_routes.py` + lien vers `auth_routes.py` (`/auth/users/new`) | `ListUsersForAdmin`, `UpdateUserRole`, `ToggleUserActive`, `ListAnnouncementsForAdmin`, `DeleteAnnouncement`, `ListChannelsForAdmin`, `DeleteChannel` + `RegisterUser` | `user_repository.py`, `announcement_repository.py`, `channel_repository.py` |
@@ -82,9 +82,14 @@ une violation d'architecture.
   - « Peut gérer les membres d'un canal » = `ADMIN` ou `TEACHER`.
 - **`ports/`** — contrats **abstraits** (ABC) :
   - `repositories.py` : `UserRepositoryPort`, `AnnouncementRepositoryPort`
-    (dont `mark_read` / `is_read` / `count_read` pour les accusés de réception),
+    (dont `mark_read` / `is_read` / `count_read` pour les accusés de réception et
+    `count_unread_for_user` pour le compteur « annonces non lues » du dashboard),
     `MessageRepositoryPort` (dont `search_by_channel`, `set_pinned` et
-    `list_pinned` pour la recherche et les épinglés), `NotificationRepositoryPort`,
+    `list_pinned` pour la recherche et les épinglés, et `list_latest_by_channels`
+    — dernier message par canal, une requête groupée, pour l'aperçu du dashboard),
+    `NotificationRepositoryPort` (dont `count_unread` pour la stat « non lus » et
+    `mark_channel_read` — marque lues les notifications d'un canal quand on
+    l'ouvre),
     `NotificationPreferencesPort` (`get_global_enabled`, `set_global_enabled`,
     `is_channel_enabled`, `set_channel_enabled`, `list_channel_states`,
     `is_enabled` — le toggle par conversation et le commutateur global),

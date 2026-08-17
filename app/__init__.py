@@ -62,6 +62,7 @@ from app.application.use_cases.message_template_use_cases import (
 from app.application.use_cases.notification_use_cases import (
     GetNotificationSettings,
     ListNotifications,
+    MarkChannelNotificationsRead,
     MarkNotificationRead,
     SetGlobalNotifications,
     SubscribePushNotifications,
@@ -236,7 +237,12 @@ def create_app(testing: bool = False):
             users=users_repo,
         ),
         get_dashboard=GetDashboard(
-            announcements=announcements_repo, notifications=notifications_repo
+            announcements=announcements_repo,
+            notifications=notifications_repo,
+            channels=channels_repo,
+            messages=messages_repo,
+            children=children_repo,
+            users=users_repo,
         ),
         send_message=SendMessage(
             messages=messages_repo,
@@ -261,6 +267,9 @@ def create_app(testing: bool = False):
         list_user_channels=ListUserChannels(channels=channels_repo),
         list_notifications=ListNotifications(notifications=notifications_repo),
         mark_notification_read=MarkNotificationRead(notifications=notifications_repo),
+        mark_channel_notifications_read=MarkChannelNotificationsRead(
+            notifications=notifications_repo, channels=channels_repo
+        ),
         get_notification_settings=GetNotificationSettings(
             preferences=notification_prefs_repo, channels=channels_repo
         ),

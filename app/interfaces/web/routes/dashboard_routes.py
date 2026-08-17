@@ -17,10 +17,24 @@ def home():
     role_message = read_value(data, "role_message", "Espace utilisateur")
     latest_announcements = as_list(read_value(data, "latest_announcements", []))
     notifications = as_list(read_value(data, "notifications", []))
+    stats = read_value(data, "stats", {})
+    conversations = as_list(read_value(data, "conversations", []))
+    children = as_list(read_value(data, "children", []))
+    user_counts = read_value(data, "user_counts", None)
+    channel_count = read_value(data, "channel_count", None)
+    announcement_count = read_value(data, "announcement_count", None)
+    recent_users = as_list(read_value(data, "recent_users", []))
 
     return render_template(
         "dashboard/home.html",
         role_message=role_message,
         latest_announcements=latest_announcements,
         notifications=notifications,
+        stats=stats,
+        conversations=conversations,
+        children=children,
+        user_counts=user_counts,
+        channel_count=channel_count,
+        announcement_count=announcement_count,
+        recent_users=recent_users,
     )

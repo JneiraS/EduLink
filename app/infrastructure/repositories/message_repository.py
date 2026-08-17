@@ -59,6 +59,28 @@ class SQLAlchemyMessageRepository(MessageRepositoryPort):
         rows.reverse()
         return [self._to_entity(row) for row in rows]
 
+    def list_latest_by_channels(self, channel_ids: list[int]) -> dict[int, Message]:
+        if not channel_ids:
+            return {}
+        latest_ids = (
+            db.session.query(MessageModel.channel_id, db.func.max(MessageModel.id))
+            .filter(MessageModel.channel_id.in_(channel_ids))
+            .group_by(MessageModel.channel_id)
+            .all()
+        )
+        rows = (
+            MessageModel.query.filter(
+                MessageModel.id.in_([message_id for _, message_id in latest_ids])
+            )
+            .all()
+        )
+        by_id = {row.id: self._to_entity(row) for row in rows}
+        return {
+            channel_id: by_id[message_id]
+            for channel_id, message_id in latest_ids
+            if message_id in by_id
+        }
+
     def _to_entity(self, model: MessageModel) -> Message:
         return Message(
             id=model.id,

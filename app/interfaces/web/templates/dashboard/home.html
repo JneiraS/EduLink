@@ -23,14 +23,185 @@
                     <a class="btn btn-outline-primary text-start" href="{{ url_for('messages.channels') }}">
                         <i class="bi bi-chat-dots me-2" aria-hidden="true"></i>Ouvrir la messagerie
                     </a>
+                    {% if current_user.role in ['ADMIN', 'TEACHER'] %}
+                    <a class="btn btn-outline-primary text-start"
+                        href="{{ url_for('announcements.create_announcement') }}">
+                        <i class="bi bi-plus-circle me-2" aria-hidden="true"></i>Nouvelle annonce
+                    </a>
+                    {% endif %}
                     {% if current_user.role == 'ADMIN' %}
                     <a class="btn btn-primary text-start" href="{{ url_for('auth.create_user') }}">
                         <i class="bi bi-person-plus me-2" aria-hidden="true"></i>Creer un compte
+                    </a>
+                    {% elif current_user.role == 'PARENT' %}
+                    <a class="btn btn-primary text-start" href="{{ url_for('parent.children') }}">
+                        <i class="bi bi-people-fill me-2" aria-hidden="true"></i>Mes enfants
                     </a>
                     {% endif %}
                 </div>
             </div>
         </div>
+    </div>
+</div>
+
+<div class="stat-grid mt-4 reveal-group">
+    <div class="stat-card stat-card--warn">
+        <span class="stat-icon" aria-hidden="true"><i class="bi bi-bell"></i></span>
+        <div>
+            <div class="stat-value">{{ stats.get('unread_notifications', 0) }}</div>
+            <div class="stat-label">Non lus</div>
+        </div>
+    </div>
+    <div class="stat-card stat-card--brand">
+        <span class="stat-icon" aria-hidden="true"><i class="bi bi-chat-dots"></i></span>
+        <div>
+            <div class="stat-value">{{ stats.get('conversations_count', 0) }}</div>
+            <div class="stat-label">Conversations</div>
+        </div>
+    </div>
+    <div class="stat-card stat-card--ok">
+        <span class="stat-icon" aria-hidden="true"><i class="bi bi-megaphone"></i></span>
+        <div>
+            <div class="stat-value">{{ stats.get('unread_announcements', 0) }}</div>
+            <div class="stat-label">Annonces non lues</div>
+        </div>
+    </div>
+</div>
+
+{% if current_user.role == 'ADMIN' and user_counts %}
+<div class="card shadow-sm mt-4 reveal-group">
+    <div class="card-body">
+        <h2 class="h6 mb-3">Vue d'ensemble de la plateforme</h2>
+        <div class="row g-3 text-center">
+            <div class="col-6 col-md-3">
+                <div class="stat-inline">
+                    <span class="stat-value">{{ user_counts.get('ADMIN', 0) }}</span>
+                    <span class="stat-label">Administrateurs</span>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="stat-inline">
+                    <span class="stat-value">{{ user_counts.get('TEACHER', 0) }}</span>
+                    <span class="stat-label">Enseignants</span>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="stat-inline">
+                    <span class="stat-value">{{ user_counts.get('PARENT', 0) }}</span>
+                    <span class="stat-label">Parents</span>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="stat-inline">
+                    <span class="stat-value">{{ channel_count or 0 }}</span>
+                    <span class="stat-label">Canaux</span>
+                </div>
+            </div>
+        </div>
+        <div class="mt-3 text-muted small">
+            <i class="bi bi-megaphone me-1" aria-hidden="true"></i>{{ announcement_count or 0 }} annonce{{
+            's' if announcement_count != 1 else '' }} publiee{{ 's' if announcement_count != 1 else '' }}
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% if recent_users %}
+<div class="card shadow-sm mt-4 reveal-group">
+    <div class="card-body">
+        <h2 class="h6 mb-3">Inscriptions recentes</h2>
+        <ul class="list-unstyled mb-0">
+            {% for user in recent_users %}
+            <li class="recent-user-item">
+                <span class="avatar avatar-sm" aria-hidden="true">{{ user.full_name[:1]|upper }}</span>
+                <div class="flex-grow-1 min-w-0">
+                    <div class="recent-user-name">{{ user.full_name }}</div>
+                    <small class="text-muted">{{ user.email }}</small>
+                </div>
+                <span class="badge badge-role badge-role--{{ user.role|lower }}">{{ user.role }}</span>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+</div>
+{% endif %}
+
+{% if current_user.role == 'PARENT' %}
+<div class="card shadow-sm mt-4 reveal-group">
+    <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h2 class="h6 mb-0">Mes enfants</h2>
+            <a class="btn btn-sm btn-outline-primary" href="{{ url_for('parent.children') }}">
+                <i class="bi bi-box-arrow-up-right me-1" aria-hidden="true"></i>Tout voir
+            </a>
+        </div>
+        {% if children %}
+        <div class="row g-3">
+            {% for child in children %}
+            <div class="col-md-6">
+                <a class="child-card text-decoration-none"
+                    href="{{ url_for('parent.child_channels', child_id=child.id) }}">
+                    <span class="child-avatar" aria-hidden="true">{{ child.full_name[:1]|upper }}</span>
+                    <div class="min-w-0">
+                        <div class="child-name">{{ child.full_name }}</div>
+                        <small class="text-muted">{{ child.class_name }}</small>
+                    </div>
+                    <i class="bi bi-chevron-right child-chevron" aria-hidden="true"></i>
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <span class="empty-icon" aria-hidden="true"><i class="bi bi-person-plus"></i></span>
+            <div class="empty-title">Aucun enfant</div>
+            <div class="empty-hint">Vos enfants apparaitront ici apres leur creation par l'administration.</div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+
+<div class="card shadow-sm mt-4 reveal-group">
+    <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h2 class="h6 mb-0">Mes conversations</h2>
+            <a class="btn btn-sm btn-outline-primary" href="{{ url_for('messages.channels') }}">
+                <i class="bi bi-box-arrow-up-right me-1" aria-hidden="true"></i>Tout voir
+            </a>
+        </div>
+        {% if conversations %}
+        <ul class="list-unstyled mb-0">
+            {% for item in conversations %}
+            <li>
+                <a class="conversation-item" href="{{ url_for('messages.channel_detail', channel_id=item.channel.id) }}">
+                    <span class="channel-icon" aria-hidden="true">
+                        <i class="bi {% if item.channel.kind == 'direct' %}bi-person{% else %}bi-hash{% endif %}"></i>
+                    </span>
+                    <div class="flex-grow-1 min-w-0">
+                        <div class="d-flex justify-content-between align-items-baseline gap-2">
+                            <span class="conversation-name">{{ item.channel.name }}</span>
+                            {% if item.last_message and item.last_message.created_at %}
+                            <span class="conversation-time">{{ item.last_message.created_at.strftime('%d/%m') }}</span>
+                            {% endif %}
+                        </div>
+                        {% if item.last_message %}
+                        <span class="conversation-preview">{{ item.last_message.content }}</span>
+                        {% else %}
+                        <span class="conversation-preview text-muted">Aucun message pour le moment.</span>
+                        {% endif %}
+                    </div>
+                </a>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <div class="empty-state">
+            <span class="empty-icon" aria-hidden="true"><i class="bi bi-chat-dots"></i></span>
+            <div class="empty-title">Aucune conversation</div>
+            <div class="empty-hint">Ouvrez la messagerie pour demarrer une conversation.</div>
+        </div>
+        {% endif %}
     </div>
 </div>
 
@@ -52,9 +223,15 @@
                         class="bi bi-megaphone"></i></span>
                 <div class="timeline-body">
                     <div class="d-flex justify-content-between align-items-baseline gap-2">
-                        <span class="timeline-title">{{ item.title }}</span>
-                        <span class="timeline-time">{{ item.created_at.strftime('%d/%m/%Y %H:%M') if item.created_at
-                            else '' }}</span>
+                        <span class="timeline-title">
+                            <a href="{{ url_for('announcements.list_announcements') }}">{{ item.announcement.title
+                                }}</a>
+                            {% if not item.is_read %}
+                            <span class="unread-dot ms-2" title="Non lu" aria-label="Non lu"></span>
+                            {% endif %}
+                        </span>
+                        <span class="timeline-time">{{ item.announcement.created_at.strftime('%d/%m/%Y %H:%M') if
+                            item.announcement.created_at else '' }}</span>
                     </div>
                 </div>
             </li>

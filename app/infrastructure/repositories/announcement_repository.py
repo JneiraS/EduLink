@@ -97,6 +97,19 @@ class SQLAlchemyAnnouncementRepository(AnnouncementRepositoryPort):
             announcement_id=announcement_id
         ).count()
 
+    def count_unread_for_user(self, user_id: int) -> int:
+        read_ids = (
+            AnnouncementReadModel.query.filter_by(user_id=user_id)
+            .with_entities(AnnouncementReadModel.announcement_id)
+            .all()
+        )
+        read_ids = {row[0] for row in read_ids}
+        if not read_ids:
+            return AnnouncementModel.query.count()
+        return AnnouncementModel.query.filter(
+            AnnouncementModel.id.notin_(read_ids)
+        ).count()
+
     def _to_entity(self, model: AnnouncementModel) -> Announcement:
         return Announcement(
             id=model.id,

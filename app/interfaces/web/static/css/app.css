@@ -29,6 +29,7 @@
     --text: #242735;
     --text-soft: #636b80;
     --line: #e4e1d3;
+    --bs-heading-color: var(--text);
 
     --brand: #4f46e5;
     --brand-strong: #4338ca;
@@ -670,6 +671,192 @@ html[data-theme="dark"] .admin-nav-link.active {
 .card-header {
     background: transparent;
     border-bottom: 1px solid var(--line);
+}
+
+/* ============================================================
+   Dashboard — stat cards
+   ============================================================ */
+.stat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: var(--space-4);
+}
+
+.stat-card {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+    padding: var(--space-4) var(--space-5);
+    border: 1px solid var(--line);
+    border-radius: var(--r-md);
+    background: var(--surface);
+    box-shadow: var(--shadow-1), var(--shadow-inset);
+}
+
+.stat-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    flex: 0 0 auto;
+    border-radius: var(--r-sm);
+    font-size: 1.15rem;
+}
+
+.stat-card--brand .stat-icon {
+    background: color-mix(in srgb, var(--brand) 12%, transparent);
+    color: var(--brand);
+}
+
+.stat-card--warn .stat-icon {
+    background: color-mix(in srgb, var(--warn) 12%, transparent);
+    color: var(--warn);
+}
+
+.stat-card--ok .stat-icon {
+    background: color-mix(in srgb, var(--ok) 12%, transparent);
+    color: var(--ok);
+}
+
+.stat-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    line-height: 1.1;
+    color: var(--text);
+}
+
+.stat-label {
+    font-size: 0.78rem;
+    color: var(--text-soft);
+    margin-top: 0.1rem;
+}
+
+.stat-inline {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.15rem;
+}
+
+.stat-inline .stat-value {
+    font-size: 1.25rem;
+}
+
+/* ============================================================
+   Dashboard — conversations
+   ============================================================ */
+.conversation-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-2);
+    border-radius: var(--r-md);
+    color: var(--text);
+    transition: background-color var(--dur-fast) ease;
+}
+
+.conversation-item:hover {
+    background: var(--list-hover-bg);
+    color: var(--text);
+}
+
+.conversation-item .channel-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    flex: 0 0 auto;
+    border-radius: var(--r-sm);
+    background: color-mix(in srgb, var(--brand) 10%, transparent);
+    color: var(--brand);
+}
+
+.conversation-name {
+    font-weight: 600;
+    color: var(--text);
+}
+
+.conversation-preview {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 100%;
+    font-size: 0.85rem;
+    color: var(--text-soft);
+}
+
+.conversation-time {
+    flex: 0 0 auto;
+    font-size: 0.72rem;
+    color: var(--text-soft);
+    white-space: nowrap;
+}
+
+/* ============================================================
+   Dashboard — children
+   ============================================================ */
+.child-card {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-4);
+    border: 1px solid var(--line);
+    border-radius: var(--r-md);
+    background: var(--surface);
+    color: var(--text);
+    transition: border-color var(--dur-fast) ease, box-shadow var(--dur-fast) ease;
+}
+
+.child-card:hover {
+    border-color: color-mix(in srgb, var(--brand) 45%, var(--line));
+    box-shadow: var(--shadow-2);
+    color: var(--text);
+}
+
+.child-avatar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    flex: 0 0 auto;
+    border-radius: var(--r-full);
+    background: var(--avatar-grad);
+    color: #ffffff;
+    font-weight: 700;
+}
+
+.child-name {
+    font-weight: 600;
+    color: var(--text);
+}
+
+.child-chevron {
+    margin-left: auto;
+    color: var(--text-soft);
+    flex: 0 0 auto;
+}
+
+/* ============================================================
+   Dashboard — recent signups
+   ============================================================ */
+.recent-user-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-2) 0;
+}
+
+.recent-user-item + .recent-user-item {
+    border-top: 1px solid var(--line);
+}
+
+.recent-user-name {
+    font-weight: 600;
+    color: var(--text);
 }
 
 /* ============================================================

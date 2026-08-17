@@ -383,6 +383,55 @@ filtrage réel (ne pas créer la notification) vit dans le **use case d'écritur
 
 ---
 
+### Exemple fil rouge n°6 : enrichissement du tableau de bord (rôle)
+
+Le dashboard était « vide » (hero + actions rapides + timeline). Il a été
+enrichi pour les 3 rôles : **stat cards**, **mes conversations** (avec aperçu du
+dernier message), panneau **« Mes enfants »** (parent), vue d'ensemble plateforme
++ **inscriptions récentes** (admin), onboarding par rôle.
+
+1. **Tests use cases** — `tests/application/test_dashboard_use_case.py`
+   (fakes `InMemoryAnnouncements/Notifications/Channels/Messages/Children/Users`) :
+   `role_message` par rôle, `stats` (non lus, nb conversations, annonces non
+   lues), `conversations` avec `last_message`, `latest_announcements` avec
+   `is_read`, `children` pour le parent, `user_counts`/`channel_count`/
+   `announcement_count`/`recent_users` pour l'admin, et **absence** de clés
+   rôle-spécifiques pour les autres rôles.
+2. **Ports** — trois nouvelles méthodes :
+   `MessageRepositoryPort.list_latest_by_channels(channel_ids)` (dernier message
+   par canal, **une requête groupée** via `MAX(id)`, pas de N+1),
+   `NotificationRepositoryPort.count_unread(user_id)`,
+   `AnnouncementRepositoryPort.count_unread_for_user(user_id)`.
+3. **Adapters** — `message_repository.py`, `notification_repository.py`,
+   `announcement_repository.py` implémentent les méthodes (tests dans
+   `tests/infrastructure/test_dashboard_repositories.py`).
+4. **Use case** — `GetDashboard` reçoit 6 repos et renvoie un dict complet ;
+   les clés rôle-spécifiques (`children`, `user_counts`…) ne sont ajoutées que
+   pour le rôle concerné.
+5. **Câblage** — `GetDashboard` instancié dans `create_app()` avec tous les
+   repos ; la route passe le nouveau contexte au template.
+6. **Template + CSS** — `home.html` : `.stat-grid` / `.stat-card--brand|warn|ok`
+   (icônes teintées via `color-mix`), `.conversation-item` (aperçu ellipsis +
+   hover `--list-hover-bg`), `.child-card`, `.recent-user-item`. Les empty-states
+   guident l'action (parent sans enfant, admin → créer des comptes).
+7. **Tests interface** — `tests/interfaces/test_dashboard_routes.py` : stat
+   cards visibles pour tous les rôles, panel enfants + onboarding parent,
+   conversation avec dernier message (enseignant), stats + inscriptions récentes
+   (admin).
+
+**Leçons** : (1) un dashboard n'est pas « un template avec des chiffres » — les
+compteurs vivent dans le **use case**, pas dans la route ni le template ; (2) les
+**clés rôle-spécifiques conditionnelles** (`if actor.role == ...`) évitent de
+fuir des données d'un rôle vers un autre ; (3) pour un aperçu « dernier message »
+sur N canaux, une méthode de port groupée (`MAX(id)` + fetch) évite le N+1.
+(4) un compteur « non lus » sans mécanisme de passage en lu reste bloqué à une
+valeur — la lecture effective se fait à l'ouverture du canal :
+`MarkChannelNotificationsRead` (use case) → `mark_channel_read` (port/repo,
+`UPDATE ... WHERE channel_id AND user_id AND is_read=False`), appelé dans le GET
+de `channel_detail`, avec la même garde `_assert_channel_access`.
+
+---
+
 ## 4. Checklist finale avant de considérer une fonctionnalité terminée
 
 - [ ] Use case testé en premier (TDD) ; validation/droits dans le use case,

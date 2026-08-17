@@ -257,6 +257,9 @@ def channel_detail(channel_id: int):
         channel_members = use_cases.list_channel_members.execute(
             actor, channel_id=channel_id
         )
+        use_cases.mark_channel_notifications_read.execute(
+            actor, channel_id=channel_id
+        )
         channel_name = resolve_channel_name(channel_id, user_channels)
         channel_obj = next(
             (channel for channel in user_channels if channel.id == channel_id),

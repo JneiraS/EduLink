@@ -31,6 +31,16 @@ class MarkNotificationRead:
 
 
 @dataclass(slots=True)
+class MarkChannelNotificationsRead:
+    notifications: NotificationRepositoryPort
+    channels: ChannelRepositoryPort
+
+    def execute(self, actor: User, channel_id: int) -> None:
+        _assert_channel_access(self.channels, actor, channel_id)
+        self.notifications.mark_channel_read(channel_id, actor.id or 0)
+
+
+@dataclass(slots=True)
 class GetNotificationSettings:
     preferences: NotificationPreferencesPort
     channels: ChannelRepositoryPort

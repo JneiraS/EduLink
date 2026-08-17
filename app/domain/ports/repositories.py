@@ -84,6 +84,10 @@ class AnnouncementRepositoryPort(ABC):
     def count_read(self, announcement_id: int) -> int:
         raise NotImplementedError
 
+    @abstractmethod
+    def count_unread_for_user(self, user_id: int) -> int:
+        raise NotImplementedError
+
 
 class MessageRepositoryPort(ABC):
     @abstractmethod
@@ -100,6 +104,10 @@ class MessageRepositoryPort(ABC):
     def search_by_channel(
         self, channel_id: int, query: str, limit: int = 50
     ) -> list[Message]:
+        raise NotImplementedError
+
+    @abstractmethod
+    def list_latest_by_channels(self, channel_ids: list[int]) -> dict[int, Message]:
         raise NotImplementedError
 
     @abstractmethod
@@ -121,7 +129,15 @@ class NotificationRepositoryPort(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    def count_unread(self, user_id: int) -> int:
+        raise NotImplementedError
+
+    @abstractmethod
     def mark_as_read(self, notification_id: int, user_id: int) -> None:
+        raise NotImplementedError
+
+    @abstractmethod
+    def mark_channel_read(self, channel_id: int, user_id: int) -> None:
         raise NotImplementedError
 
 

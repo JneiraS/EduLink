@@ -2,10 +2,12 @@ import pytest
 
 from app.application.use_cases.notification_use_cases import (
     GetNotificationSettings,
+    MarkChannelNotificationsRead,
     SetGlobalNotifications,
     ToggleChannelNotifications,
 )
 from app.domain.entities.channel import Channel
+from app.domain.entities.notification import Notification
 from app.domain.entities.user import User, UserRole
 from app.domain.errors import AuthorizationError, NotFoundError
 
@@ -122,6 +124,44 @@ def test_toggle_channel_notifications_missing_channel():
     channels = InMemoryChannelsForPrefs([Channel(id=1, name="C1", created_by=2)])
     use_case = ToggleChannelNotifications(
         preferences=InMemoryPrefs(), channels=channels
+    )
+    with pytest.raises(NotFoundError):
+        use_case.execute(_actor(), channel_id=999)
+
+
+class InMemoryNotifications:
+    def __init__(self):
+        self.channels_read = []
+
+    def mark_channel_read(self, channel_id, user_id):
+        self.channels_read.append((channel_id, user_id))
+
+
+def test_mark_channel_read_marks_notifications_of_channel():
+    notifications = InMemoryNotifications()
+    channels = InMemoryChannelsForPrefs([Channel(id=1, name="C1", created_by=2)])
+    use_case = MarkChannelNotificationsRead(
+        notifications=notifications, channels=channels
+    )
+    use_case.execute(_actor(), channel_id=1)
+    assert (1, 1) in notifications.channels_read
+
+
+def test_mark_channel_read_requires_membership():
+    notifications = InMemoryNotifications()
+    channels = InMemoryChannelsForPrefs([Channel(id=1, name="C1", created_by=2)])
+    use_case = MarkChannelNotificationsRead(
+        notifications=notifications, channels=channels
+    )
+    with pytest.raises(AuthorizationError):
+        use_case.execute(_actor(uid=9), channel_id=1)
+
+
+def test_mark_channel_read_missing_channel():
+    notifications = InMemoryNotifications()
+    channels = InMemoryChannelsForPrefs([Channel(id=1, name="C1", created_by=2)])
+    use_case = MarkChannelNotificationsRead(
+        notifications=notifications, channels=channels
     )
     with pytest.raises(NotFoundError):
         use_case.execute(_actor(), channel_id=999)
