@@ -2,6 +2,40 @@ from app.infrastructure.database.models import ChannelModel, MessageTemplateMode
 from tests.helpers import add_message, create_channel, create_user, login
 
 
+def test_channel_detail_search_results(client, app):
+    admin_id = create_user(app, role="ADMIN", email="srch1@t.local")
+    channel_id = create_channel(app, "Canal", admin_id, [admin_id])
+    add_message(app, channel_id, admin_id, "Hello world")
+    add_message(app, channel_id, admin_id, "Bonjour le monde")
+    login(client, admin_id)
+    resp = client.get(f"/messages/channels/{channel_id}?q=hello")
+    assert resp.status_code == 200
+    assert b"Hello world" in resp.data
+    assert b"Bonjour" not in resp.data
+
+
+def test_channel_detail_search_rejects_non_member(client, app):
+    owner_id = create_user(app, role="ADMIN", email="srch2@t.local")
+    outsider_id = create_user(app, role="PARENT", email="srch3@t.local")
+    channel_id = create_channel(app, "Prive", owner_id, [owner_id])
+    add_message(app, channel_id, owner_id, "secret information")
+    login(client, outsider_id)
+    resp = client.get(
+        f"/messages/channels/{channel_id}?q=secret", follow_redirects=True
+    )
+    assert b"User is not member of this channel" in resp.data
+
+
+def test_channel_detail_search_no_results(client, app):
+    admin_id = create_user(app, role="ADMIN", email="srch4@t.local")
+    channel_id = create_channel(app, "Canal", admin_id, [admin_id])
+    add_message(app, channel_id, admin_id, "Hello world")
+    login(client, admin_id)
+    resp = client.get(f"/messages/channels/{channel_id}?q=doesnotexist")
+    assert resp.status_code == 200
+    assert b"Aucun message" in resp.data
+
+
 def test_channels_page_requires_login(client):
     response = client.get("/messages/channels")
     assert response.status_code == 302

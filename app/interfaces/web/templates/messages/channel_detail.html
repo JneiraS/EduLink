@@ -56,11 +56,19 @@
                     </div>
                     {% endfor %}
                     {% else %}
+                    {% if search_mode %}
+                    <div class="empty-state">
+                        <span class="empty-icon" aria-hidden="true"><i class="bi bi-search"></i></span>
+                        <div class="empty-title">Aucun message</div>
+                        <div class="empty-hint">Aucun message ne contient " {{ search_query }} ".</div>
+                    </div>
+                    {% else %}
                     <div class="empty-state">
                         <span class="empty-icon" aria-hidden="true"><i class="bi bi-chat-dots"></i></span>
                         <div class="empty-title">Aucun message</div>
                         <div class="empty-hint">Lancez la conversation !</div>
                     </div>
+                    {% endif %}
                     {% endif %}
                 </div>
 
@@ -73,6 +81,10 @@
                     <button class="btn btn-primary send-btn" type="submit" aria-label="Envoyer">
                         <i class="bi bi-send" aria-hidden="true"></i>
                     </button>
+                </form>
+                <form method="get" class="search-form" role="search">
+                    <input class="form-control form-control-sm" type="search" name="q" value="{{ search_query or '' }}"
+                        placeholder="Rechercher dans les messages..." autocomplete="off" aria-label="Rechercher">
                 </form>
                 {% if message_templates %}
                 <div class="template-picker" data-template-picker>

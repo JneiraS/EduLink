@@ -250,6 +250,44 @@ contrat pour les autres appelants.
 
 ---
 
+### Exemple fil rouge n°3 : la recherche de messages dans un canal
+
+Fonctionnalité « recherche ILIKE par canal, avec garde d'appartenance ».
+
+1. **Tests use cases** — `tests/application/test_message_use_cases.py` (avec
+   `InMemoryMessages` + `InMemoryChannels(members=...)`) :
+   `SearchChannelMessages` relève `NotFoundError` si le canal n'existe pas,
+   `AuthorizationError` si l'acteur n'en est pas membre, `ValidationError` pour
+   une requête vide/trop longue, et renvoie les messages dont le contenu
+   contient le mot-clé (ILIKE).
+2. **Ports** — `MessageRepositoryPort.search_by_channel(channel_id, query, limit)`
+   ajouté.
+3. **Adapters** — `SQLAlchemyMessageRepository.search_by_channel` utilise
+   `MessageModel.content.ilike(f"%{query}%")`, trié par `id desc` puis inversé
+   pour l'ordre croissant d'affichage.
+4. **Use cases** — `app/application/use_cases/message_use_cases.py`
+   (`SearchChannelMessages`).
+5. **Câblage** — champ `search_channel_messages` dans `container.py` + instance
+   dans `create_app()` (`app/__init__.py`).
+6. **Routes** — `messages_routes.py` (`/channels/<id>` GET avec `?q=` pour la
+   recherche, `?before=` pour la pagination) : un `q` présent déclenche
+   `SearchChannelMessages` et rend les résultats dans le même template
+   `channel_detail.html`, avec variable `search_mode` (sinon listing paginé
+   normal).
+7. **Templates + CSS** — `messages/channel_detail.html` : un
+   `<form method="get">` de recherche dans le bloc du compositeur, et un état
+   vide « Aucun message ne contient … » quand `search_mode`. Styles
+   `.search-form` dans `app.css`.
+8. **Tests interface** — `tests/interfaces/test_messages_routes.py` :
+   résultats de recherche visibles pour un membre, refus (`AuthorizationError`)
+   pour un non-membre, état vide quand aucune correspondance.
+
+**Leçon** : la garde d'appartenance et le `NotFoundError` sont partagés entre
+`ListChannelMessages` et `SearchChannelMessages` — factorisez-les dans le use
+case (ou un helper) plutôt que de dupliquer la logique dans la route.
+
+---
+
 ## 4. Checklist finale avant de considérer une fonctionnalité terminée
 
 - [ ] Use case testé en premier (TDD) ; validation/droits dans le use case,

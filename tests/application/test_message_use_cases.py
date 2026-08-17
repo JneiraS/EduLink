@@ -2,6 +2,7 @@ import pytest
 
 from app.application.use_cases.message_use_cases import (
     ListChannelMessages,
+    SearchChannelMessages,
     SendMessage,
 )
 from app.domain.entities.channel import Channel
@@ -28,6 +29,17 @@ class InMemoryMessages:
         rows = rows[:limit]
         rows.reverse()
         return rows, has_more
+
+    def search_by_channel(self, channel_id, query, limit=50):
+        term = query.strip().lower()
+        rows = [
+            m for m in self.items
+            if m.channel_id == channel_id and term in m.content.lower()
+        ]
+        rows.sort(key=lambda m: m.id, reverse=True)
+        rows = rows[:limit]
+        rows.reverse()
+        return rows
 
 
 class InMemoryNotifications:
@@ -112,3 +124,44 @@ def test_send_message_rejects_oversized_content():
     )
     with pytest.raises(ValidationError):
         use_case.execute(_actor(), channel_id=1, content="x" * 5001)
+
+
+def _make_search_messages(messages, saved):
+    for i, c in enumerate(messages):
+        saved.save(Message(id=None, channel_id=1, sender_id=1, content=c))
+
+
+def test_search_messages_not_found():
+    use_case = SearchChannelMessages(
+        messages=InMemoryMessages(), channels=InMemoryChannels()
+    )
+    with pytest.raises(NotFoundError):
+        use_case.execute(_actor(), channel_id=999, query="hello")
+
+
+def test_search_messages_requires_membership():
+    use_case = SearchChannelMessages(
+        messages=InMemoryMessages(), channels=InMemoryChannels(members=(1,))
+    )
+    with pytest.raises(AuthorizationError):
+        use_case.execute(_actor(uid=2), channel_id=1, query="hello")
+
+
+def test_search_messages_returns_matching_only():
+    messages = InMemoryMessages()
+    _make_search_messages(
+        ["Hello world", "Bonjour le monde", "hello there"], messages
+    )
+    use_case = SearchChannelMessages(
+        messages=messages, channels=InMemoryChannels(members=(1,))
+    )
+    results = use_case.execute(_actor(), channel_id=1, query="hello")
+    assert [m.content for m in results] == ["Hello world", "hello there"]
+
+
+def test_search_messages_rejects_empty_query():
+    use_case = SearchChannelMessages(
+        messages=InMemoryMessages(), channels=InMemoryChannels()
+    )
+    with pytest.raises(ValidationError):
+        use_case.execute(_actor(), channel_id=1, query="   ")

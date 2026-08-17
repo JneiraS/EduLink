@@ -28,6 +28,20 @@ class SQLAlchemyMessageRepository(MessageRepositoryPort):
         rows.reverse()
         return [self._to_entity(row) for row in rows], has_more
 
+    def search_by_channel(
+        self, channel_id: int, query: str, limit: int = 50
+    ) -> list[Message]:
+        pattern = f"%{query}%"
+        rows = (
+            MessageModel.query.filter_by(channel_id=channel_id)
+            .filter(MessageModel.content.ilike(pattern))
+            .order_by(MessageModel.id.desc())
+            .limit(limit)
+            .all()
+        )
+        rows.reverse()
+        return [self._to_entity(row) for row in rows]
+
     def _to_entity(self, model: MessageModel) -> Message:
         return Message(
             id=model.id,
