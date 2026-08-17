@@ -175,6 +175,21 @@ def channel_detail(channel_id: int):
                 flash(str(exc), "danger")
 
             return redirect(url_for(CHANNEL_DETAIL, channel_id=channel_id))
+        if action == "toggle_pin":
+            message_id = request.form.get("message_id", type=int)
+            pinned = request.form.get("pinned") == "1"
+            try:
+                get_use_cases().pin_message.execute(
+                    actor,
+                    channel_id=channel_id,
+                    message_id=message_id or 0,
+                    pinned=pinned,
+                )
+                flash("Message epingle" if pinned else "Message desepingle", "success")
+            except (ValidationError, AuthorizationError, NotFoundError) as exc:
+                flash(str(exc), "danger")
+
+            return redirect(url_for(CHANNEL_DETAIL, channel_id=channel_id))
         content = request.form.get("content", "")
         try:
             get_use_cases().send_message.execute(
@@ -231,6 +246,20 @@ def channel_detail(channel_id: int):
         )
         messages_view = build_messages_view(messages, member_names)
         oldest_message_id = messages[0].id if messages else None
+
+        if not is_direct:
+            pinned_messages = use_cases.list_pinned_messages.execute(
+                actor, channel_id=channel_id
+            )
+            pinned_member_names = build_member_name_index(
+                channel_members,
+                pinned_messages,
+                users_lookup=lambda sender_ids: use_cases
+                .find_users_by_ids.execute(list(sender_ids)),
+            )
+            pinned_view = build_messages_view(pinned_messages, pinned_member_names)
+        else:
+            pinned_view = []
     except (AuthorizationError, NotFoundError) as exc:
         flash(str(exc), "danger")
         return redirect(url_for(MESSAGES_CHANNELS))
@@ -240,6 +269,7 @@ def channel_detail(channel_id: int):
         channel_id=channel_id,
         channel_name=channel_name,
         messages=messages_view,
+        pinned_messages=pinned_view,
         members=channel_members,
         available_users_by_role=group_users_by_role(available_users),
         can_manage_members=can_manage_members,

@@ -288,6 +288,50 @@ case (ou un helper) plutôt que de dupliquer la logique dans la route.
 
 ---
 
+### Exemple fil rouge n°4 : messages épinglés / importants
+
+Fonctionnalité « colonne `is_pinned` + section Épinglés en tête + toggle
+enseignant/admin ».
+
+1. **Tests use cases** — `tests/application/test_message_use_cases.py` :
+   `PinMessage` relève `AuthorizationError` pour un `PARENT` (seuls
+   `ADMIN`/`TEACHER` épingle), `NotFoundError` si le message n'existe pas, et
+   bascule `is_pinned` via `set_pinned` ; `ListPinnedMessages` impose la
+   **même garde d'appartenance** que le listing et ne renvoie que les épinglés.
+2. **Ports** — `MessageRepositoryPort.set_pinned(message_id, pinned)` et
+   `list_pinned(channel_id)` ajoutés.
+3. **Entité + migration** — champ `is_pinned: bool = False` sur `Message` ;
+   colonne `is_pinned` (Boolean, `server_default=false()`) sur `messages`
+   (migration `a1f42c8d9e77_add_messages_is_pinned`).
+4. **Adapters** — `SQLAlchemyMessageRepository.set_pinned` / `list_pinned`
+   (filtre `channel_id` + `is_pinned=True`, tri `created_at desc` puis
+   inversion), `is_pinned` ajouté à `_to_entity`.
+5. **Use cases** — `app/application/use_cases/message_use_cases.py`
+   (`PinMessage`, `ListPinnedMessages`). **Refactor** : la garde
+   canal/membre est extraite dans `_assert_channel_access` et partagée par
+   `ListChannelMessages`, `SearchChannelMessages`, `PinMessage` et
+   `ListPinnedMessages`.
+6. **Câblage** — champs `pin_message` et `list_pinned_messages` dans
+   `container.py` + instances dans `create_app()`.
+7. **Routes** — `messages_routes.py` : branche POST `action == "toggle_pin"`
+   sur `/channels/<id>` (message_id + `pinned` cible), et GET qui charge
+   `list_pinned_messages` (hors conversations directes) pour la section.
+8. **Templates + CSS** — `messages/channel_detail.html` : section « Épinglés »
+   en tête du `.chat-messages` (visible uniquement si des épinglés existent,
+   hors direct), bouton pin (toggle) sur chaque bulle réservé à
+   `can_manage_members` ; `build_messages_view` gagne `id`/`is_pinned`. Styles
+   `.pinned-section` / `.pin-form` dans `app.css`.
+9. **Tests interface** — `tests/interfaces/test_messages_routes.py` : un
+   enseignant épingle et la section s'affiche (persistance DB), un `PARENT`
+   reçoit `AuthorizationError` (état inchangé), et le bouton pin est absent
+   pour un parent.
+
+**Leçon** : une capacité d'écriture réservée à certains rôles (épingler)
+se contrôle **dans le use case**, pas seulement dans le template — le template
+cache le bouton, le use case reste la garde de vérité.
+
+---
+
 ## 4. Checklist finale avant de considérer une fonctionnalité terminée
 
 - [ ] Use case testé en premier (TDD) ; validation/droits dans le use case,

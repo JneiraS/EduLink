@@ -102,6 +102,14 @@ class MessageRepositoryPort(ABC):
     ) -> list[Message]:
         raise NotImplementedError
 
+    @abstractmethod
+    def set_pinned(self, message_id: int, pinned: bool) -> Message | None:
+        raise NotImplementedError
+
+    @abstractmethod
+    def list_pinned(self, channel_id: int) -> list[Message]:
+        raise NotImplementedError
+
 
 class NotificationRepositoryPort(ABC):
     @abstractmethod

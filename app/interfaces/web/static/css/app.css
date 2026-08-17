@@ -1380,6 +1380,41 @@ textarea.form-control:focus {
     border-color: var(--line);
 }
 
+.pinned-section {
+    border: 1px solid var(--line);
+    border-radius: var(--radius, 0.5rem);
+    padding: 0.5rem 0.75rem;
+    margin-bottom: 0.75rem;
+    background: color-mix(in srgb, var(--accent, #0d6efd) 6%, transparent);
+}
+
+.pinned-header {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--muted, #6c757d);
+    margin-bottom: 0.4rem;
+}
+
+.pinned-section .chat-message {
+    animation: none;
+}
+
+.chat-message .pin-form {
+    display: flex;
+    align-items: center;
+}
+
+.chat-message .pin-form .btn {
+    padding: 0.15rem 0.35rem;
+    font-size: 0.8rem;
+    line-height: 1;
+}
+
 .chat-message--mine {
     justify-content: flex-end;
 }
