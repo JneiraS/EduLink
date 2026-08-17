@@ -6,9 +6,11 @@
         <span class="kicker">Communication</span>
         <h1 class="page-title">Annonces scolaires</h1>
     </div>
+    {% if current_user.role|string|upper in ['ADMIN', 'TEACHER'] %}
     <a class="btn btn-primary" href="{{ url_for('announcements.create_announcement') }}">
         <i class="bi bi-plus-lg me-2" aria-hidden="true"></i>Nouvelle annonce
     </a>
+    {% endif %}
 </div>
 
 <div class="card shadow-sm">
