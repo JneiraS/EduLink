@@ -7,6 +7,36 @@ from app.domain.entities.channel import Channel
 from app.domain.entities.user import User, UserRole
 
 
+class InMemoryPrefs:
+    def __init__(self):
+        self.global_enabled = {}
+        self.channel_states = {}
+
+    def get_global_enabled(self, user_id):
+        return self.global_enabled.get(user_id, True)
+
+    def set_global_enabled(self, user_id, enabled):
+        self.global_enabled[user_id] = enabled
+
+    def is_channel_enabled(self, user_id, channel_id):
+        return self.channel_states.get((user_id, channel_id), True)
+
+    def set_channel_enabled(self, user_id, channel_id, enabled):
+        self.channel_states[(user_id, channel_id)] = enabled
+
+    def list_channel_states(self, user_id):
+        return {
+            cid: state
+            for (uid, cid), state in self.channel_states.items()
+            if uid == user_id
+        }
+
+    def is_enabled(self, user_id, channel_id):
+        return self.get_global_enabled(user_id) and self.is_channel_enabled(
+            user_id, channel_id
+        )
+
+
 class InMemoryMessageRepo:
     def __init__(self):
         self.items = []
@@ -86,6 +116,7 @@ def test_send_message_creates_notifications_for_other_members():
         channels=InMemoryChannelRepo(),
         notifications=InMemoryNotificationRepo(),
         realtime=FakeRealtime(),
+        preferences=InMemoryPrefs(),
     )
 
     actor = User(
@@ -104,3 +135,51 @@ def test_send_message_creates_notifications_for_other_members():
     assert sorted([n.user_id for n in use_case.notifications.items]) == [2, 3]
     assert len(use_case.realtime.user_events) == 2
     assert len(use_case.realtime.channel_events) == 1
+
+
+def test_send_message_skips_notification_for_muted_member():
+    prefs = InMemoryPrefs()
+    prefs.set_channel_enabled(3, 1, False)
+    use_case = SendMessage(
+        messages=InMemoryMessageRepo(),
+        channels=InMemoryChannelRepo(),
+        notifications=InMemoryNotificationRepo(),
+        realtime=FakeRealtime(),
+        preferences=prefs,
+    )
+    actor = User(
+        id=1,
+        full_name="Teacher",
+        email="teacher@test.local",
+        role=UserRole.TEACHER,
+        password_hash="hash",
+        is_active=True,
+    )
+    use_case.execute(actor=actor, channel_id=1, content="Bonjour")
+
+    assert [n.user_id for n in use_case.notifications.items] == [2]
+    assert [uid for uid, _ in use_case.realtime.user_events] == [2]
+
+
+def test_send_message_skips_notification_when_global_disabled():
+    prefs = InMemoryPrefs()
+    prefs.set_global_enabled(3, False)
+    use_case = SendMessage(
+        messages=InMemoryMessageRepo(),
+        channels=InMemoryChannelRepo(),
+        notifications=InMemoryNotificationRepo(),
+        realtime=FakeRealtime(),
+        preferences=prefs,
+    )
+    actor = User(
+        id=1,
+        full_name="Teacher",
+        email="teacher@test.local",
+        role=UserRole.TEACHER,
+        password_hash="hash",
+        is_active=True,
+    )
+    use_case.execute(actor=actor, channel_id=1, content="Bonjour")
+
+    assert [n.user_id for n in use_case.notifications.items] == [2]
+    assert [uid for uid, _ in use_case.realtime.user_events] == [2]

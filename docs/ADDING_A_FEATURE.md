@@ -332,6 +332,57 @@ cache le bouton, le use case reste la garde de vérité.
 
 ---
 
+### Exemple fil rouge n°5 : préférences de notification par conversation
+
+Fonctionnalité « toggle global (recevoir toutes les notifications) + toggle
+par conversation (canal ou 1:1) », visible par **tous** les membres.
+
+1. **Tests use cases** — `tests/application/test_notification_preferences_use_cases.py`
+   (fakes `InMemoryPrefs` + `InMemoryChannelsForPrefs`) :
+   `GetNotificationSettings` renvoie `global_enabled` + `channel_states`
+   (défaut tout activé), `ToggleChannelNotifications` inverse l'état et impose
+   l'appartenance (`NotFoundError`/`AuthorizationError`), `SetGlobalNotifications`
+   persiste. Côté `SendMessage` (`tests/application/test_message_notifications_use_case.py`) :
+   un membre « muet » (canal désactivé) **ne reçoit ni notification ni push**.
+2. **Ports** — `NotificationPreferencesPort` ajouté (`get_global_enabled`,
+   `set_global_enabled`, `is_channel_enabled`, `set_channel_enabled`,
+   `list_channel_states`, `is_enabled`).
+3. **Migration** — `c3d9b4e5f6a7_add_notification_preferences` : tables
+   `user_notification_settings` et `channel_notification_settings` (absence de
+   ligne = activé).
+4. **Adapters** — `notification_preferences_repository.py`
+   (`SQLAlchemyNotificationPreferencesRepository`) : `db.session.get` sur la
+   clé composite `(user_id, channel_id)`, défaut `True`, upsert simple.
+5. **Use cases** — `notification_use_cases.py` (`GetNotificationSettings`,
+   `SetGlobalNotifications`, `ToggleChannelNotifications`). Ce dernier réutilise
+   `_assert_channel_access` de `message_use_cases.py`.
+6. **Filtrage** — `SendMessage` reçoit `preferences: NotificationPreferencesPort`
+   en dépendance et saute `notifications.save` + `realtime.notify_user` quand
+   `is_enabled(member_id, channel_id)` est faux (global OU canal désactivé).
+7. **Câblage** — champs `get_notification_settings`, `set_global_notifications`,
+   `toggle_channel_notifications` dans `container.py` + instances dans
+   `create_app()` ; service `notification_preferences`.
+8. **Routes** — `messages_routes.py` : `POST /channels/<id>/notifications`
+   (toggle canal, redirect liste), `POST /notifications/global` (toggle global),
+   branche `action == "toggle_notifications"` sur `/channels/<id>` (toggle depuis
+   le canal) ; le GET des listes et du canal passe `notif_*` / `notifications_enabled`.
+9. **Templates + CSS + JS** — `channels.html` : commutateur global (form-switch,
+   soumission **via `data-global-notif-form` dans `app.js`** — pas de script
+   inline, CSP) + bouton cloche par conversation ; `channel_detail.html` :
+   bouton cloche dans le header. Styles `.notif-global-toggle` /
+   `.notif-channel-toggle` dans `app.css`.
+10. **Tests interface** — `tests/interfaces/test_messages_routes.py` : la liste
+    rend les toggles, le toggle global et le toggle canal persistent en DB, un
+    non-membre est refusé (`AuthorizationError`, aucun enregistrement), et le
+    toggle depuis `channel_detail` fonctionne.
+
+**Leçon** : un toggle d'abonnement n'est pas un privilège de rôle — il est
+ouvert à **tout membre** et la garde n'est que l'appartenance au canal. Le
+filtrage réel (ne pas créer la notification) vit dans le **use case d'écriture**
+(`SendMessage`), pas dans le template.
+
+---
+
 ## 4. Checklist finale avant de considérer une fonctionnalité terminée
 
 - [ ] Use case testé en premier (TDD) ; validation/droits dans le use case,

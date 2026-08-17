@@ -36,6 +36,7 @@ publique pour l'instant.
 | Messages en canal (chat + pagination + recherche + épinglés) | `messages_routes.py` | `SendMessage`, `ListChannelMessages`, `ListChannelMembers`, `SearchChannelMessages`, `PinMessage`, `ListPinnedMessages` | `message_repository.py` (`save`, `list_by_channel`, `search_by_channel`, `set_pinned`, `list_pinned`), `channel_repository.py` |
 | Modèles de messages | `messages_routes.py` (`/templates`, `/templates/<id>/edit`) | `ListMessageTemplates`, `CreateMessageTemplate`, `UpdateMessageTemplate`, `DeleteMessageTemplate` | `message_template_repository.py` |
 | Notifications (liste / lecture) | `notifications_routes.py` | `ListNotifications`, `MarkNotificationRead` | `notification_repository.py` |
+| Préférences de notification (toggle global + par canal) | `messages_routes.py` (`/channels`, `/channels/<id>`) | `GetNotificationSettings`, `SetGlobalNotifications`, `ToggleChannelNotifications` | `notification_preferences_repository.py` (`get_global_enabled`, `is_channel_enabled`, `set_*`, `is_enabled`), `channel_repository.py` |
 | Push web (abonnement PWA) | `push_routes.py` | `SubscribePushNotifications`, `UnsubscribePushNotifications` | `push_subscription_repository.py` |
 | **Administration** (création de comptes, rôles, activ./désactiv., suppression) | `admin_routes.py` + lien vers `auth_routes.py` (`/auth/users/new`) | `ListUsersForAdmin`, `UpdateUserRole`, `ToggleUserActive`, `ListAnnouncementsForAdmin`, `DeleteAnnouncement`, `ListChannelsForAdmin`, `DeleteChannel` + `RegisterUser` | `user_repository.py`, `announcement_repository.py`, `channel_repository.py` |
 | **Enfants** (rattachement à un parent, lien aux canaux de classe) | `admin_routes.py` (`/admin/children...`) + `parent_routes.py` (`/parent/children...`) | `CreateChild`, `ListChildren`, `ListClassNames`, `DeleteChild`, `LinkChildToClassChannels` | `children_repository.py`, `channel_repository.py` |
@@ -84,6 +85,9 @@ une violation d'architecture.
     (dont `mark_read` / `is_read` / `count_read` pour les accusés de réception),
     `MessageRepositoryPort` (dont `search_by_channel`, `set_pinned` et
     `list_pinned` pour la recherche et les épinglés), `NotificationRepositoryPort`,
+    `NotificationPreferencesPort` (`get_global_enabled`, `set_global_enabled`,
+    `is_channel_enabled`, `set_channel_enabled`, `list_channel_states`,
+    `is_enabled` — le toggle par conversation et le commutateur global),
     `ChannelRepositoryPort` (dont `find_direct_between` pour les 1:1 et
     `find_by_name(name, kind)` pour résoudre un canal par nom, optionnellement
     filtré par type — utilisé par le lien enfant → canaux de classe),
@@ -321,6 +325,14 @@ Point d'entrée : `run.py` → `create_app()` + `socketio.run(...)` (host/port v
 - Notifications : la colonne `channel_id` (nullable) relie les notifications de
   message à un canal ; les notifications d'annonce la laissent `NULL`. L'UI
   navigue via `n.channel_id` — ne **pas** parser la chaîne `content`.
+- **Préférences de notification** : deux tables — `user_notification_settings`
+  (`user_id` PK, `global_enabled` booléen, commutateur « recevoir toutes les
+  notifications ») et `channel_notification_settings` (`user_id` +
+  `channel_id` PK, `enabled`). L'absence de ligne = activé (défaut). Le
+  filtrage s'applique **dans `SendMessage`** avant de créer une notification ou
+  d'émettre un push (`preferences.is_enabled(member_id, channel_id)` = global
+  ET canal). Le toggle de canal est accessible à tous les membres ; la garde
+  d'appartenance vit dans `ToggleChannelNotifications`.
 
 ### Pagination
 

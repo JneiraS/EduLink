@@ -283,6 +283,17 @@ function initConfirmDialogs() {
     });
 }
 
+function initGlobalNotificationToggle() {
+    document.querySelectorAll("[data-global-notif-form]").forEach((form) => {
+        const checkbox = form.querySelector('input[type="checkbox"][name="enabled"]');
+        if (checkbox) {
+            checkbox.addEventListener("change", () => {
+                form.submit();
+            });
+        }
+    });
+}
+
 function initCopyButtons() {
     document.querySelectorAll("[data-copy-target]").forEach((button) => {
         button.addEventListener("click", async () => {
@@ -434,6 +445,8 @@ initThemeToggle();
 initCharCounters();
 
 initConfirmDialogs();
+
+initGlobalNotificationToggle();
 
 initAutoGrow();
 

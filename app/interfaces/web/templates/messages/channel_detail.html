@@ -11,6 +11,17 @@
                         <small class="text-muted">{{ members|length }} membre{{ 's' if members|length != 1 else ''
                             }}</small>
                     </div>
+                    <form method="post" class="notif-channel-toggle"
+                        title="Activer ou desactiver les notifications de cette conversation">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <input type="hidden" name="action" value="toggle_notifications">
+                        <button type="submit"
+                            class="btn btn-sm {% if notifications_enabled %}btn-outline-secondary{% else %}btn-secondary{% endif %}"
+                            aria-label="{% if notifications_enabled %}Desactiver les notifications{% else %}Activer les notifications{% endif %}">
+                            <i class="bi {% if notifications_enabled %}bi-bell{% else %}bi-bell-slash{% endif %}"
+                                aria-hidden="true"></i>
+                        </button>
+                    </form>
                     {% if members %}
                     <div class="avatar-stack" aria-hidden="true">
                         {% for member in members[:5] %}

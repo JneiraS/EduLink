@@ -7,6 +7,7 @@ from app.domain.errors import AuthorizationError, NotFoundError, ValidationError
 from app.domain.ports.repositories import (
     ChannelRepositoryPort,
     MessageRepositoryPort,
+    NotificationPreferencesPort,
     NotificationRepositoryPort,
     UserRepositoryPort,
 )
@@ -32,6 +33,7 @@ class SendMessage:
     channels: ChannelRepositoryPort
     notifications: NotificationRepositoryPort
     realtime: RealtimeNotificationPort
+    preferences: NotificationPreferencesPort
 
     def execute(self, actor: User, channel_id: int, content: str) -> Message:
         if not self.channels.find_by_id(channel_id):
@@ -58,6 +60,8 @@ class SendMessage:
         member_ids = self.channels.list_member_ids(channel_id)
         for member_id in member_ids:
             if member_id == (actor.id or 0):
+                continue
+            if not self.preferences.is_enabled(member_id, channel_id):
                 continue
 
             created_notification = self.notifications.save(
