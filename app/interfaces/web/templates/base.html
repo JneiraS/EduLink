@@ -39,10 +39,31 @@
                 </a>
 
                 {% if current_user.role == 'ADMIN' %}
-                <a class="nav-pill {% if endpoint.startswith('admin.') %}active{% endif %}"
-                    href="{{ url_for('admin.members') }}" title="Administration">
-                    <i class="bi bi-sliders" aria-hidden="true"></i>
-                    <span class="nav-action-label">Administration</span>
+                <a class="nav-pill {% if endpoint == 'admin.members' %}active{% endif %}"
+                    href="{{ url_for('admin.members') }}" title="Membres">
+                    <i class="bi bi-people" aria-hidden="true"></i>
+                    <span class="nav-action-label">Membres</span>
+                </a>
+                <a class="nav-pill {% if endpoint == 'admin.children' %}active{% endif %}"
+                    href="{{ url_for('admin.children') }}" title="Enfants">
+                    <i class="bi bi-people-fill" aria-hidden="true"></i>
+                    <span class="nav-action-label">Enfants</span>
+                </a>
+                <a class="nav-pill {% if endpoint == 'admin.announcements' %}active{% endif %}"
+                    href="{{ url_for('admin.announcements') }}" title="Annonces">
+                    <i class="bi bi-megaphone" aria-hidden="true"></i>
+                    <span class="nav-action-label">Annonces</span>
+                </a>
+                <a class="nav-pill {% if endpoint == 'admin.channels' %}active{% endif %}"
+                    href="{{ url_for('admin.channels') }}" title="Canaux">
+                    <i class="bi bi-hash" aria-hidden="true"></i>
+                    <span class="nav-action-label">Canaux</span>
+                </a>
+                {% elif current_user.role == 'PARENT' %}
+                <a class="nav-pill {% if endpoint.startswith('parent.') %}active{% endif %}"
+                    href="{{ url_for('parent.children') }}" title="Mes enfants">
+                    <i class="bi bi-people-fill" aria-hidden="true"></i>
+                    <span class="nav-action-label">Mes enfants</span>
                 </a>
                 {% endif %}
 

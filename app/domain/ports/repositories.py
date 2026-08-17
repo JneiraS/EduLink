@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 
 from app.domain.entities.announcement import Announcement
 from app.domain.entities.channel import Channel
+from app.domain.entities.child import Child
 from app.domain.entities.invitation import Invitation
 from app.domain.entities.message import Message
 from app.domain.entities.message_template import MessageTemplate
@@ -140,6 +141,10 @@ class ChannelRepositoryPort(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    def find_by_name(self, name: str, kind: str | None = None) -> Channel | None:
+        raise NotImplementedError
+
+    @abstractmethod
     def list_all(self) -> list[Channel]:
         raise NotImplementedError
 
@@ -197,4 +202,26 @@ class MessageTemplateRepositoryPort(ABC):
     def update(
         self, template_id: int, label: str, content: str
     ) -> MessageTemplate | None:
+        raise NotImplementedError
+
+
+class ChildrenRepositoryPort(ABC):
+    @abstractmethod
+    def save(self, child: Child) -> Child:
+        raise NotImplementedError
+
+    @abstractmethod
+    def list_by_parent(self, parent_id: int) -> list[Child]:
+        raise NotImplementedError
+
+    @abstractmethod
+    def find_by_class(self, class_name: str) -> list[Child]:
+        raise NotImplementedError
+
+    @abstractmethod
+    def find_by_id(self, child_id: int) -> Child | None:
+        raise NotImplementedError
+
+    @abstractmethod
+    def delete(self, child_id: int) -> Child | None:
         raise NotImplementedError

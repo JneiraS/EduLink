@@ -129,3 +129,12 @@ class SQLAlchemyChannelRepository(ChannelRepositoryPort):
         )
         rows = db.session.execute(stmt).all()
         return [row[0] for row in rows]
+
+    def find_by_name(self, name: str, kind: str | None = None) -> Channel | None:
+        query = ChannelModel.query.filter_by(name=name)
+        if kind is not None:
+            query = query.filter_by(kind=kind)
+        row = query.first()
+        if not row:
+            return None
+        return _to_channel(row)

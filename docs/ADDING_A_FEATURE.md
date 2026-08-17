@@ -198,6 +198,43 @@ l'implémentation de référence : suivez ses fichiers dans l'ordre.
 **Leçon** : chaque brique est petite, pure et testée à son niveau ; le
 câblage ne fait que de l'assemblage.
 
+### Exemple fil rouge n°2 : les enfants (feature « Enfants »)
+
+Feature « enfants » (rattachement d'un enfant à un parent, lien aux canaux de
+classe) — second exemple complet, avec nouvelle table. Suivez ses fichiers :
+
+1. **Tests use cases** — `tests/application/test_children_use_cases.py` (avec
+   repos in-memory) : garde ADMIN sur `CreateChild`/`DeleteChild`/
+   `LinkChildToClassChannels`, validation des noms (≤120), `parent_id` requis
+   et doit être un `PARENT`, `DeleteChild` lève `NotFoundError` si absent,
+   `LinkChildToClassChannels` ne **réutilise pas un canal `direct`** du même nom
+   (filtre `kind="group"`).
+2. **Ports** — `ChildrenRepositoryPort` (`save`, `list_by_parent`,
+   `find_by_class`, `find_by_id`, `delete`) ; `ChannelRepositoryPort.find_by_name`
+   gagne un paramètre `kind: str | None = None` (filtre optionnel).
+3. **Adapters + migration** — `SQLAlchemyChildrenRepository` (mapping
+   `_to_entity`) ; table `children` via migration Alembic
+   (`migrations/versions/317b92dacc5c_add_children_table.py`).
+4. **Use cases** — `app/application/use_cases/children_use_cases.py`.
+5. **Câblage** — champs dans `container.py` + instances dans `create_app()`
+   (`app/__init__.py`, dont l'enregistrement du blueprint `parent_bp`).
+6. **Routes** — `admin_routes.py` (`/admin/children`, `/children/create`,
+   `/children/<id>/delete`, `/children/<id>/link-channels`) + `parent_routes.py`
+   (`/parent/children`, `/parent/children/<id>/channels` avec garde `PARENT` et
+   résolution de l'enfant **via `ListChildren` du parent** — un enfant d'un
+   autre parent est introuvable).
+7. **Templates** — `admin/children.html`, `parent/children.html`,
+   `parent/child_channels.html` + nav-pills dans `base.html` (Enfants/Membres/
+   Annonces/Canaux pour `ADMIN`, « Mes enfants » pour `PARENT`).
+8. **Tests interface** — `tests/interfaces/test_children_routes.py` : accès
+   refusé aux rôles non habilités, listing, création, suppression, lien aux
+   canaux de classe (vérifie les membres du canal via `row.user_id`), redirection
+   pour un enfant d'un autre parent.
+
+**Leçon** : le filtre par `kind` sur `find_by_name` montre comment un port peut
+gagner un paramètre optionnel pour durcir une règle métier sans changer son
+contrat pour les autres appelants.
+
 ---
 
 ## 4. Checklist finale avant de considérer une fonctionnalité terminée

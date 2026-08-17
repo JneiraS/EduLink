@@ -11,6 +11,7 @@ from app.interfaces.web.routes.utils import current_actor, get_use_cases
 admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
 
 ADMIN_MEMBERS = "admin.members"
+ADMIN_CHILDREN = "admin.children"
 
 
 def _guard_admin():
@@ -146,3 +147,71 @@ def delete_channel(channel_id: int):
     except DomainError as exc:
         flash(str(exc), "danger")
     return redirect(url_for("admin.channels"))
+
+
+@admin_bp.route("/children", methods=["GET"])
+@login_required
+def children():
+    guard = _guard_admin()
+    if guard:
+        return guard
+    parents = get_use_cases().list_all_users.execute()
+    parent_children = {}
+    for parent in parents:
+        if parent.role.value == "PARENT":
+            children = get_use_cases().list_children.execute(parent)
+            if children:
+                parent_children[parent.id] = children
+    return render_template("admin/children.html", parents=parents, parent_children=parent_children)
+
+
+@admin_bp.route("/children/create", methods=["POST"])
+@login_required
+def create_child():
+    guard = _guard_admin()
+    if guard:
+        return guard
+    try:
+        parent_id = int(request.form.get("parent_id", 0))
+        full_name = request.form.get("full_name", "").strip()
+        class_name = request.form.get("class_name", "").strip()
+        child = get_use_cases().create_child.execute(
+            current_actor(),
+            full_name=full_name,
+            class_name=class_name,
+            parent_id=parent_id,
+        )
+        flash(f"Enfant {child.full_name} cree pour la classe {child.class_name}", "success")
+    except DomainError as exc:
+        flash(str(exc), "danger")
+    except (ValueError, TypeError):
+        flash("Donnees invalides", "danger")
+    return redirect(url_for(ADMIN_CHILDREN))
+
+
+@admin_bp.route("/children/<int:child_id>/delete", methods=["POST"])
+@login_required
+def delete_child(child_id: int):
+    guard = _guard_admin()
+    if guard:
+        return guard
+    try:
+        get_use_cases().delete_child.execute(current_actor(), child_id)
+        flash("Enfant supprime", "success")
+    except DomainError as exc:
+        flash(str(exc), "danger")
+    return redirect(url_for(ADMIN_CHILDREN))
+
+
+@admin_bp.route("/children/<int:child_id>/link-channels", methods=["POST"])
+@login_required
+def link_child_channels(child_id: int):
+    guard = _guard_admin()
+    if guard:
+        return guard
+    try:
+        get_use_cases().link_child_to_class_channels.execute(current_actor(), child_id)
+        flash("Canaux de classe lies", "success")
+    except DomainError as exc:
+        flash(str(exc), "danger")
+    return redirect(url_for(ADMIN_CHILDREN))
