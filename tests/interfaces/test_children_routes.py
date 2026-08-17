@@ -29,11 +29,15 @@ def test_admin_children_page_lists_children(client, app):
     admin_id = create_user(app, role="ADMIN", email="admin_child@test.local")
     parent_id = create_user(app, role="PARENT", email="parent_child@test.local")
     _add_child(app, parent_id, full_name="Enfant Test", class_name="CM2")
+    _add_child(app, parent_id, full_name="Enfant B", class_name="6eme A")
     login(client, admin_id)
     resp = client.get("/admin/children")
     assert resp.status_code == 200
     assert b"Enfant Test" in resp.data
     assert b"CM2" in resp.data
+    assert b'<datalist id="class-list">' in resp.data
+    assert b'<option value="CM2"></option>' in resp.data
+    assert b'<option value="6eme A"></option>' in resp.data
 
 
 def test_admin_children_page_requires_admin(client, app):
@@ -59,6 +63,27 @@ def test_admin_create_child_success(client, app):
         assert child is not None
         assert child.parent_id == parent_id
         assert child.class_name == "CM1"
+
+
+def test_admin_create_child_links_class_channel(client, app):
+    admin_id = create_user(app, role="ADMIN", email="admin_auto@test.local")
+    parent_id = create_user(app, role="PARENT", email="parent_auto@test.local")
+    login(client, admin_id)
+    resp = client.post(
+        "/admin/children/create",
+        data={"parent_id": str(parent_id), "full_name": "Leo Auto", "class_name": "CM4"},
+        follow_redirects=True,
+    )
+    assert resp.status_code == 200
+    with app.app_context():
+        channel = ChannelModel.query.filter_by(name="CM4", kind="group").first()
+        assert channel is not None
+        rows = db.session.execute(
+            channel_members.select().where(
+                channel_members.c.channel_id == channel.id
+            )
+        ).all()
+        assert parent_id in [row.user_id for row in rows]
 
 
 def test_admin_create_child_rejects_non_parent(client, app):

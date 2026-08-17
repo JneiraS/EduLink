@@ -3,8 +3,9 @@ import pytest
 from app.application.use_cases.children_use_cases import (
     CreateChild,
     DeleteChild,
-    ListChildren,
     LinkChildToClassChannels,
+    ListChildren,
+    ListClassNames,
 )
 from app.domain.entities.child import Child
 from app.domain.entities.user import User, UserRole
@@ -34,6 +35,9 @@ class InMemoryChildren:
             if child.id == child_id:
                 return self.children.pop(i)
         return None
+
+    def list_class_names(self) -> list[str]:
+        return sorted({c.class_name for c in self.children})
 
 
 class InMemoryUsers:
@@ -97,7 +101,7 @@ def test_create_child_requires_admin():
     users_repo = InMemoryUsers()
     admin = _parent_actor(UserRole.ADMIN, uid=1)
     users_repo.users.append(admin)
-    use_case = CreateChild(children=children_repo, users=users_repo)
+    use_case = CreateChild(children=children_repo, users=users_repo, channels=InMemoryChannels())
     with pytest.raises(AuthorizationError):
         use_case.execute(_parent_actor(UserRole.PARENT, uid=2), "Élève", "CM1")
 
@@ -109,7 +113,7 @@ def test_create_child_valid():
     parent = _parent_actor(UserRole.PARENT, uid=2)
     users_repo.users.append(admin)
     users_repo.users.append(parent)
-    use_case = CreateChild(children=children_repo, users=users_repo)
+    use_case = CreateChild(children=children_repo, users=users_repo, channels=InMemoryChannels())
     child = use_case.execute(admin, "Élève", "CM1", parent_id=parent.id)
     assert child.full_name == "Élève"
     assert child.class_name == "CM1"
@@ -124,7 +128,7 @@ def test_create_child_requires_name():
     parent = _parent_actor(UserRole.PARENT, uid=2)
     users_repo.users.append(admin)
     users_repo.users.append(parent)
-    use_case = CreateChild(children=children_repo, users=users_repo)
+    use_case = CreateChild(children=children_repo, users=users_repo, channels=InMemoryChannels())
     with pytest.raises(ValidationError):
         use_case.execute(admin, "  ", "CM1", parent_id=parent.id)
 
@@ -136,7 +140,7 @@ def test_create_child_rejects_oversized_name():
     parent = _parent_actor(UserRole.PARENT, uid=2)
     users_repo.users.append(admin)
     users_repo.users.append(parent)
-    use_case = CreateChild(children=children_repo, users=users_repo)
+    use_case = CreateChild(children=children_repo, users=users_repo, channels=InMemoryChannels())
     with pytest.raises(ValidationError):
         use_case.execute(admin, "X" * 121, "CM1", parent_id=parent.id)
 
@@ -148,7 +152,7 @@ def test_create_child_requires_class():
     parent = _parent_actor(UserRole.PARENT, uid=2)
     users_repo.users.append(admin)
     users_repo.users.append(parent)
-    use_case = CreateChild(children=children_repo, users=users_repo)
+    use_case = CreateChild(children=children_repo, users=users_repo, channels=InMemoryChannels())
     with pytest.raises(ValidationError):
         use_case.execute(admin, "Élève", "", parent_id=parent.id)
 
@@ -160,7 +164,7 @@ def test_create_child_rejects_oversized_class():
     parent = _parent_actor(UserRole.PARENT)
     users_repo.users.append(admin)
     users_repo.users.append(parent)
-    use_case = CreateChild(children=children_repo, users=users_repo)
+    use_case = CreateChild(children=children_repo, users=users_repo, channels=InMemoryChannels())
     with pytest.raises(ValidationError):
         use_case.execute(admin, "Élève", "X" * 121, parent_id=parent.id)
 
@@ -172,7 +176,7 @@ def test_create_child_invalid_parent():
     parent = _parent_actor(UserRole.PARENT)
     users_repo.users.append(admin)
     users_repo.users.append(parent)
-    use_case = CreateChild(children=children_repo, users=users_repo)
+    use_case = CreateChild(children=children_repo, users=users_repo, channels=InMemoryChannels())
     with pytest.raises(ValidationError):
         use_case.execute(admin, "Élève", "CM1", parent_id=999)
 
@@ -182,9 +186,41 @@ def test_create_child_requires_parent_id():
     users_repo = InMemoryUsers()
     admin = _parent_actor(UserRole.ADMIN, uid=1)
     users_repo.users.append(admin)
-    use_case = CreateChild(children=children_repo, users=users_repo)
+    use_case = CreateChild(children=children_repo, users=users_repo, channels=InMemoryChannels())
     with pytest.raises(ValidationError):
         use_case.execute(admin, "Élève", "CM1", parent_id=None)
+
+
+def test_create_child_links_parent_to_class_channel():
+    children_repo = InMemoryChildren()
+    users_repo = InMemoryUsers()
+    channels_repo = InMemoryChannels()
+    admin = _parent_actor(UserRole.ADMIN, uid=1)
+    parent = _parent_actor(UserRole.PARENT, uid=2)
+    users_repo.users.append(admin)
+    users_repo.users.append(parent)
+    use_case = CreateChild(children=children_repo, users=users_repo, channels=channels_repo)
+    child = use_case.execute(admin, "Élève", "CM2", parent_id=parent.id)
+    assert child.id == 1
+    channel = channels_repo.find_by_name("CM2", kind="group")
+    assert channel is not None
+    assert channels_repo.list_member_ids(channel.id) == [parent.id]
+
+
+def test_create_child_reuses_existing_class_channel():
+    children_repo = InMemoryChildren()
+    users_repo = InMemoryUsers()
+    channels_repo = InMemoryChannels()
+    existing = type("Channel", (), {"id": 1, "name": "CM2", "created_by": 1, "kind": "group"})()
+    channels_repo.channels.append(existing)
+    admin = _parent_actor(UserRole.ADMIN, uid=1)
+    parent = _parent_actor(UserRole.PARENT, uid=2)
+    users_repo.users.append(admin)
+    users_repo.users.append(parent)
+    use_case = CreateChild(children=children_repo, users=users_repo, channels=channels_repo)
+    use_case.execute(admin, "Élève", "CM2", parent_id=parent.id)
+    assert len(channels_repo.channels) == 1
+    assert channels_repo.list_member_ids(1) == [parent.id]
 
 
 # ---------------------------------------------------------------------------
@@ -206,6 +242,24 @@ def test_list_children_empty():
     use_case = ListChildren(children=InMemoryChildren())
     children = use_case.execute(_parent_actor(UserRole.PARENT))
     assert children == []
+
+
+# ---------------------------------------------------------------------------
+# ListClassNames
+# ---------------------------------------------------------------------------
+
+def test_list_class_names_returns_distinct_sorted():
+    repo = InMemoryChildren()
+    repo.save(_child(1, "Élève A", "CM1"))
+    repo.save(_child(1, "Élève B", "CM2"))
+    repo.save(_child(2, "Élève C", "CM1"))
+    use_case = ListClassNames(children=repo)
+    assert use_case.execute() == ["CM1", "CM2"]
+
+
+def test_list_class_names_empty():
+    use_case = ListClassNames(children=InMemoryChildren())
+    assert use_case.execute() == []
 
 
 # ---------------------------------------------------------------------------

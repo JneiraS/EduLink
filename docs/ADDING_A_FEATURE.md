@@ -124,6 +124,10 @@ Faites passer le test de l'étape 1 (vert).
 
 - Créez le template dans `app/interfaces/web/templates/<feature>/`.
 - Extendez `base.html` ; la navigation suit le motif des nav-pills existantes.
+  Pour ajouter une page, soit un lien `nav-pill` direct dans `base.html`, soit
+  une entrée du menu déroulant « Administration » (réservé `ADMIN`). La navbar
+  est `navbar-expand-lg` avec hamburger : les libellés restent visibles en
+  mobile.
 - **CSP sans `'unsafe-inline'` pour les scripts** : tout JS custom va dans
   `static/js/app.js`, tout CSS dans `static/css/app.css`. Pas de script inline
   dans un template.
@@ -187,9 +191,9 @@ l'implémentation de référence : suivez ses fichiers dans l'ordre.
    fichier PDF lors de la suppression d'annonce (via `_uploads_dir` importé de
    `announcements_routes.py`).
 7. **Templates** — `templates/admin/{members,announcements,channels}.html` +
-   nav-pill « Administration » dans `base.html` (visible si `ADMIN`) + styles
-   `.admin-table`, `.status-badge`, `.avatar-sm` dans `app.css` + `data-confirm`
-   pour les suppressions.
+   menu déroulant « Administration » dans `base.html` (visible si `ADMIN`) +
+   styles `.admin-table`, `.status-badge`, `.avatar-sm` dans `app.css` +
+   `data-confirm` pour les suppressions.
 8. **Tests interface** — `tests/interfaces/test_admin_routes.py` : page
    protégée (302 anonyme), refus TEACHER (`b"Acces reserve a l"` — attention à
    l'apostrophe échappée `&#39;` !), listing, changement de rôle, toggle
@@ -208,28 +212,37 @@ classe) — second exemple complet, avec nouvelle table. Suivez ses fichiers :
    `LinkChildToClassChannels`, validation des noms (≤120), `parent_id` requis
    et doit être un `PARENT`, `DeleteChild` lève `NotFoundError` si absent,
    `LinkChildToClassChannels` ne **réutilise pas un canal `direct`** du même nom
-   (filtre `kind="group"`).
+   (filtre `kind="group"`), et **`CreateChild` relie automatiquement** le parent
+   au canal de classe (créé s'il manque, réutilisé s'il existe).
 2. **Ports** — `ChildrenRepositoryPort` (`save`, `list_by_parent`,
-   `find_by_class`, `find_by_id`, `delete`) ; `ChannelRepositoryPort.find_by_name`
-   gagne un paramètre `kind: str | None = None` (filtre optionnel).
+    `find_by_class`, `find_by_id`, `delete`, `list_class_names` pour les
+    classes distinctes du formulaire) ; `ChannelRepositoryPort.find_by_name`
+    gagne un paramètre `kind: str | None = None` (filtre optionnel).
 3. **Adapters + migration** — `SQLAlchemyChildrenRepository` (mapping
    `_to_entity`) ; table `children` via migration Alembic
    (`migrations/versions/317b92dacc5c_add_children_table.py`).
-4. **Use cases** — `app/application/use_cases/children_use_cases.py`.
+4. **Use cases** — `app/application/use_cases/children_use_cases.py`
+    (`CreateChild`, `ListChildren`, `ListClassNames`, `DeleteChild`,
+    `LinkChildToClassChannels`).
 5. **Câblage** — champs dans `container.py` + instances dans `create_app()`
-   (`app/__init__.py`, dont l'enregistrement du blueprint `parent_bp`).
+    (`app/__init__.py`, dont l'enregistrement du blueprint `parent_bp`).
 6. **Routes** — `admin_routes.py` (`/admin/children`, `/children/create`,
-   `/children/<id>/delete`, `/children/<id>/link-channels`) + `parent_routes.py`
-   (`/parent/children`, `/parent/children/<id>/channels` avec garde `PARENT` et
-   résolution de l'enfant **via `ListChildren` du parent** — un enfant d'un
-   autre parent est introuvable).
-7. **Templates** — `admin/children.html`, `parent/children.html`,
-   `parent/child_channels.html` + nav-pills dans `base.html` (Enfants/Membres/
-   Annonces/Canaux pour `ADMIN`, « Mes enfants » pour `PARENT`).
+    `/children/<id>/delete`, `/children/<id>/link-channels`) + `parent_routes.py`
+    (`/parent/children`, `/parent/children/<id>/channels` avec garde `PARENT` et
+    résolution de l'enfant **via `ListChildren` du parent** — un enfant d'un
+    autre parent est introuvable). La route `/admin/children` passe
+    `class_names` (via `ListClassNames`) pour le `datalist` du formulaire.
+7. **Templates** — `admin/children.html` (le champ « Classe » est un input
+    libre relié à un `<datalist id="class-list">` listant les classes
+    existantes : on peut choisir ou saisir une nouvelle classe),
+    `parent/children.html`, `parent/child_channels.html` + entrée « Enfants »
+    du menu déroulant « Administration » dans `base.html` (pour `ADMIN`) et
+    lien « Mes enfants » pour `PARENT`.
 8. **Tests interface** — `tests/interfaces/test_children_routes.py` : accès
-   refusé aux rôles non habilités, listing, création, suppression, lien aux
-   canaux de classe (vérifie les membres du canal via `row.user_id`), redirection
-   pour un enfant d'un autre parent.
+   refusé aux rôles non habilités, listing, création (qui **relie aussi** le
+   parent au canal de classe — vérifie les membres du canal via `row.user_id`),
+   suppression, lien manuel aux canaux de classe, redirection pour un enfant
+   d'un autre parent.
 
 **Leçon** : le filtre par `kind` sur `find_by_name` montre comment un port peut
 gagner un paramètre optionnel pour durcir une règle métier sans changer son

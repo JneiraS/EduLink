@@ -68,6 +68,7 @@ from app.application.use_cases.children_use_cases import (
     DeleteChild,
     LinkChildToClassChannels,
     ListChildren,
+    ListClassNames,
 )
 from app.config.settings import DevelopmentConfig, TestingConfig
 from app.domain.errors import DomainError
@@ -279,8 +280,11 @@ def create_app(testing: bool = False):
         toggle_user_active=ToggleUserActive(users=users_repo),
         delete_announcement=DeleteAnnouncement(announcements=announcements_repo),
         delete_channel=DeleteChannel(channels=channels_repo),
-        create_child=CreateChild(children=children_repo, users=users_repo),
+        create_child=CreateChild(
+            children=children_repo, users=users_repo, channels=channels_repo
+        ),
         list_children=ListChildren(children=children_repo),
+        list_class_names=ListClassNames(children=children_repo),
         delete_child=DeleteChild(children=children_repo),
         link_child_to_class_channels=LinkChildToClassChannels(
             children=children_repo, channels=channels_repo

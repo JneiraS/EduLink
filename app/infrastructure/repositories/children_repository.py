@@ -45,6 +45,15 @@ class SQLAlchemyChildrenRepository(ChildrenRepositoryPort):
         db.session.commit()
         return child
 
+    def list_class_names(self) -> list[str]:
+        rows = (
+            db.session.query(ChildModel.class_name)
+            .distinct()
+            .order_by(ChildModel.class_name)
+            .all()
+        )
+        return [row[0] for row in rows]
+
     def _to_entity(self, model: ChildModel) -> Child:
         return Child(
             id=model.id,

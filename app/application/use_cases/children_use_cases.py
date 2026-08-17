@@ -41,10 +41,31 @@ def _require_admin(actor: User) -> None:
         raise AuthorizationError("Accès réservé à l'administration")
 
 
+def _link_child_to_class_channels(
+    channels: ChannelRepositoryPort,
+    child: Child,
+    created_by: int,
+) -> None:
+    channel = channels.find_by_name(child.class_name, kind="group")
+    if channel is None:
+        channel = channels.create(
+            Channel(
+                id=None,
+                name=child.class_name,
+                kind="group",
+                created_by=created_by,
+            )
+        )
+
+    if child.parent_id not in channels.list_member_ids(channel.id):
+        channels.add_member(channel.id, child.parent_id)
+
+
 @dataclass(slots=True)
 class CreateChild:
     children: ChildrenRepositoryPort
     users: UserRepositoryPort
+    channels: ChannelRepositoryPort
 
     def execute(self, actor: User, full_name: str, class_name: str, parent_id: int | None = None) -> Child:
         _require_admin(actor)
@@ -64,7 +85,9 @@ class CreateChild:
             full_name=full_name,
             class_name=class_name,
         )
-        return self.children.save(child)
+        child = self.children.save(child)
+        _link_child_to_class_channels(self.channels, child, actor.id)
+        return child
 
 
 @dataclass(slots=True)
@@ -73,6 +96,14 @@ class ListChildren:
 
     def execute(self, actor: User) -> list[Child]:
         return self.children.list_by_parent(actor.id)
+
+
+@dataclass(slots=True)
+class ListClassNames:
+    children: ChildrenRepositoryPort
+
+    def execute(self) -> list[str]:
+        return self.children.list_class_names()
 
 
 @dataclass(slots=True)
@@ -97,17 +128,4 @@ class LinkChildToClassChannels:
         child = self.children.find_by_id(child_id)
         if child is None:
             raise NotFoundError("Enfant introuvable")
-
-        channel = self.channels.find_by_name(child.class_name, kind="group")
-        if channel is None:
-            channel = self.channels.create(
-                Channel(
-                    id=None,
-                    name=child.class_name,
-                    kind="group",
-                    created_by=actor.id,
-                )
-            )
-
-        if child.parent_id not in self.channels.list_member_ids(channel.id):
-            self.channels.add_member(channel.id, child.parent_id)
+        _link_child_to_class_channels(self.channels, child, actor.id)

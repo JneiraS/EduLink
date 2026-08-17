@@ -162,7 +162,13 @@ def children():
             children = get_use_cases().list_children.execute(parent)
             if children:
                 parent_children[parent.id] = children
-    return render_template("admin/children.html", parents=parents, parent_children=parent_children)
+    class_names = get_use_cases().list_class_names.execute()
+    return render_template(
+        "admin/children.html",
+        parents=parents,
+        parent_children=parent_children,
+        class_names=class_names,
+    )
 
 
 @admin_bp.route("/children/create", methods=["POST"])
@@ -181,7 +187,10 @@ def create_child():
             class_name=class_name,
             parent_id=parent_id,
         )
-        flash(f"Enfant {child.full_name} cree pour la classe {child.class_name}", "success")
+        flash(
+            f"Enfant {child.full_name} cree et lie aux canaux de classe {child.class_name}",
+            "success",
+        )
     except DomainError as exc:
         flash(str(exc), "danger")
     except (ValueError, TypeError):

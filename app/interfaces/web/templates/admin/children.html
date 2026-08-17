@@ -32,7 +32,12 @@
             </div>
             <div class="col-md-3">
                 <label for="class_name" class="form-label">Classe <span class="text-danger">*</span></label>
-                <input type="text" class="form-control" id="class_name" name="class_name" maxlength="120" required placeholder="ex: CM2, 6ème A">
+                <input type="text" class="form-control" id="class_name" name="class_name" list="class-list" maxlength="120" required placeholder="ex: CM2, 6ème A" autocomplete="off">
+                <datalist id="class-list">
+                    {% for class_name in class_names %}
+                    <option value="{{ class_name }}"></option>
+                    {% endfor %}
+                </datalist>
             </div>
             <div class="col-md-1 d-flex align-items-end">
                 <button type="submit" class="btn btn-primary w-100">
@@ -70,12 +75,12 @@
                                     {% if parent %}{{ parent.full_name }} ({{ parent.email }}){% else %}Inconnu{% endif %}
                                 </td>
                                 <td class="text-end">
-                                    <form method="post" action="{{ url_for('admin.link_child_channels', child_id=child.id) }}" class="d-inline me-2" data-confirm="Lier ce parent aux canaux de la classe {{ child.class_name }} ?">
+                                    <!-- <form method="post" action="{{ url_for('admin.link_child_channels', child_id=child.id) }}" class="d-inline me-2" data-confirm="Lier ce parent aux canaux de la classe {{ child.class_name }} ?">
                                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                         <button type="submit" class="btn btn-sm btn-outline-primary" title="Lier aux canaux de classe">
                                             <i class="bi bi-link-45deg"></i>
                                         </button>
-                                    </form>
+                                    </form> -->
                                     <form method="post" action="{{ url_for('admin.delete_child', child_id=child.id) }}" class="d-inline" data-confirm="Supprimer cet enfant ?">
                                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                         <button type="submit" class="btn btn-sm btn-outline-danger" title="Supprimer">

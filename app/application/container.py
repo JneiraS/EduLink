@@ -52,6 +52,7 @@ from app.application.use_cases.children_use_cases import (
     DeleteChild,
     LinkChildToClassChannels,
     ListChildren,
+    ListClassNames,
 )
 from app.application.use_cases.user_query_use_cases import FindUsersByIds, ListAllUsers
 
@@ -91,6 +92,7 @@ class UseCaseContainer:
     list_channels_for_admin: ListChannelsForAdmin
     create_child: CreateChild
     list_children: ListChildren
+    list_class_names: ListClassNames
     delete_child: DeleteChild
     link_child_to_class_channels: LinkChildToClassChannels
     update_user_role: UpdateUserRole

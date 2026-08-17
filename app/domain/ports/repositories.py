@@ -225,3 +225,7 @@ class ChildrenRepositoryPort(ABC):
     @abstractmethod
     def delete(self, child_id: int) -> Child | None:
         raise NotImplementedError
+
+    @abstractmethod
+    def list_class_names(self) -> list[str]:
+        raise NotImplementedError

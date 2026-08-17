@@ -38,7 +38,7 @@ publique pour l'instant.
 | Notifications (liste / lecture) | `notifications_routes.py` | `ListNotifications`, `MarkNotificationRead` | `notification_repository.py` |
 | Push web (abonnement PWA) | `push_routes.py` | `SubscribePushNotifications`, `UnsubscribePushNotifications` | `push_subscription_repository.py` |
 | **Administration** (création de comptes, rôles, activ./désactiv., suppression) | `admin_routes.py` + lien vers `auth_routes.py` (`/auth/users/new`) | `ListUsersForAdmin`, `UpdateUserRole`, `ToggleUserActive`, `ListAnnouncementsForAdmin`, `DeleteAnnouncement`, `ListChannelsForAdmin`, `DeleteChannel` + `RegisterUser` | `user_repository.py`, `announcement_repository.py`, `channel_repository.py` |
-| **Enfants** (rattachement à un parent, lien aux canaux de classe) | `admin_routes.py` (`/admin/children...`) + `parent_routes.py` (`/parent/children...`) | `CreateChild`, `ListChildren`, `DeleteChild`, `LinkChildToClassChannels` | `children_repository.py`, `channel_repository.py` |
+| **Enfants** (rattachement à un parent, lien aux canaux de classe) | `admin_routes.py` (`/admin/children...`) + `parent_routes.py` (`/parent/children...`) | `CreateChild`, `ListChildren`, `ListClassNames`, `DeleteChild`, `LinkChildToClassChannels` | `children_repository.py`, `channel_repository.py` |
 | Requêtes utilitaires (lecture) | routes diverses | `ListAllUsers`, `FindUsersByIds` | `user_repository.py` |
 
 Le temps réel n'apparaît pas dans un blueprint : `SocketIONotificationService`
@@ -87,7 +87,8 @@ une violation d'architecture.
     filtré par type — utilisé par le lien enfant → canaux de classe),
     `PushSubscriptionRepositoryPort`, `MessageTemplateRepositoryPort`
     (dont `update` pour modifier un modèle existant), `ChildrenRepositoryPort`
-    (`save`, `list_by_parent`, `find_by_class`, `find_by_id`, `delete`).
+    (`save`, `list_by_parent`, `find_by_class`, `find_by_id`, `delete`,
+    `list_class_names` pour les classes distinctes du formulaire).
   - `services.py` : `PasswordHasherPort`, `RealtimeNotificationPort`.
 - **`errors.py`** — hiérarchie d'erreurs métier :
   `DomainError` → `AuthenticationError`, `AuthorizationError`, `NotFoundError`,
@@ -142,10 +143,14 @@ une violation d'architecture.
 - **`socket_events.py`** : enregistre les handlers SocketIO (rejoindre les
   rooms `user_<id>` et `channel_<id>`).
 - **`templates/`** : Jinja2. **`static/`** : CSS/JS custom, manifest PWA.
-  La navigation principale vit dans `base.html` (nav-pills) : les liens
-  d'administration (Membres, Enfants, Annonces, Canaux) ne sont visibles que
-  pour `ADMIN`, le lien « Mes enfants » pour `PARENT` — il n'y a plus de
-  sous-navigation `admin/_nav.html`.
+  La navigation principale vit dans `base.html` : une navbar Bootstrap
+  responsive (`navbar-expand-lg`) avec bouton hamburger sur écran < 992px.
+  Les liens principaux (Annonces, Messagerie) sont des nav-pills ; pour
+  `ADMIN`, les sections Membres, Enfants, Annonces et Canaux sont regroupées
+  dans un menu déroulant « Administration » ; pour `PARENT`, le lien
+  « Mes enfants » — il n'y a plus de sous-navigation `admin/_nav.html`.
+  En mobile, le menu replié s'affiche en colonne et les libellés restent
+  visibles (les styles icon-only d'avant ont été retirés).
 
 Le **sélecteur de membres** (création de canal, « ajouter des membres ») est
 un composant réutilisable : recherche temps réel, regroupement par rôle
@@ -270,14 +275,18 @@ Point d'entrée : `run.py` → `create_app()` + `socketio.run(...)` (host/port v
 ### Enfants & canaux de classe
 
 - Les enfants sont créés par un `ADMIN` (`CreateChild`) et rattachés à un
-  compte `PARENT` (validation du rôle dans le use case). `ListChildren` ne
-  renvoie que les enfants du parent appelant (route `parent_routes.py`), ce qui
-  empêche un parent de voir les enfants d'un autre.
+  compte `PARENT` (validation du rôle dans le use case). `CreateChild` relie
+  **automatiquement** le parent au canal de classe (même logique que
+  `LinkChildToClassChannels`, factorisée dans `_link_child_to_class_channels`) :
+  plus besoin de cliquer sur « Lier aux canaux de classe » après la création.
+  `ListChildren` ne renvoie que les enfants du parent appelant (route
+  `parent_routes.py`), ce qui empêche un parent de voir les enfants d'un autre.
 - `LinkChildToClassChannels` (réservé admin) relie le parent à un canal de
   classe : il cherche un canal **`kind="group"`** par `class_name`
   (`find_by_name(name, kind="group")`) et le crée s'il n'existe pas. Le filtre
   par `kind` évite de relier le parent à un canal `direct` qui porterait le
-  même nom.
+  même nom. Il reste disponible pour rattacher manuellement un enfant existant
+  (ex. changement de classe).
 - La page parent `/parent/children/<id>/channels` liste les canaux du parent
   dont le nom correspond à la classe de l'enfant (`list_user_channels` filtré
   par `class_name`). Un enfant d'un autre parent est introuvable → redirect.
