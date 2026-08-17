@@ -142,10 +142,14 @@ une violation d'architecture.
 - **`socket_events.py`** : enregistre les handlers SocketIO (rejoindre les
   rooms `user_<id>` et `channel_<id>`).
 - **`templates/`** : Jinja2. **`static/`** : CSS/JS custom, manifest PWA.
-  La navigation principale vit dans `base.html` (nav-pills) : les liens
-  d'administration (Membres, Enfants, Annonces, Canaux) ne sont visibles que
-  pour `ADMIN`, le lien « Mes enfants » pour `PARENT` — il n'y a plus de
-  sous-navigation `admin/_nav.html`.
+  La navigation principale vit dans `base.html` : une navbar Bootstrap
+  responsive (`navbar-expand-lg`) avec bouton hamburger sur écran < 992px.
+  Les liens principaux (Annonces, Messagerie) sont des nav-pills ; pour
+  `ADMIN`, les sections Membres, Enfants, Annonces et Canaux sont regroupées
+  dans un menu déroulant « Administration » ; pour `PARENT`, le lien
+  « Mes enfants » — il n'y a plus de sous-navigation `admin/_nav.html`.
+  En mobile, le menu replié s'affiche en colonne et les libellés restent
+  visibles (les styles icon-only d'avant ont été retirés).
 
 Le **sélecteur de membres** (création de canal, « ajouter des membres ») est
 un composant réutilisable : recherche temps réel, regroupement par rôle

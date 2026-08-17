@@ -124,6 +124,10 @@ Faites passer le test de l'étape 1 (vert).
 
 - Créez le template dans `app/interfaces/web/templates/<feature>/`.
 - Extendez `base.html` ; la navigation suit le motif des nav-pills existantes.
+  Pour ajouter une page, soit un lien `nav-pill` direct dans `base.html`, soit
+  une entrée du menu déroulant « Administration » (réservé `ADMIN`). La navbar
+  est `navbar-expand-lg` avec hamburger : les libellés restent visibles en
+  mobile.
 - **CSP sans `'unsafe-inline'` pour les scripts** : tout JS custom va dans
   `static/js/app.js`, tout CSS dans `static/css/app.css`. Pas de script inline
   dans un template.
@@ -187,9 +191,9 @@ l'implémentation de référence : suivez ses fichiers dans l'ordre.
    fichier PDF lors de la suppression d'annonce (via `_uploads_dir` importé de
    `announcements_routes.py`).
 7. **Templates** — `templates/admin/{members,announcements,channels}.html` +
-   nav-pill « Administration » dans `base.html` (visible si `ADMIN`) + styles
-   `.admin-table`, `.status-badge`, `.avatar-sm` dans `app.css` + `data-confirm`
-   pour les suppressions.
+   menu déroulant « Administration » dans `base.html` (visible si `ADMIN`) +
+   styles `.admin-table`, `.status-badge`, `.avatar-sm` dans `app.css` +
+   `data-confirm` pour les suppressions.
 8. **Tests interface** — `tests/interfaces/test_admin_routes.py` : page
    protégée (302 anonyme), refus TEACHER (`b"Acces reserve a l"` — attention à
    l'apostrophe échappée `&#39;` !), listing, changement de rôle, toggle
@@ -224,8 +228,9 @@ classe) — second exemple complet, avec nouvelle table. Suivez ses fichiers :
    résolution de l'enfant **via `ListChildren` du parent** — un enfant d'un
    autre parent est introuvable).
 7. **Templates** — `admin/children.html`, `parent/children.html`,
-   `parent/child_channels.html` + nav-pills dans `base.html` (Enfants/Membres/
-   Annonces/Canaux pour `ADMIN`, « Mes enfants » pour `PARENT`).
+   `parent/child_channels.html` + entrée « Enfants » du menu déroulant
+   « Administration » dans `base.html` (pour `ADMIN`) et lien « Mes enfants »
+   pour `PARENT`.
 8. **Tests interface** — `tests/interfaces/test_children_routes.py` : accès
    refusé aux rôles non habilités, listing, création, suppression, lien aux
    canaux de classe (vérifie les membres du canal via `row.user_id`), redirection
