@@ -75,6 +75,7 @@ from app.application.use_cases.user_query_use_cases import FindUsersByIds, ListA
 from app.application.use_cases.children_use_cases import (
     CreateChild,
     DeleteChild,
+    FindParentsByChild,
     LinkChildToClassChannels,
     ListChildren,
     ListClassNames,
@@ -348,6 +349,9 @@ def create_app(testing: bool = False):
         delete_child=DeleteChild(children=children_repo),
         link_child_to_class_channels=LinkChildToClassChannels(
             children=children_repo, channels=channels_repo
+        ),
+        find_parents_by_child=FindParentsByChild(
+            children=children_repo, users=users_repo
         ),
     )
 

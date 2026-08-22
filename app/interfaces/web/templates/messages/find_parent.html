@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row justify-content-center reveal-group">
+    <div class="col-lg-7">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <span class="kicker">Messagerie</span>
+                <h1 class="page-title mb-2">Trouver un parent</h1>
+                <p class="text-muted mb-4">Recherchez un enfant pour contacter son parent.</p>
+
+                <form method="get" class="mb-4" role="search">
+                    <div class="input-group">
+                        <input class="form-control" type="search" name="q"
+                            value="{{ search_query or '' }}"
+                            placeholder="Nom de l'enfant..." autocomplete="off"
+                            aria-label="Nom de l'enfant">
+                        <button class="btn btn-primary" type="submit">
+                            <i class="bi bi-search" aria-hidden="true"></i>
+                        </button>
+                    </div>
+                </form>
+
+                {% if results %}
+                <div class="d-flex flex-column gap-3">
+                    {% for result in results %}
+                    <div class="card">
+                        <div class="card-body d-flex justify-content-between align-items-center">
+                            <div>
+                                <div class="fw-semibold">
+                                    <i class="bi bi-person-child me-2 text-muted" aria-hidden="true"></i>
+                                    {{ result.child.full_name }}
+                                </div>
+                                <small class="text-muted">
+                                    {{ result.child.class_name }} &mdash;
+                                    {{ result.parent.full_name }}
+                                </small>
+                            </div>
+                            <form method="post" class="d-inline">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <input type="hidden" name="parent_id" value="{{ result.parent.id }}">
+                                <button class="btn btn-sm btn-outline-primary" type="submit">
+                                    <i class="bi bi-chat-dots me-1" aria-hidden="true"></i>Contacter
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% elif search_query and search_query.strip() %}
+                <div class="empty-state">
+                    <span class="empty-icon" aria-hidden="true"><i class="bi bi-search"></i></span>
+                    <div class="empty-title">Aucun enfant trouve</div>
+                    <div class="empty-hint">Essayez avec un autre nom.</div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

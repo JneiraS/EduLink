@@ -123,6 +123,42 @@ def new_conversation():
     )
 
 
+@messages_bp.route("/find-parent", methods=["GET", "POST"])
+@login_required
+def find_parent():
+    actor = current_actor()
+    if actor.role not in (UserRole.ADMIN, UserRole.TEACHER):
+        flash("Acces reserve aux enseignants", "danger")
+        return redirect(url_for("dashboard.home"))
+    if request.method == "POST":
+        parent_id = request.form.get("parent_id", type=int)
+        if parent_id:
+            try:
+                channel = get_use_cases().open_direct_conversation.execute(
+                    actor, other_user_id=parent_id
+                )
+                flash("Conversation creee", "success")
+                return redirect(url_for(CHANNEL_DETAIL, channel_id=channel.id))
+            except (ValidationError, NotFoundError) as exc:
+                flash(str(exc), "danger")
+        return redirect(url_for("messages.find_parent"))
+
+    query = request.args.get("q", type=str, default="")
+    results = []
+    if query.strip():
+        try:
+            results = get_use_cases().find_parents_by_child.execute(
+                actor, query=query
+            )
+        except (AuthorizationError, ValidationError) as exc:
+            flash(str(exc), "danger")
+    return render_template(
+        "messages/find_parent.html",
+        results=results,
+        search_query=query,
+    )
+
+
 @messages_bp.route("/templates", methods=["GET", "POST"])
 @login_required
 def templates():

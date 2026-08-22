@@ -624,3 +624,60 @@ def test_channel_detail_toggle_notifications(client, app):
             ChannelNotificationSettingModel, (teacher_id, channel_id)
         )
         assert row is not None and row.enabled is False
+
+
+# ---------------------------------------------------------------------------
+# Find parent
+# ---------------------------------------------------------------------------
+
+def test_find_parent_requires_login(client):
+    resp = client.get("/messages/find-parent")
+    assert resp.status_code == 302
+
+
+def test_find_parent_requires_teacher_or_admin(client, app):
+    parent_id = create_user(app, role="PARENT", email="fp1@t.local")
+    login(client, parent_id)
+    resp = client.get("/messages/find-parent", follow_redirects=True)
+    assert resp.status_code == 200
+    assert b"Acces r" in resp.data
+
+
+def test_find_parent_renders_search_form(client, app):
+    teacher_id = create_user(app, role="TEACHER", email="fp2@t.local")
+    login(client, teacher_id)
+    resp = client.get("/messages/find-parent")
+    assert resp.status_code == 200
+    assert b"Trouver un parent" in resp.data
+    assert b"Nom de l" in resp.data
+
+
+def test_find_parent_shows_results(client, app):
+    teacher_id = create_user(app, role="TEACHER", email="fp3@t.local")
+    parent_id = create_user(app, role="PARENT", email="fp4@t.local", full_name="Marie Dupont")
+    from app.infrastructure.database.models import ChildModel
+    from app.extensions import db
+    with app.app_context():
+        child = ChildModel(parent_id=parent_id, full_name="Alice Dupont", class_name="CM1")
+        db.session.add(child)
+        db.session.commit()
+
+    login(client, teacher_id)
+    resp = client.get("/messages/find-parent?q=Alice")
+    assert resp.status_code == 200
+    assert b"Alice Dupont" in resp.data
+    assert b"Marie Dupont" in resp.data
+    assert b"Contacter" in resp.data
+
+
+def test_find_parent_post_opens_conversation(client, app):
+    teacher_id = create_user(app, role="TEACHER", email="fp5@t.local")
+    parent_id = create_user(app, role="PARENT", email="fp6@t.local")
+    login(client, teacher_id)
+    resp = client.post(
+        "/messages/find-parent",
+        data={"parent_id": str(parent_id)},
+        follow_redirects=True,
+    )
+    assert resp.status_code == 200
+    assert b"Conversation creee" in resp.data

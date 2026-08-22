@@ -331,3 +331,7 @@ class ChildrenRepositoryPort(ABC):
     @abstractmethod
     def list_class_names(self) -> list[str]:
         raise NotImplementedError
+
+    @abstractmethod
+    def find_by_name_like(self, query: str, limit: int = 20) -> list[Child]:
+        raise NotImplementedError
