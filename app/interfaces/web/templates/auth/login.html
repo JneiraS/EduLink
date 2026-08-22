@@ -1,20 +1,44 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-md-6 col-lg-5">
+<div class="auth-screen">
+    <div class="auth-brand">
+        <span class="kicker">Plateforme scolaire</span>
+        <h1 class="auth-tagline">La communication scolaire, simplifiee.</h1>
+        <p class="text-muted">Annonces, messagerie et echanges reunis en un seul endroit pour les parents, les
+            enseignants et l'equipe.</p>
+        <div class="auth-features">
+            <div class="auth-feature">
+                <i class="bi bi-megaphone" aria-hidden="true"></i>
+                <span>Annonces scolaires centralisees</span>
+            </div>
+            <div class="auth-feature">
+                <i class="bi bi-chat-dots" aria-hidden="true"></i>
+                <span>Canaux de messagerie prives</span>
+            </div>
+            <div class="auth-feature">
+                <i class="bi bi-bell" aria-hidden="true"></i>
+                <span>Notifications en temps reel</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="auth-card">
         <div class="card shadow-sm">
             <div class="card-body p-4">
-                <h1 class="h4 mb-3">Connexion</h1>
+                <h1 class="h4 mb-1">Connexion</h1>
+                <p class="text-muted small mb-3">Accedez a votre espace scolaire.</p>
                 <form method="post">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <div class="mb-3">
                         <label class="form-label" for="email">Email</label>
-                        <input class="form-control" id="email" type="email" name="email" required>
+                        <input class="form-control" id="email" type="email" name="email" required
+                            autocomplete="username" placeholder="vous@exemple.fr">
                     </div>
                     <div class="mb-3">
                         <label class="form-label" for="password">Mot de passe</label>
-                        <input class="form-control" id="password" type="password" name="password" required>
+                        <input class="form-control" id="password" type="password" name="password" required
+                            autocomplete="current-password" placeholder="Votre mot de passe">
                     </div>
                     <button class="btn btn-primary w-100" type="submit">Se connecter</button>
                 </form>

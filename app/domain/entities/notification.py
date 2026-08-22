@@ -8,4 +8,5 @@ class Notification:
     user_id: int
     content: str
     is_read: bool
+    channel_id: int | None = None
     created_at: datetime | None = None

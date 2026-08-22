@@ -30,6 +30,7 @@ wheels/
 
 # Flask
 instance/
+uploads/
 .webassets-cache
 
 # IDE
@@ -53,3 +54,6 @@ htmlcov/
 # Logs
 *.log
 .keys/**
+
+# Opencode
+.opencode/**

@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-end mb-4 gap-3 flex-wrap reveal-group">
+    <div>
+        <span class="kicker">Administration</span>
+        <h1 class="page-title">Statistiques</h1>
+    </div>
+    <span class="text-muted small">30 derniers jours</span>
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-6">
+        <div class="card shadow-sm h-100">
+            <div class="card-body">
+                <h2 class="card-title h5">
+                    <i class="bi bi-person-plus-fill me-2 text-muted" aria-hidden="true"></i>
+                    Inscriptions par semaine
+                </h2>
+                <div class="chart-box">
+                    <canvas id="chart-registrations" data-chart='{{ stats.registrations_by_week|tojson }}'></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="card shadow-sm h-100">
+            <div class="card-body">
+                <h2 class="card-title h5">
+                    <i class="bi bi-people-fill me-2 text-muted" aria-hidden="true"></i>
+                    Utilisateurs par role
+                </h2>
+                <div class="chart-box">
+                    <canvas id="chart-users-by-role" data-chart='{{ stats.users_by_role|tojson }}'></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="card shadow-sm h-100">
+            <div class="card-body">
+                <h2 class="card-title h5">
+                    <i class="bi bi-chat-left-text-fill me-2 text-muted" aria-hidden="true"></i>
+                    Messages par jour
+                </h2>
+                <div class="chart-box">
+                    <canvas id="chart-messages-by-day" data-chart='{{ stats.messages_by_day|tojson }}'></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="card shadow-sm h-100">
+            <div class="card-body">
+                <h2 class="card-title h5">
+                    <i class="bi bi-hash me-2 text-muted" aria-hidden="true"></i>
+                    Canaux les plus actifs
+                </h2>
+                <div class="chart-box">
+                    <canvas id="chart-top-channels" data-chart='{{ stats.top_channels|tojson }}'></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="card shadow-sm h-100">
+            <div class="card-body">
+                <h2 class="card-title h5">
+                    <i class="bi bi-megaphone-fill me-2 text-muted" aria-hidden="true"></i>
+                    Lecture des annonces
+                </h2>
+                <div class="chart-box">
+                    <canvas id="chart-read-rates" data-chart='{{ stats.announcement_read_rates|tojson }}'></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="card shadow-sm h-100">
+            <div class="card-body">
+                <h2 class="card-title h5">
+                    <i class="bi bi-bell-fill me-2 text-muted" aria-hidden="true"></i>
+                    Adoption des notifications push
+                </h2>
+                <div class="chart-box">
+                    <canvas id="chart-push-adoption" data-chart='{{ stats.push_adoption|tojson }}'></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<script src="{{ url_for('static', filename='js/admin-charts.js') }}"></script>
+{% endblock %}

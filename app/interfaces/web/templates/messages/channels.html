@@ -1,52 +1,209 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="row g-3">
+<div class="d-flex align-items-center justify-content-between gap-3 mb-4 reveal-group">
+    <div>
+        <span class="kicker">Messagerie</span>
+        <h1 class="page-title mb-0">Messagerie</h1>
+    </div>
+    <a class="btn btn-primary" href="{{ url_for('messages.new_conversation') }}">
+        <i class="bi bi-person-plus me-2" aria-hidden="true"></i>Nouvelle conversation
+    </a>
+</div>
+<div class="row g-4 reveal-group">
     <div class="col-lg-5">
-        <div class="card shadow-sm">
+        {% if can_manage %}
+        <div class="card shadow-sm h-100">
             <div class="card-body">
-                <h2 class="h6">Creer un canal</h2>
+                <h2 class="h5 mb-3">Creer un canal</h2>
                 <form method="post">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <div class="mb-3">
                         <label class="form-label" for="name">Nom du canal</label>
-                        <input class="form-control" id="name" name="name" required>
+                        <input class="form-control" id="name" name="name" required maxlength="120"
+                            placeholder="Ex. Classe de CM2" value="{{ form_name or '' }}">
                     </div>
                     <div class="mb-3">
-                        <label class="form-label" for="members">Membres</label>
-                        <p class="form-text mb-2">Selectionne les membres du canal.</p>
-                        <div class="border rounded p-2" id="members">
-                            {% for user in users %}
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" name="members" value="{{ user.id }}"
-                                    id="member_{{ user.id }}" {% if user.id==current_user_id %}checked disabled{% endif
-                                    %}>
-                                <label class="form-check-label" for="member_{{ user.id }}">
-                                    {{ user.full_name }} ({{ user.role }}){% if user.id == current_user_id %} - vous{%
-                                    endif %}
-                                </label>
+                        <label class="form-label" for="member-search">Membres</label>
+                        <p class="form-text mb-2">Recherchez et selectionnez les membres. Vous serez automatiquement
+                            membre du canal.</p>
+
+                        <div class="member-picker border rounded p-3" data-member-picker>
+                            <div class="member-picker-toolbar">
+                                <input class="form-control form-control-sm member-picker-search" id="member-search"
+                                    type="search" data-member-search placeholder="Rechercher un membre..."
+                                    aria-label="Rechercher un membre" autocomplete="off">
+                                <span class="member-picker-count" data-selected-count
+                                    aria-live="polite">0 selectionne(s)</span>
+                                <button type="button" class="member-picker-clear" data-clear-selection>Effacer</button>
                             </div>
-                            {% endfor %}
+
+                            <div class="member-picker-empty" data-search-empty hidden>
+                                Aucun membre ne correspond a la recherche.
+                            </div>
+
+                            <div class="member-picker-groups">
+                                {% for group_role, group_label, group_users in users_by_role %}
+                                {% if group_users %}
+                                <fieldset class="member-group" data-role-group="{{ group_role.value }}">
+                                    <legend class="member-group-header">
+                                        <label class="member-group-toggle">
+                                            <input type="checkbox" class="form-check-input" data-group-toggle
+                                                aria-label="Tout selectionner les {{ group_label|lower }}">
+                                            <span class="member-group-label">{{ group_label }}</span>
+                                            <span class="badge text-bg-light" data-group-count>{{ group_users|length }}</span>
+                                        </label>
+                                    </legend>
+                                    <div class="member-group-body">
+                                        {% for user in group_users %}
+                                        {% set name_parts = user.full_name.split()[:2] %}
+                                        {% set user_initials = (name_parts[0][0] if name_parts else '') ~ (name_parts[1][0] if name_parts|length > 1 else '') %}
+                                        <label class="member-option" for="member_{{ user.id }}">
+                                            <input class="form-check-input member-checkbox" type="checkbox" name="members" value="{{ user.id }}" id="member_{{ user.id }}"{% if user.id == current_user_id %} checked disabled{% endif %}{% if user.id in selected_member_ids %} checked{% endif %}>
+                                            <span class="avatar avatar-sm" aria-hidden="true">{{ user_initials|upper }}</span>
+                                            <span class="member-option-name">{{ user.full_name }}</span>
+                                            {% if user.id == current_user_id %}<span class="badge text-bg-light ms-auto">Vous</span>{% endif %}
+                                        </label>
+                                        {% endfor %}
+                                    </div>
+                                </fieldset>
+                                {% endif %}
+                                {% endfor %}
+                            </div>
+
+                            <div class="member-picker-summary" data-selected-summary
+                                aria-label="Membres selectionnes"></div>
                         </div>
                     </div>
-                    <button class="btn btn-primary" type="submit">Creer</button>
+                    <button class="btn btn-primary" type="submit">
+                        <i class="bi bi-plus-lg me-2" aria-hidden="true"></i>Creer
+                    </button>
                 </form>
             </div>
         </div>
+        {% endif %}
+
+        <div class="card shadow-sm mt-3">
+            <div class="card-body">
+                <h2 class="h5 mb-2">Mes modeles de messages</h2>
+                <p class="text-muted mb-3">Reutilisez vos messages frequents dans les conversations.</p>
+                <a class="btn btn-outline-secondary" href="{{ url_for('messages.templates') }}">
+                    <i class="bi bi-file-earmark-text me-2" aria-hidden="true"></i>Gerer mes modeles
+                </a>
+            </div>
+        </div>
     </div>
+
     <div class="col-lg-7">
         <div class="card shadow-sm">
             <div class="card-body">
-                <h2 class="h6">Mes canaux</h2>
-                {% if channels %}
+                <div class="d-flex flex-column gap-1 mb-3">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <h2 class="h5 mb-0">Conversations</h2>
+                        <form method="post" action="{{ url_for('messages.set_global_notifications') }}"
+                            class="notif-global-toggle" title="Activer ou desactiver toutes les notifications"
+                            data-global-notif-form>
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <div class="form-check form-switch mb-0">
+                                <input class="form-check-input" type="checkbox" role="switch" id="global-notif"
+                                    name="enabled" value="1" {% if notif_global_enabled %}checked{% endif %}>
+                                <label class="form-check-label small text-muted" for="global-notif">
+                                    Recevoir toutes les notifications
+                                </label>
+                            </div>
+                        </form>
+                    </div>
+                    <small class="text-muted">Lorsque desactive, aucune notification (sonnerie ou push) n'est emise.</small>
+                </div>
+                {% if direct_channels %}
                 <div class="list-group">
-                    {% for channel in channels %}
-                    <a class="list-group-item list-group-item-action"
-                        href="{{ url_for('messages.channel_detail', channel_id=channel.id) }}">{{ channel.name }}</a>
+                    {% for channel in direct_channels %}
+                    {% set channel_enabled = notif_channel_states.get(channel.id, True) %}
+                    <div class="list-group-item {% if not channel_enabled %}channel-item--muted{% endif %}"
+                        data-channel-id="{{ channel.id }}">
+                        <div class="channel-row">
+                            <a class="channel-link d-flex align-items-center flex-grow-1 text-decoration-none"
+                                href="{{ url_for('messages.channel_detail', channel_id=channel.id) }}">
+                                <span class="channel-icon" aria-hidden="true"><i class="bi bi-person"></i></span>
+                                <span class="channel-name">{{ channel.name }}</span>
+                            </a>
+                            <form method="post"
+                                action="{{ url_for('messages.toggle_channel_notifications', channel_id=channel.id) }}"
+                                class="notif-channel-toggle">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                {% if channel_enabled %}
+                                <button type="submit" class="notif-btn notif-btn--on"
+                                    data-confirm="Desactiver les notifications de cette conversation ?"
+                                    aria-pressed="true" aria-label="Desactiver les notifications"
+                                    title="Notifications actives">
+                                    <i class="bi bi-bell" aria-hidden="true"></i>
+                                </button>
+                                {% else %}
+                                <button type="submit" class="notif-btn notif-btn--off"
+                                    aria-pressed="false" aria-label="Activer les notifications"
+                                    title="Notifications desactivees">
+                                    <i class="bi bi-bell-slash" aria-hidden="true"></i>
+                                </button>
+                                {% endif %}
+                            </form>
+                        </div>
+                    </div>
                     {% endfor %}
                 </div>
                 {% else %}
-                <p class="text-muted mb-0">Aucun canal.</p>
+                <div class="empty-state">
+                    <span class="empty-icon" aria-hidden="true"><i class="bi bi-person"></i></span>
+                    <div class="empty-title">Aucune conversation</div>
+                    <div class="empty-hint">Lancez une conversation privee avec un contact.</div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="card shadow-sm mt-3">
+            <div class="card-body">
+                <h2 class="h5 mb-3">Canaux</h2>
+                {% if group_channels %}
+                <div class="list-group">
+                    {% for channel in group_channels %}
+                    {% set channel_enabled = notif_channel_states.get(channel.id, True) %}
+                    <div class="list-group-item {% if not channel_enabled %}channel-item--muted{% endif %}"
+                        data-channel-id="{{ channel.id }}">
+                        <div class="channel-row">
+                            <a class="channel-link d-flex align-items-center flex-grow-1 text-decoration-none"
+                                href="{{ url_for('messages.channel_detail', channel_id=channel.id) }}">
+                                <span class="channel-icon" aria-hidden="true"><i class="bi bi-hash"></i></span>
+                                <span class="channel-name">{{ channel.name }}</span>
+                            </a>
+                            <form method="post"
+                                action="{{ url_for('messages.toggle_channel_notifications', channel_id=channel.id) }}"
+                                class="notif-channel-toggle">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                {% if channel_enabled %}
+                                <button type="submit" class="notif-btn notif-btn--on"
+                                    data-confirm="Desactiver les notifications de cette conversation ?"
+                                    aria-pressed="true" aria-label="Desactiver les notifications"
+                                    title="Notifications actives">
+                                    <i class="bi bi-bell" aria-hidden="true"></i>
+                                </button>
+                                {% else %}
+                                <button type="submit" class="notif-btn notif-btn--off"
+                                    aria-pressed="false" aria-label="Activer les notifications"
+                                    title="Notifications desactivees">
+                                    <i class="bi bi-bell-slash" aria-hidden="true"></i>
+                                </button>
+                                {% endif %}
+                            </form>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="empty-state">
+                    <span class="empty-icon" aria-hidden="true"><i class="bi bi-chat-dots"></i></span>
+                    <div class="empty-title">Aucun canal</div>
+                    <div class="empty-hint">Creez votre premier canal pour discuter avec votre equipe.</div>
+                </div>
                 {% endif %}
             </div>
         </div>

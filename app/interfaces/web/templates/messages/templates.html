@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row justify-content-center reveal-group">
+    <div class="col-lg-8">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <span class="kicker">Messagerie</span>
+                <h1 class="page-title mb-4">Mes modeles de messages</h1>
+                <form method="post" class="mb-4">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <div class="mb-3">
+                        <label class="form-label" for="label">Nom du modele</label>
+                        <input class="form-control" id="label" name="label" required maxlength="80"
+                            placeholder="Ex. Reponse rapide">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" for="content">Contenu</label>
+                        <textarea class="form-control" id="content" name="content" rows="4" required
+                            maxlength="5000" data-maxlength="5000"
+                            placeholder="Votre texte reutilisable"></textarea>
+                        <small class="char-counter" data-counter-for="content" aria-live="polite"></small>
+                    </div>
+                    <button class="btn btn-primary" type="submit">
+                        <i class="bi bi-plus-lg me-2" aria-hidden="true"></i>Enregistrer le modele
+                    </button>
+                </form>
+
+                {% if templates %}
+                <div class="list-group">
+                    {% for template in templates %}
+                    <div
+                        class="list-group-item list-group-item-action d-flex align-items-center gap-3 border rounded-3 mb-2">
+                        <div class="me-auto">
+                            <div class="fw-semibold">{{ template.label }}</div>
+                            <small class="text-muted">{{ template.content }}</small>
+                        </div>
+                        <a class="btn btn-sm btn-outline-primary"
+                            href="{{ url_for('messages.edit_template', template_id=template.id) }}">Modifier</a>
+                        <form method="post"
+                            action="{{ url_for('messages.delete_template', template_id=template.id) }}">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button class="btn btn-sm btn-outline-danger" type="submit"
+                                data-confirm="Supprimer ce modele ?">Supprimer</button>
+                        </form>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="empty-state">
+                    <span class="empty-icon" aria-hidden="true"><i class="bi bi-file-earmark-text"></i></span>
+                    <div class="empty-title">Aucun modele</div>
+                    <div class="empty-hint">Creez des modeles pour reutiliser vos messages frequents.</div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

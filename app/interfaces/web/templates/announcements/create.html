@@ -1,26 +1,68 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="row">
+<div class="row justify-content-center">
     <div class="col-lg-8">
         <div class="card shadow-sm">
             <div class="card-body">
-                <h1 class="h5 mb-3">Publier une annonce</h1>
+                <span class="kicker">Annonces</span>
+                <h1 class="page-title mb-4">Publier une annonce</h1>
                 <form method="post" enctype="multipart/form-data">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <div class="mb-3">
                         <label class="form-label" for="title">Titre</label>
-                        <input class="form-control" id="title" name="title" required>
+                        <input class="form-control" id="title" name="title" required maxlength="255"
+                            data-maxlength="255">
+                        <small class="char-counter" data-counter-for="title" aria-live="polite"></small>
                     </div>
                     <div class="mb-3">
                         <label class="form-label" for="content">Contenu</label>
-                        <textarea class="form-control" id="content" name="content" rows="4" required></textarea>
+                        <textarea class="form-control" id="content" name="content" rows="5" required
+                            maxlength="5000" data-maxlength="5000"></textarea>
+                        <small class="char-counter" data-counter-for="content" aria-live="polite"></small>
                     </div>
-                    <div class="mb-3">
+                    <div class="mb-4">
+                        <label class="form-label">Audience</label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="audience" id="audience-all"
+                                value="all" checked>
+                            <label class="form-check-label" for="audience-all">Tous les utilisateurs</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="audience" id="audience-channels"
+                                value="channels" data-audience-toggle="target-channels">
+                            <label class="form-check-label" for="audience-channels">Uniquement les membres des canaux selectionnes</label>
+                        </div>
+                    </div>
+                    <div class="mb-4 d-none" id="target-channels" data-audience-target>
+                        <label class="form-label">Canaux</label>
+                        {% if channels %}
+                        <div class="channel-picker" data-channel-picker>
+                            {% for channel in channels %}
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="target_channels"
+                                    id="target_channel_{{ channel.id }}" value="{{ channel.id }}">
+                                <label class="form-check-label" for="target_channel_{{ channel.id }}">{{ channel.name }}</label>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <p class="text-muted mb-0">Vous n'appartenez a aucun canal. Choisissez « Tous les utilisateurs » ou rejoignez un canal.</p>
+                        {% endif %}
+                    </div>
+                    <div class="mb-4">
                         <label class="form-label" for="document">Document PDF (optionnel)</label>
-                        <input class="form-control" id="document" name="document" type="file" accept="application/pdf">
+                        <label class="file-zone" for="document" id="file-zone" data-file-label>
+                            <i class="bi bi-cloud-arrow-up" aria-hidden="true"></i>
+                            <div><strong>Deposer un PDF</strong> ou cliquer pour parcourir</div>
+                            <small class="text-muted">Maximum 5 Mo, format PDF.</small>
+                        </label>
+                        <input class="form-control d-none" id="document" name="document" type="file"
+                            accept="application/pdf">
                     </div>
-                    <button class="btn btn-primary" type="submit">Publier</button>
+                    <button class="btn btn-primary" type="submit">
+                        <i class="bi bi-send me-2" aria-hidden="true"></i>Publier l'annonce
+                    </button>
                 </form>
             </div>
         </div>

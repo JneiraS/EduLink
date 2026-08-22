@@ -1,33 +1,85 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h1 class="h4 mb-0">Annonces scolaires</h1>
-    <a class="btn btn-primary" href="{{ url_for('announcements.create_announcement') }}">Nouvelle annonce</a>
+<div class="d-flex justify-content-between align-items-end mb-4 gap-3 flex-wrap reveal-group">
+    <div>
+        <span class="kicker">Communication</span>
+        <h1 class="page-title">Annonces scolaires</h1>
+    </div>
+    {% if current_user.role|string|upper in ['ADMIN', 'TEACHER'] %}
+    <a class="btn btn-primary" href="{{ url_for('announcements.create_announcement') }}">
+        <i class="bi bi-plus-lg me-2" aria-hidden="true"></i>Nouvelle annonce
+    </a>
+    {% endif %}
 </div>
 
 <div class="card shadow-sm">
     <div class="card-body">
         {% if announcements %}
         {% for a in announcements %}
-        <article class="announcement-item border-bottom pb-3 mb-3">
+        <article class="announcement-item">
             <div class="announcement-meta">
                 <i class="bi bi-calendar3" aria-hidden="true"></i>
-                <small class="text-muted fw-semibold">{{ a.created_at.strftime('%d/%m/%Y %H:%M') if a.created_at else '' }}</small>
+                <small class="text-muted fw-semibold">{{ a.created_at.strftime('%d/%m/%Y %H:%M') if a.created_at else
+                    '' }}</small>
             </div>
-            <h2 class="announcement-title h6 mb-1">{{ a.title }}</h2>
+            <h2 class="announcement-title">{{ a.title }}</h2>
             <p class="announcement-content mb-2">{{ a.content }}</p>
             {% if a.pdf_filename %}
             {% set display_pdf_name = a.pdf_filename.split('_', 1)[1] if '_' in a.pdf_filename else a.pdf_filename %}
-            <a class="announcement-attachment" href="{{ url_for('announcements.download_announcement_pdf', filename=a.pdf_filename) }}" download>
+            <a class="announcement-attachment"
+                href="{{ url_for('announcements.download_announcement_pdf', filename=a.pdf_filename) }}" download>
                 <i class="bi bi-file-earmark-pdf" aria-hidden="true"></i>
                 <small>{{ display_pdf_name }}</small>
             </a>
             {% endif %}
+            {% set status = read_status.get(a.id) %}
+            {% if status %}
+            <div class="announcement-read-status">
+                {% if current_user.role|string|upper in ['ADMIN', 'TEACHER'] %}
+                <span class="badge text-bg-light border">Vu par {{ status[0] }}/{{ status[1] }}</span>
+                {% endif %}
+                {% if not status[2] %}
+                <form method="post"
+                    action="{{ url_for('announcements.confirm_read', announcement_id=a.id, page=page) }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button class="btn btn-sm btn-outline-primary" type="submit">Confirmer la lecture</button>
+                </form>
+                {% else %}
+                <span class="badge text-bg-success border">Confirme</span>
+                {% endif %}
+            </div>
+            {% endif %}
         </article>
         {% endfor %}
         {% else %}
-        <p class="text-muted mb-0">Aucune annonce disponible.</p>
+        <div class="empty-state">
+            <span class="empty-icon" aria-hidden="true"><i class="bi bi-megaphone"></i></span>
+            <div class="empty-title">Aucune annonce disponible</div>
+            <div class="empty-hint">Les annonces de l'etablissement apparaitront ici.</div>
+        </div>
+        {% endif %}
+
+        {% if total_pages > 1 %}
+        <nav class="mt-4" aria-label="Pagination des annonces">
+            <ul class="pagination pagination-sm mb-0">
+                <li class="page-item {% if page <= 1 %}disabled{% endif %}">
+                    <a class="page-link" href="{{ url_for('announcements.list_announcements', page=page-1) }}">
+                        <i class="bi bi-chevron-left" aria-hidden="true"></i>
+                        <span class="visually-hidden">Precedent</span>
+                    </a>
+                </li>
+                <li class="page-item disabled">
+                    <span class="page-link">Page {{ page }} / {{ total_pages }}</span>
+                </li>
+                <li class="page-item {% if page >= total_pages %}disabled{% endif %}">
+                    <a class="page-link" href="{{ url_for('announcements.list_announcements', page=page+1) }}">
+                        <i class="bi bi-chevron-right" aria-hidden="true"></i>
+                        <span class="visually-hidden">Suivant</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
         {% endif %}
     </div>
 </div>

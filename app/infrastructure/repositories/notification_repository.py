@@ -11,6 +11,7 @@ class SQLAlchemyNotificationRepository(NotificationRepositoryPort):
             user_id=notification.user_id,
             content=notification.content,
             is_read=notification.is_read,
+            channel_id=notification.channel_id,
         )
         db.session.add(model)
         db.session.commit()
@@ -24,6 +25,11 @@ class SQLAlchemyNotificationRepository(NotificationRepositoryPort):
         )
         return [self._to_entity(row) for row in rows]
 
+    def count_unread(self, user_id: int) -> int:
+        return NotificationModel.query.filter_by(
+            user_id=user_id, is_read=False
+        ).count()
+
     def mark_as_read(self, notification_id: int, user_id: int) -> None:
         model = NotificationModel.query.filter_by(
             id=notification_id, user_id=user_id
@@ -33,11 +39,18 @@ class SQLAlchemyNotificationRepository(NotificationRepositoryPort):
         model.is_read = True
         db.session.commit()
 
+    def mark_channel_read(self, channel_id: int, user_id: int) -> None:
+        NotificationModel.query.filter_by(
+            channel_id=channel_id, user_id=user_id, is_read=False
+        ).update({"is_read": True}, synchronize_session=False)
+        db.session.commit()
+
     def _to_entity(self, model: NotificationModel) -> Notification:
         return Notification(
             id=model.id,
             user_id=model.user_id,
             content=model.content,
             is_read=model.is_read,
+            channel_id=model.channel_id,
             created_at=model.created_at,
         )

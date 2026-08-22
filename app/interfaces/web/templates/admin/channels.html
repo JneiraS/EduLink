@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-end mb-4 gap-3 flex-wrap reveal-group">
+    <div>
+        <span class="kicker">Administration</span>
+        <h1 class="page-title">Gestion des canaux</h1>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body">
+        {% if channels %}
+        <div class="table-responsive">
+            <table class="table table-hover align-middle admin-table">
+                <thead>
+                    <tr>
+                        <th scope="col">Canal</th>
+                        <th scope="col">Membres</th>
+                        <th scope="col" class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in channels %}
+                    <tr>
+                        <td>
+                            <div class="fw-semibold">
+                                <i class="bi bi-hash me-2 text-muted" aria-hidden="true"></i>{{ row.channel.name }}
+                            </div>
+                        </td>
+                        <td>
+                            <span class="badge rounded-pill text-bg-light border">
+                                <i class="bi bi-people me-1" aria-hidden="true"></i>{{ row.member_count }}
+                            </span>
+                        </td>
+                        <td class="text-end">
+                            <form method="post" action="{{ url_for('admin.delete_channel', channel_id=row.channel.id) }}"
+                                class="d-inline">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button class="btn btn-sm btn-outline-danger" type="submit"
+                                    data-confirm="Supprimer ce canal et toutes ses conversations ?">
+                                    <i class="bi bi-trash me-1" aria-hidden="true"></i>Supprimer
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <span class="empty-icon" aria-hidden="true"><i class="bi bi-chat-dots"></i></span>
+            <div class="empty-title">Aucun canal</div>
+            <div class="empty-hint">Les canaux crees par les enseignants apparaitront ici.</div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

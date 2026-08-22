@@ -1,82 +1,242 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="row g-3">
-    <div class="col-lg-8">
-        <div class="card shadow-sm mb-3">
-            <div class="card-body" id="messages-container">
-                {% if messages %}
-                {% for m in messages %}
-                <div class="mb-2 pb-2 border-bottom">
-                    <strong>{{ m.sender_name }}</strong>
-                    <small class="text-muted fw-semibold">{{ m.created_at.strftime('%d/%m/%Y %H:%M') if m.created_at
-                        else ''
-                        }}</small>
-                    <div>{{ m.content }}</div>
-                </div>
-                {% endfor %}
-                {% else %}
-                <p class="text-muted mb-0">Aucun message.</p>
-                {% endif %}
-            </div>
-        </div>
-
-        <div class="card shadow-sm">
+<div class="row g-4 reveal-group">
+    <div class="col-lg-{% if is_direct %}12{% else %}8{% endif %}">
+        <div class="card shadow-sm chat-window">
             <div class="card-body">
-                <form method="post">
+                <div class="chat-header">
+                    <div class="flex-grow-1 min-w-0">
+                        <h1 class="h5 mb-0">{{ channel_name or ('Canal #' ~ channel_id) }}</h1>
+                        <small class="text-muted">{{ members|length }} membre{{ 's' if members|length != 1 else ''
+                            }}</small>
+                    </div>
+                    {% if members %}
+                    <form method="post" class="notif-channel-toggle"
+                        title="Activer ou desactiver les notifications de cette conversation">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <input type="hidden" name="action" value="toggle_notifications">
+                        {% if notifications_enabled %}
+                        <button type="submit" class="notif-btn notif-btn--on"
+                            data-confirm="Desactiver les notifications de cette conversation ?"
+                            aria-pressed="true" aria-label="Desactiver les notifications">
+                            <i class="bi bi-bell" aria-hidden="true"></i>
+                        </button>
+                        {% else %}
+                        <button type="submit" class="notif-btn notif-btn--off"
+                            aria-pressed="false" aria-label="Activer les notifications">
+                            <i class="bi bi-bell-slash" aria-hidden="true"></i>
+                        </button>
+                        {% endif %}
+                    </form>
+                    <div class="avatar-stack" aria-hidden="true">
+                        {% for member in members[:5] %}
+                        {% set name_parts = member.full_name.split()[:2] %}
+                        {% set m_initials = (name_parts[0][0] if name_parts else '') ~ (name_parts[1][0] if name_parts|length > 1 else '') %}
+                        <span class="avatar avatar-sm" title="{{ member.full_name }}">{{ m_initials|upper }}</span>
+                        {% endfor %}
+                        {% if members|length > 5 %}
+                        <span class="avatar avatar-sm">+{{ members|length - 5 }}</span>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="chat-messages" id="messages-container" aria-live="polite">
+                    {% if pinned_messages and not is_direct and not search_mode %}
+                    <div class="pinned-section">
+                        <div class="pinned-header">
+                            <i class="bi bi-pin-angle-fill me-1" aria-hidden="true"></i>Epingles
+                        </div>
+                        {% for pm in pinned_messages %}
+                        <div class="chat-message chat-message--pinned">
+                            <span class="avatar avatar-sm" aria-hidden="true">
+                                {% set pm_name_parts = pm.sender_name.split()[:2] %}
+                                {{ ((pm_name_parts[0][0] if pm_name_parts else '') ~ (pm_name_parts[1][0] if pm_name_parts|length > 1 else ''))|upper }}
+                            </span>
+                            <div class="bubble">
+                                <div class="bubble-text">{{ pm.content }}</div>
+                                <span class="bubble-time">{{ pm.created_at.strftime('%d/%m/%Y %H:%M') if pm.created_at else
+                                    '' }}</span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    {% if has_older %}
+                    <div class="load-older text-center">
+                        <a class="btn btn-outline-secondary btn-sm"
+                            href="{{ url_for('messages.channel_detail', channel_id=channel_id, before=oldest_message_id) }}">
+                            <i class="bi bi-arrow-counterclockwise me-2" aria-hidden="true"></i>Charger les messages
+                            plus anciens
+                        </a>
+                    </div>
+                    {% endif %}
+
+                    {% if messages %}
+                    {% for m in messages %}
+                    {% set is_mine = m.sender_id is defined and m.sender_id == current_user.id %}
+                    <div class="chat-message {% if is_mine %}chat-message--mine{% endif %}">
+                        {% if not is_mine %}
+                        {% set name_parts = m.sender_name.split()[:2] %}
+                        {% set s_initials = (name_parts[0][0] if name_parts else '') ~ (name_parts[1][0] if name_parts|length > 1 else '') %}
+                        <span class="avatar avatar-sm" aria-hidden="true">{{ s_initials|upper }}</span>
+                        {% endif %}
+                        <div class="bubble">
+                            <!-- {% if not is_mine %}
+                            <div class="bubble-sender">{{ m.sender_name }}</div>
+                            {% endif %} -->
+                            <div class="bubble-text">{{ m.content }}</div>
+                            <span class="bubble-time">{{ m.created_at.strftime('%d/%m/%Y %H:%M') if m.created_at else
+                                '' }}</span>
+                        </div>
+                        {% if not is_direct and can_manage_members %}
+                        <form method="post" class="pin-form" data-confirm="{% if m.is_pinned %}Desepingler ce message ?{% else %}Epingler ce message ?{% endif %}">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <input type="hidden" name="action" value="toggle_pin">
+                            <input type="hidden" name="message_id" value="{{ m.id }}">
+                            <input type="hidden" name="pinned" value="{{ '0' if m.is_pinned else '1' }}">
+                            <button type="submit"
+                                class="btn btn-sm {% if m.is_pinned %}btn-warning{% else %}btn-outline-secondary{% endif %}"
+                                title="{% if m.is_pinned %}Desepingler{% else %}Epingler{% endif %}"
+                                aria-label="{% if m.is_pinned %}Desepingler{% else %}Epingler{% endif %}">
+                                <i class="bi bi-pin-angle" aria-hidden="true"></i>
+                            </button>
+                        </form>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                    {% else %}
+                    {% if search_mode %}
+                    <div class="empty-state">
+                        <span class="empty-icon" aria-hidden="true"><i class="bi bi-search"></i></span>
+                        <div class="empty-title">Aucun message</div>
+                        <div class="empty-hint">Aucun message ne contient " {{ search_query }} ".</div>
+                    </div>
+                    {% else %}
+                    <div class="empty-state">
+                        <span class="empty-icon" aria-hidden="true"><i class="bi bi-chat-dots"></i></span>
+                        <div class="empty-title">Aucun message</div>
+                        <div class="empty-hint">Lancez la conversation !</div>
+                    </div>
+                    {% endif %}
+                    {% endif %}
+                </div>
+
+                <form method="post" class="composer">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <input type="hidden" name="action" value="send_message">
-                    <div class="mb-3">
-                        <label class="form-label" for="content">Votre message</label>
-                        <textarea class="form-control" id="content" name="content" rows="3" required></textarea>
-                    </div>
-                    <button class="btn btn-primary" type="submit">Envoyer</button>
+                    <label class="visually-hidden" for="content">Votre message</label>
+                    <textarea class="form-control" id="content" name="content" rows="1" maxlength="5000"
+                        data-maxlength="5000" data-auto-grow placeholder="Votre message..."></textarea>
+                    <button class="btn btn-primary send-btn" type="submit" aria-label="Envoyer">
+                        <i class="bi bi-send" aria-hidden="true"></i>
+                    </button>
                 </form>
+                <form method="get" class="search-form" role="search">
+                    <input class="form-control form-control-sm" type="search" name="q" value="{{ search_query or '' }}"
+                        placeholder="Rechercher dans les messages..." autocomplete="off" aria-label="Rechercher">
+                </form>
+                {% if message_templates %}
+                <div class="template-picker" data-template-picker>
+                    <details>
+                        <summary class="btn btn-sm btn-outline-secondary">
+                            <i class="bi bi-file-earmark-text me-1" aria-hidden="true"></i>Modeles
+                        </summary>
+                        <div class="template-picker-list">
+                            {% for template in message_templates %}
+                            <button type="button" class="template-option"
+                                data-template-content="{{ template.content|e }}">{{ template.label }}</button>
+                            {% endfor %}
+                        </div>
+                    </details>
+                </div>
+                {% endif %}
+                <a class="template-manage" href="{{ url_for('messages.templates') }}">Gerer mes modeles</a>
             </div>
         </div>
     </div>
 
+    {% if not is_direct %}
     <div class="col-lg-4">
         <div class="card shadow-sm">
             <div class="card-body">
-                <h1 class="h5 mb-0">{{ channel_name or ('Canal #' ~ channel_id) }}</h1>
-                <div class="mt-2">
-                    <small class="text-muted">Membres:</small>
-                    {% if members %}
-                    <div class="mt-1 d-flex flex-column gap-2">
-                        {% for member in members %}
-                        <span class="badge text-bg-light border text-start">{{ member.full_name }} ({{
-                            member.role.value|capitalize
-                            }})</span>
-                        {% endfor %}
+                <h2 class="h6 mb-3"><i class="bi bi-people me-2" aria-hidden="true"></i>Membres</h2>
+                {% if members %}
+                <div class="d-flex flex-column gap-2">
+                    {% for member in members %}
+                    {% set name_parts = member.full_name.split()[:2] %}
+                    {% set m_initials = (name_parts[0][0] if name_parts else '') ~ (name_parts[1][0] if name_parts|length > 1 else '') %}
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="avatar avatar-sm" aria-hidden="true">{{ m_initials|upper }}</span>
+                        <span class="me-auto">{{ member.full_name }}</span>
+                        <span
+                            class="badge text-bg-light border badge-role badge-role--{{ member.role.value|lower }}">{{ member.role.value|capitalize }}</span>
                     </div>
-                    {% else %}
-                    <div class="text-muted">Aucun membre</div>
-                    {% endif %}
+                    {% endfor %}
                 </div>
+                {% else %}
+                <div class="text-muted">Aucun membre</div>
+                {% endif %}
             </div>
         </div>
 
-        {% if can_manage_members and (current_user.role|string|upper in ['ADMIN', 'TEACHER']) %}
+        {% if can_manage_members and not is_direct and (current_user.role|string|upper in ['ADMIN', 'TEACHER']) %}
         <div class="card shadow-sm mt-3">
             <div class="card-body">
-                <h2 class="h6">Ajouter des membres</h2>
-                {% if available_users %}
+                <h2 class="h6 mb-3">Ajouter des membres</h2>
+                {% if available_users_by_role %}
                 <form method="post">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <input type="hidden" name="action" value="add_members">
-                    <div class="border rounded p-2 mb-3" id="members">
-                        {% for user in available_users %}
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" name="members" value="{{ user.id }}"
-                                id="member_add_{{ user.id }}">
-                            <label class="form-check-label" for="member_add_{{ user.id }}">
-                                {{ user.full_name }} ({{ user.role|capitalize }})
-                            </label>
+
+                    <div class="member-picker" data-member-picker>
+                        <div class="member-picker-toolbar">
+                            <input class="form-control form-control-sm member-picker-search" type="search"
+                                data-member-search placeholder="Rechercher un membre..."
+                                aria-label="Rechercher un membre" autocomplete="off">
+                            <span class="member-picker-count" data-selected-count
+                                aria-live="polite">0 selectionne(s)</span>
+                            <button type="button" class="member-picker-clear" data-clear-selection>Effacer</button>
                         </div>
-                        {% endfor %}
+
+                        <div class="member-picker-empty" data-search-empty hidden>
+                            Aucun membre ne correspond a la recherche.
+                        </div>
+
+                        <div class="member-picker-groups">
+                            {% for group_role, group_label, group_users in available_users_by_role %}
+                            {% if group_users %}
+                            <fieldset class="member-group" data-role-group="{{ group_role.value }}">
+                                <legend class="member-group-header">
+                                    <label class="member-group-toggle">
+                                        <input type="checkbox" class="form-check-input" data-group-toggle
+                                            aria-label="Tout selectionner les {{ group_label|lower }}">
+                                        <span class="member-group-label">{{ group_label }}</span>
+                                        <span class="badge text-bg-light" data-group-count>{{ group_users|length }}</span>
+                                    </label>
+                                </legend>
+                                <div class="member-group-body">
+                                    {% for user in group_users %}
+                                    {% set name_parts = user.full_name.split()[:2] %}
+                                    {% set add_initials = (name_parts[0][0] if name_parts else '') ~ (name_parts[1][0] if name_parts|length > 1 else '') %}
+                                    <label class="member-option" for="member_add_{{ user.id }}">
+                                        <input class="form-check-input member-checkbox" type="checkbox" name="members" value="{{ user.id }}" id="member_add_{{ user.id }}">
+                                        <span class="avatar avatar-sm" aria-hidden="true">{{ add_initials|upper }}</span>
+                                        <span class="member-option-name">{{ user.full_name }}</span>
+                                    </label>
+                                    {% endfor %}
+                                </div>
+                            </fieldset>
+                            {% endif %}
+                            {% endfor %}
+                        </div>
+
+                        <div class="member-picker-summary" data-selected-summary
+                            aria-label="Membres selectionnes"></div>
                     </div>
-                    <button class="btn btn-outline-primary" type="submit">Ajouter</button>
+
+                    <button class="btn btn-outline-primary mt-3" type="submit">Ajouter</button>
                 </form>
                 {% else %}
                 <p class="text-muted mb-0">Tous les utilisateurs sont deja membres.</p>
@@ -85,5 +245,6 @@
         </div>
         {% endif %}
     </div>
+    {% endif %}
 </div>
 {% endblock %}

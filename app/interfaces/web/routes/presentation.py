@@ -1,6 +1,6 @@
 from collections.abc import Mapping
 
-MESSAGE_CHANNEL_NOTIFICATION_PREFIX = "Nouveau message dans le canal "
+from app.domain.entities.user import UserRole
 
 
 def as_list(value):
@@ -24,48 +24,25 @@ def parse_member_ids(form_data) -> list[int]:
     return sorted({int(value) for value in raw_members if value.isdigit()})
 
 
-def build_channel_maps(channels):
-    channel_id_by_name = {}
-    channel_links_by_name = {}
+ROLE_ORDER = (UserRole.ADMIN, UserRole.TEACHER, UserRole.PARENT)
+ROLE_LABELS = {
+    UserRole.ADMIN: "Administrateurs",
+    UserRole.TEACHER: "Enseignants",
+    UserRole.PARENT: "Parents",
+}
 
-    for channel in as_list(channels):
-        channel_name = str(read_value(channel, "name", "") or "").strip()
-        channel_id = read_value(channel, "id")
-        if not channel_name or channel_id is None:
+
+def group_users_by_role(users) -> list[tuple[UserRole, str, list]]:
+    """Group domain users by role into fixed-order sections for the member picker."""
+    buckets = {role: [] for role in ROLE_ORDER}
+    for user in users:
+        try:
+            role = UserRole(user.role)
+        except (TypeError, ValueError):
             continue
-
-        channel_id_by_name[channel_name.casefold()] = channel_id
-        channel_links_by_name[channel_name] = channel_id
-
-    return channel_id_by_name, channel_links_by_name
-
-
-def build_notification_channel_links(
-    notifications,
-    channel_id_by_name,
-    message_prefix: str = MESSAGE_CHANNEL_NOTIFICATION_PREFIX,
-):
-    notification_channel_links = {}
-    notification_channel_links_by_content = {}
-
-    for notification in notifications:
-        content = str(read_value(notification, "content", "") or "")
-        if not content.startswith(message_prefix):
-            continue
-
-        notification_id = read_value(notification, "id")
-        channel_name_key = (
-            content[len(message_prefix) :].strip().rstrip(" .!?:;").casefold()
-        )
-        channel_id = channel_id_by_name.get(channel_name_key)
-        if channel_id is None:
-            continue
-
-        if notification_id is not None:
-            notification_channel_links[notification_id] = channel_id
-        notification_channel_links_by_content[content] = channel_id
-
-    return notification_channel_links, notification_channel_links_by_content
+        if role in buckets:
+            buckets[role].append(user)
+    return [(role, ROLE_LABELS[role], buckets[role]) for role in ROLE_ORDER]
 
 
 def resolve_channel_name(
@@ -118,9 +95,12 @@ def resolve_sender_name(member_names, sender_id):
 def build_messages_view(channel_messages, member_names):
     return [
         {
+            "id": message.id,
+            "sender_id": message.sender_id,
             "sender_name": resolve_sender_name(member_names, message.sender_id),
             "created_at": message.created_at,
             "content": message.content,
+            "is_pinned": message.is_pinned,
         }
         for message in channel_messages
     ]

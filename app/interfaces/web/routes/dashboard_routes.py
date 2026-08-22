@@ -1,12 +1,7 @@
 from flask import Blueprint, render_template
 from flask_login import login_required
 
-from app.interfaces.web.routes.presentation import (
-    as_list,
-    build_channel_maps,
-    build_notification_channel_links,
-    read_value,
-)
+from app.interfaces.web.routes.presentation import as_list, read_value
 from app.interfaces.web.routes.utils import current_actor, get_use_cases
 
 dashboard_bp = Blueprint("dashboard", __name__, url_prefix="/")
@@ -22,19 +17,24 @@ def home():
     role_message = read_value(data, "role_message", "Espace utilisateur")
     latest_announcements = as_list(read_value(data, "latest_announcements", []))
     notifications = as_list(read_value(data, "notifications", []))
-
-    channels = use_cases.list_user_channels.execute(actor)
-    channel_id_by_name, channel_links_by_name = build_channel_maps(channels)
-    notification_channel_links, notification_channel_links_by_content = (
-        build_notification_channel_links(notifications, channel_id_by_name)
-    )
+    stats = read_value(data, "stats", {})
+    conversations = as_list(read_value(data, "conversations", []))
+    children = as_list(read_value(data, "children", []))
+    user_counts = read_value(data, "user_counts", None)
+    channel_count = read_value(data, "channel_count", None)
+    announcement_count = read_value(data, "announcement_count", None)
+    recent_users = as_list(read_value(data, "recent_users", []))
 
     return render_template(
         "dashboard/home.html",
         role_message=role_message,
         latest_announcements=latest_announcements,
         notifications=notifications,
-        notification_channel_links=notification_channel_links,
-        notification_channel_links_by_content=notification_channel_links_by_content,
-        channel_links_by_name=channel_links_by_name,
+        stats=stats,
+        conversations=conversations,
+        children=children,
+        user_counts=user_counts,
+        channel_count=channel_count,
+        announcement_count=announcement_count,
+        recent_users=recent_users,
     )
