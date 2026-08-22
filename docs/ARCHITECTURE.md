@@ -89,7 +89,8 @@ une violation d'architecture.
   - `repositories.py` : `UserRepositoryPort`, `AnnouncementRepositoryPort` (dont `mark_read` / `is_read` / `count_read` pour les accusés de réception,
     `count_unread_for_user` pour le compteur « annonces non lues » du dashboard,
     `paginate(page, per_page, channel_ids=None)` pour la liste scopée par
-    appartenance, et `find_by_pdf_filename` pour servir le PDF),
+    appartenance, `find_by_pdf_filename` pour servir le PDF, et `list_recent(limit)`
+    — les N dernières annonces, pour les read-rates des stats admin),
     `MessageRepositoryPort` (dont `search_by_channel`, `set_pinned` et
     `list_pinned` pour la recherche et les épinglés, `find_by_id` pour la garde
     d'appartenance de `PinMessage`, et `list_latest_by_channels`

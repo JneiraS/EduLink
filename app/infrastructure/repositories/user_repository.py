@@ -1,9 +1,10 @@
-from datetime import date, datetime
+from datetime import datetime
 
 from app.domain.entities.user import User, UserRole
 from app.domain.ports.repositories import UserRepositoryPort
 from app.extensions import db
 from app.infrastructure.database.models import UserModel
+from app.infrastructure.repositories._date_utils import parse_date
 
 
 class SQLAlchemyUserRepository(UserRepositoryPort):
@@ -71,7 +72,7 @@ class SQLAlchemyUserRepository(UserRepositoryPort):
             .all()
         )
         return [
-            {"date": _parse_date(row[0]), "count": row[1]} for row in rows
+            {"date": parse_date(row[0]), "count": row[1]} for row in rows
         ]
 
     def get_auth_model(self, user_id: int) -> UserModel:
@@ -90,10 +91,3 @@ class SQLAlchemyUserRepository(UserRepositoryPort):
             is_active=model.is_active,
             created_at=model.created_at,
         )
-
-
-def _parse_date(value) -> date:
-    """Normalize a SQL date string into a date object for chart labels."""
-    if isinstance(value, date):
-        return value
-    return datetime.strptime(str(value), "%Y-%m-%d").date()

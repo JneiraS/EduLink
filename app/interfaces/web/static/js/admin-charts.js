@@ -1,3 +1,5 @@
+let chartInstances = [];
+
 const CHART_COLORS = {
   primary: "#65AFFF",
   secondary: "#6CCFF6",
@@ -34,11 +36,18 @@ function registerChart(canvasId, build) {
   const data = readChartData(canvas);
   if (!data) return;
   const colors = chartThemeColors();
-  new Chart(canvas.getContext("2d"), build(data, colors));
+  const chart = new Chart(canvas.getContext("2d"), build(data, colors));
+  chartInstances.push(chart);
+}
+
+function destroyCharts() {
+  chartInstances.forEach((chart) => chart.destroy());
+  chartInstances = [];
 }
 
 function renderAdminCharts() {
   if (typeof Chart === "undefined") return;
+  destroyCharts();
   const colors = chartThemeColors();
 
   registerChart("chart-registrations", (data) => ({
@@ -222,8 +231,12 @@ function renderAdminCharts() {
   }));
 }
 
-function hexWithAlpha(hex) {
-  return hex;
+function hexWithAlpha(hex, alpha = 0.55) {
+  const value = hex.replace("#", "");
+  const r = parseInt(value.slice(0, 2), 16);
+  const g = parseInt(value.slice(2, 4), 16);
+  const b = parseInt(value.slice(4, 6), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
 
 function baseOptions(colors, extra) {
@@ -238,3 +251,4 @@ function baseOptions(colors, extra) {
 }
 
 document.addEventListener("DOMContentLoaded", renderAdminCharts);
+document.addEventListener("edulink:themechange", renderAdminCharts);

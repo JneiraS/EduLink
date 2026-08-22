@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 
 from app.domain.entities.user import User, UserRole
 from app.domain.errors import AuthorizationError
@@ -17,7 +17,7 @@ MESSAGES_WINDOW_DAYS = 14
 REGISTRATIONS_WINDOW_DAYS = 30
 
 
-def _week_start(day) -> object:
+def _week_start(day: date) -> date:
     """Return the Monday of the week containing `day` (ISO week)."""
     return day - timedelta(days=day.weekday())
 
@@ -54,7 +54,7 @@ class GetAdminStats:
 
     def _registrations_by_week(self, since, now) -> list[dict]:
         daily = {row["date"]: row["count"] for row in self.users.count_grouped_by_date(since)}
-        buckets: dict[object, int] = {}
+        buckets: dict[date, int] = {}
         current = _week_start(since.date())
         end = _week_start(now.date())
         while current <= end:
@@ -78,7 +78,7 @@ class GetAdminStats:
 
     def _announcement_read_rates(self) -> list[dict]:
         rates = []
-        for announcement in self.announcements.list_all()[:RECENT_ANNOUNCEMENTS]:
+        for announcement in self.announcements.list_recent(RECENT_ANNOUNCEMENTS):
             audience: set[int] = set()
             if announcement.target_channel_ids:
                 for channel_id in announcement.target_channel_ids:
