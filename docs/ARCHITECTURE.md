@@ -43,6 +43,7 @@ sécurité — ne pas revenir en arrière).
 | Push web (abonnement PWA) | `push_routes.py` | `SubscribePushNotifications`, `UnsubscribePushNotifications` | `push_subscription_repository.py` |
 | **Administration** (création de comptes, rôles, activ./désactiv., suppression) | `admin_routes.py` + lien vers `auth_routes.py` (`/auth/users/new`) | `ListUsersForAdmin`, `UpdateUserRole`, `ToggleUserActive`, `ListAnnouncementsForAdmin`, `DeleteAnnouncement`, `ListChannelsForAdmin`, `DeleteChannel` + `RegisterUser` | `user_repository.py`, `announcement_repository.py`, `channel_repository.py` |
 | **Enfants** (rattachement à un parent, lien aux canaux de classe) | `admin_routes.py` (`/admin/children...`) + `parent_routes.py` (`/parent/children...`) | `CreateChild`, `ListChildren`, `ListClassNames`, `DeleteChild`, `LinkChildToClassChannels` | `children_repository.py`, `channel_repository.py` |
+| **Trouver un parent** (enseignant cherche un parent via l'enfant) | `messages_routes.py` (`/messages/find-parent`) | `FindParentsByChild` (garde TEACHER/ADMIN ; retourne `ParentSearchResult` = child + UserSummary) | `children_repository.py` (`find_by_name_like`), `user_repository.py` (`find_many_by_ids`) |
 | **Statistiques admin** (graphiques Chart.js) | `admin_routes.py` (`/admin/stats`) | `GetAdminStats` (agrégations ; read-rates d'annonces calculés dans le use case) | `user_repository.py`, `message_repository.py`, `announcement_repository.py`, `channel_repository.py`, `push_subscription_repository.py` |
 | Requêtes utilitaires (lecture) | routes diverses | `ListAllUsers`, `FindUsersByIds` (renvoient des `UserSummary` : `id`/`full_name`/`role` — **jamais** `email`/`password_hash`), `ListChannelMembers` (idem) | `user_repository.py` |
 
@@ -110,7 +111,8 @@ une violation d'architecture.
     l'adoption push), `MessageTemplateRepositoryPort`
     (dont `update` pour modifier un modèle existant), `ChildrenRepositoryPort`
     (`save`, `list_by_parent`, `find_by_class`, `find_by_id`, `delete`,
-    `list_class_names` pour les classes distinctes du formulaire). Les compteurs
+    `list_class_names` pour les classes distinctes du formulaire,
+    `find_by_name_like` pour la recherche de parents par nom d'enfant). Les compteurs
     d'agrégation des stats admin (`UserRepositoryPort.count_total / count_active /
     count_by_role / count_grouped_by_date`) font des `GROUP BY date(created_at)`
     bruts — le padding des jours/semaines vides est fait dans `GetAdminStats`.

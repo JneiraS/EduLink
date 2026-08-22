@@ -3,6 +3,7 @@ import pytest
 from app.application.use_cases.children_use_cases import (
     CreateChild,
     DeleteChild,
+    FindParentsByChild,
     LinkChildToClassChannels,
     ListChildren,
     ListClassNames,
@@ -39,6 +40,13 @@ class InMemoryChildren:
     def list_class_names(self) -> list[str]:
         return sorted({c.class_name for c in self.children})
 
+    def find_by_name_like(self, query: str, limit: int = 20) -> list[Child]:
+        q = query.strip().lower()
+        return [
+            c for c in self.children
+            if q in c.full_name.lower()
+        ][:limit]
+
 
 class InMemoryUsers:
     def __init__(self):
@@ -46,6 +54,9 @@ class InMemoryUsers:
 
     def find_by_id(self, user_id: int):
         return next((u for u in self.users if u.id == user_id), None)
+
+    def find_many_by_ids(self, user_ids: list[int]):
+        return [u for u in self.users if u.id in user_ids]
 
     def save(self, user):
         if user.id is None:
@@ -354,3 +365,64 @@ def test_link_child_to_class_channels_child_not_found():
     use_case = LinkChildToClassChannels(children=children_repo, channels=channels_repo)
     with pytest.raises(NotFoundError):
         use_case.execute(_parent_actor(UserRole.ADMIN), 999)
+
+
+# ---------------------------------------------------------------------------
+# FindParentsByChild
+# ---------------------------------------------------------------------------
+
+def _make_find_parents(children=None, users=None):
+    return FindParentsByChild(
+        children=children or InMemoryChildren(),
+        users=users or InMemoryUsers(),
+    )
+
+
+def test_find_parents_by_child_requires_teacher_or_admin():
+    use_case = _make_find_parents()
+    with pytest.raises(AuthorizationError):
+        use_case.execute(_parent_actor(UserRole.PARENT), "Alice")
+
+
+def test_find_parents_by_child_admin_allowed():
+    children_repo = InMemoryChildren()
+    users_repo = InMemoryUsers()
+    parent = _parent_actor(UserRole.PARENT, uid=10)
+    users_repo.users.append(parent)
+    children_repo.save(_child(10, "Alice Dupont", "CM1"))
+    use_case = _make_find_parents(children=children_repo, users=users_repo)
+    results = use_case.execute(_parent_actor(UserRole.ADMIN), "Alice")
+    assert len(results) == 1
+    assert results[0].child.full_name == "Alice Dupont"
+    assert results[0].parent.id == 10
+
+
+def test_find_parents_by_child_returns_matching_results():
+    children_repo = InMemoryChildren()
+    users_repo = InMemoryUsers()
+    parent1 = _parent_actor(UserRole.PARENT, uid=10)
+    parent2 = _parent_actor(UserRole.PARENT, uid=20)
+    users_repo.users.extend([parent1, parent2])
+    children_repo.save(_child(10, "Alice Dupont", "CM1"))
+    children_repo.save(_child(10, "Bob Dupont", "CM1"))
+    children_repo.save(_child(20, "Alice Martin", "CM2"))
+    use_case = _make_find_parents(children=children_repo, users=users_repo)
+    results = use_case.execute(_parent_actor(UserRole.TEACHER), "Alice")
+    assert len(results) == 2
+    names = {r.child.full_name for r in results}
+    assert names == {"Alice Dupont", "Alice Martin"}
+
+
+def test_find_parents_by_child_no_results():
+    children_repo = InMemoryChildren()
+    users_repo = InMemoryUsers()
+    children_repo.save(_child(10, "Alice", "CM1"))
+    use_case = _make_find_parents(children=children_repo, users=users_repo)
+    results = use_case.execute(_parent_actor(UserRole.TEACHER), "Zorro")
+    assert results == []
+
+
+def test_find_parents_by_child_empty_query():
+    use_case = _make_find_parents()
+    with pytest.raises(ValidationError):
+        use_case.execute(_parent_actor(UserRole.TEACHER), "  ")

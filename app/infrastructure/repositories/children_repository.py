@@ -54,6 +54,18 @@ class SQLAlchemyChildrenRepository(ChildrenRepositoryPort):
         )
         return [row[0] for row in rows]
 
+    def find_by_name_like(self, query: str, limit: int = 20) -> list[Child]:
+        escaped = query.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+        pattern = f"%{escaped}%"
+        models = (
+            ChildModel.query
+            .filter(ChildModel.full_name.ilike(pattern, escape="\\"))
+            .order_by(ChildModel.full_name)
+            .limit(limit)
+            .all()
+        )
+        return [self._to_entity(m) for m in models]
+
     def _to_entity(self, model: ChildModel) -> Child:
         return Child(
             id=model.id,

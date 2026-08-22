@@ -59,6 +59,7 @@ from app.application.use_cases.notification_use_cases import (
 from app.application.use_cases.children_use_cases import (
     CreateChild,
     DeleteChild,
+    FindParentsByChild,
     LinkChildToClassChannels,
     ListChildren,
     ListClassNames,
@@ -113,6 +114,7 @@ class UseCaseContainer:
     list_class_names: ListClassNames
     delete_child: DeleteChild
     link_child_to_class_channels: LinkChildToClassChannels
+    find_parents_by_child: FindParentsByChild
     update_user_role: UpdateUserRole
     toggle_user_active: ToggleUserActive
     delete_announcement: DeleteAnnouncement

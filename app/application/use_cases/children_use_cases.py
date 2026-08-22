@@ -1,8 +1,8 @@
 from dataclasses import dataclass
 
 from app.domain.entities.channel import Channel
-from app.domain.entities.child import Child
-from app.domain.entities.user import User, UserRole
+from app.domain.entities.child import Child, ParentSearchResult
+from app.domain.entities.user import User, UserRole, UserSummary
 from app.domain.errors import AuthorizationError, NotFoundError, ValidationError
 from app.domain.ports.repositories import (
     ChannelRepositoryPort,
@@ -129,3 +129,36 @@ class LinkChildToClassChannels:
         if child is None:
             raise NotFoundError("Enfant introuvable")
         _link_child_to_class_channels(self.channels, child, actor.id)
+
+
+@dataclass(slots=True)
+class FindParentsByChild:
+    children: ChildrenRepositoryPort
+    users: UserRepositoryPort
+
+    def execute(self, actor: User, query: str) -> list[ParentSearchResult]:
+        if actor.role not in (UserRole.ADMIN, UserRole.TEACHER):
+            raise AuthorizationError("Accès réservé aux enseignants")
+        query = query.strip()
+        if not query:
+            raise ValidationError("Le terme de recherche est requis")
+
+        matched_children = self.children.find_by_name_like(query)
+        parent_ids = list({c.parent_id for c in matched_children})
+        parents = {p.id: p for p in self.users.find_many_by_ids(parent_ids)}
+
+        results = []
+        for child in matched_children:
+            parent = parents.get(child.parent_id)
+            if parent:
+                results.append(
+                    ParentSearchResult(
+                        child=child,
+                        parent=UserSummary(
+                            id=parent.id,
+                            full_name=parent.full_name,
+                            role=parent.role,
+                        ),
+                    )
+                )
+        return results
