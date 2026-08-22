@@ -26,7 +26,8 @@ class FakeUsers:
     def count_by_role(self):
         counts = {}
         for u in self.users:
-            counts[u.role] = counts.get(u.role, 0) + 1
+            role = u.role.value
+            counts[role] = counts.get(role, 0) + 1
         return counts
 
     def count_grouped_by_date(self, since):
@@ -78,6 +79,14 @@ class FakeAnnouncements:
     def list_all(self):
         return list(self.announcements)
 
+    def list_recent(self, limit):
+        ordered = sorted(
+            self.announcements,
+            key=lambda a: a.created_at or NOW,
+            reverse=True,
+        )
+        return list(ordered[:limit])
+
     def count_read(self, announcement_id):
         return len(self.reads.get(announcement_id, []))
 
@@ -102,14 +111,14 @@ def _user(uid, role, created_at=None, active=True):
     )
 
 
-def _announcement(aid, title="Annonce", target_channel_ids=None):
+def _announcement(aid, title="Annonce", target_channel_ids=None, created_at=None):
     return Announcement(
         id=aid,
         title=title,
         content="content",
         created_by=1,
         pdf_filename=None,
-        created_at=NOW,
+        created_at=created_at or NOW,
         target_channel_ids=target_channel_ids or [],
     )
 
@@ -158,9 +167,9 @@ def test_users_by_role_counts():
     ]
     data = _make_stats(users=users).execute(_user(1, UserRole.ADMIN))
     assert data["users_by_role"] == {
-        UserRole.ADMIN: 1,
-        UserRole.TEACHER: 1,
-        UserRole.PARENT: 2,
+        "ADMIN": 1,
+        "TEACHER": 1,
+        "PARENT": 2,
     }
 
 
@@ -231,9 +240,36 @@ def test_announcement_read_rates_targeted_uses_channel_members():
     ]
 
 
+def test_announcement_read_rates_limited_to_recent():
+    users = [_user(1, UserRole.ADMIN)]
+    announcements = [
+        _announcement(aid, title=f"A{aid}", created_at=NOW - timedelta(days=aid))
+        for aid in range(7, 0, -1)
+    ]
+    reads = {aid: [1] for aid in range(1, 8)}
+    data = _make_stats(
+        users=users, announcements=announcements, reads=reads
+    ).execute(_user(1, UserRole.ADMIN))
+    titles = [rate["title"] for rate in data["announcement_read_rates"]]
+    assert titles == ["A1", "A2", "A3", "A4", "A5"]
+    assert len(titles) == 5
+
+
 def test_push_adoption_counts_distinct_subscribers():
     data = _make_stats(
         users=[_user(1, UserRole.ADMIN), _user(2, UserRole.PARENT)],
         push_user_ids=[1, 2, 2],
     ).execute(_user(1, UserRole.ADMIN))
     assert data["push_adoption"] == {"subscribers": 2, "total_users": 2}
+
+
+def test_empty_database_returns_zeroed_sections():
+    data = _make_stats().execute(_user(1, UserRole.ADMIN))
+    assert data["users_by_role"] == {}
+    assert data["top_channels"] == []
+    assert data["announcement_read_rates"] == []
+    assert data["push_adoption"] == {"subscribers": 0, "total_users": 0}
+    assert len(data["messages_by_day"]) == 14
+    assert all(day["count"] == 0 for day in data["messages_by_day"])
+    assert data["registrations_by_week"]
+    assert all(week["count"] == 0 for week in data["registrations_by_week"])

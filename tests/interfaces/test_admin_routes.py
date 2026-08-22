@@ -291,3 +291,4 @@ def test_admin_stats_page_renders_charts(client, app):
     assert b"chart-top-channels" in response.data
     assert b"chart-read-rates" in response.data
     assert b"chart-push-adoption" in response.data
+    assert b"data-chart=" in response.data

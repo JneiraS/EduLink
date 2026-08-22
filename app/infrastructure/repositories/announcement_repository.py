@@ -59,6 +59,14 @@ class SQLAlchemyAnnouncementRepository(AnnouncementRepositoryPort):
         ).all()
         return [self._to_entity(row) for row in rows]
 
+    def list_recent(self, limit: int) -> list[Announcement]:
+        rows = (
+            AnnouncementModel.query.order_by(AnnouncementModel.created_at.desc())
+            .limit(limit)
+            .all()
+        )
+        return [self._to_entity(row) for row in rows]
+
     def find_by_pdf_filename(self, pdf_filename: str) -> Announcement | None:
         model = AnnouncementModel.query.filter_by(pdf_filename=pdf_filename).first()
         return self._to_entity(model) if model else None

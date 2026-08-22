@@ -86,6 +86,10 @@ class AnnouncementRepositoryPort(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    def list_recent(self, limit: int) -> list[Announcement]:
+        raise NotImplementedError
+
+    @abstractmethod
     def find_by_pdf_filename(self, pdf_filename: str) -> Announcement | None:
         raise NotImplementedError
 

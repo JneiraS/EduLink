@@ -244,6 +244,7 @@ function initThemeToggle() {
         root.setAttribute("data-theme", theme);
         localStorage.setItem("edulink-theme", theme);
         applyThemeUi(theme);
+        document.dispatchEvent(new CustomEvent("edulink:themechange", { detail: theme }));
     };
 
     const currentTheme = root.getAttribute("data-theme") || "light";

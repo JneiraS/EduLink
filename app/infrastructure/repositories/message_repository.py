@@ -1,9 +1,8 @@
-from datetime import date, datetime
-
 from app.domain.entities.message import Message
 from app.domain.ports.repositories import MessageRepositoryPort
 from app.extensions import db
 from app.infrastructure.database.models import ChannelModel, MessageModel
+from app.infrastructure.repositories._date_utils import parse_date
 
 
 class SQLAlchemyMessageRepository(MessageRepositoryPort):
@@ -99,7 +98,7 @@ class SQLAlchemyMessageRepository(MessageRepositoryPort):
             .all()
         )
         return [
-            {"date": _parse_date(row[0]), "count": row[1]} for row in rows
+            {"date": parse_date(row[0]), "count": row[1]} for row in rows
         ]
 
     def count_top_channels(self, limit: int = 5) -> list[dict]:
@@ -129,10 +128,3 @@ class SQLAlchemyMessageRepository(MessageRepositoryPort):
             created_at=model.created_at,
             is_pinned=model.is_pinned,
         )
-
-
-def _parse_date(value) -> date:
-    """Normalize a SQL date string into a date object for chart labels."""
-    if isinstance(value, date):
-        return value
-    return datetime.strptime(str(value), "%Y-%m-%d").date()

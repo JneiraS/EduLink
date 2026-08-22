@@ -54,6 +54,37 @@ def test_announcement_repository_delete_unknown_returns_none():
         assert repo.find_by_id(999) is None
 
 
+def test_announcement_repository_list_recent_orders_desc_with_limit():
+    from datetime import datetime, timedelta, timezone
+
+    app = create_app(testing=True)
+
+    with app.app_context():
+        author_id = create_user(app, role="TEACHER", email="rec@repo.local")
+        now = datetime.now(timezone.utc)
+        ids = []
+        for days in range(5):
+            model = AnnouncementModel(
+                title=f"Annonce {days}",
+                content="Contenu",
+                created_by=author_id,
+                created_at=now - timedelta(days=days),
+            )
+            db.session.add(model)
+            db.session.flush()
+            ids.append(model.id)
+        db.session.commit()
+
+        repo = SQLAlchemyAnnouncementRepository()
+        recent = repo.list_recent(limit=3)
+        assert [a.title for a in recent] == [
+            "Annonce 0",
+            "Annonce 1",
+            "Annonce 2",
+        ]
+        assert len(recent) == 3
+
+
 def test_channel_repository_list_all_orders_by_creation():
     app = create_app(testing=True)
 
