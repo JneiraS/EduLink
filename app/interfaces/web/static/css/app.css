@@ -1760,46 +1760,41 @@ textarea.form-control:focus {
    Auth screen
    ============================================================ */
 .auth-screen {
-    display: grid;
-    grid-template-columns: 1.05fr 1fr;
-    gap: var(--space-6);
-    align-items: center;
-    min-height: calc(100vh - 120px);
-    padding: var(--space-4) 0;
-}
-
-.auth-brand .auth-tagline {
-    font-family: var(--font-display);
-    font-size: clamp(1.9rem, 3.4vw, 2.7rem);
-    font-weight: 600;
-    line-height: 1.12;
-    letter-spacing: -0.02em;
-    margin: 0.4rem 0 1rem;
-}
-
-.auth-feature {
     display: flex;
+    justify-content: center;
     align-items: center;
-    gap: 0.7rem;
-    padding: 0.35rem 0;
-    color: var(--text-soft);
+    min-height: calc(100vh - 140px);
+    padding: var(--space-5) 0;
 }
 
-.auth-feature i {
+.auth-glyph {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 30px;
-    height: 30px;
-    border-radius: 50%;
+    width: 44px;
+    height: 44px;
+    border-radius: 14px;
     background: var(--brand-soft);
     color: var(--brand);
+    font-size: 1.4rem;
+    margin-bottom: var(--space-4);
+}
+
+.auth-panel {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--r-lg);
+    box-shadow: var(--shadow-1);
+    padding: var(--space-6) var(--space-6) var(--space-5);
+}
+
+.auth-panel .h4 {
+    margin-bottom: var(--space-5);
 }
 
 .auth-card {
     width: 100%;
-    max-width: 420px;
-    margin-left: auto;
+    max-width: 360px;
 }
 
 /* ============================================================
@@ -2025,19 +2020,12 @@ hr {
     }
 
     .auth-screen {
-        grid-template-columns: 1fr;
-        gap: var(--space-5);
         min-height: auto;
         padding-top: var(--space-5);
     }
 
-    .auth-card {
-        margin-left: 0;
-        max-width: 100%;
-    }
-
-    .auth-feature {
-        display: none;
+    .auth-panel {
+        padding: var(--space-5) var(--space-4);
     }
 
     .bubble {
