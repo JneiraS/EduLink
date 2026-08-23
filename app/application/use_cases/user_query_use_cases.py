@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from app.domain.entities.user import User, UserRole, UserSummary
+from app.domain.entities.user import User, UserSummary
 from app.domain.ports.repositories import UserRepositoryPort
 
 
