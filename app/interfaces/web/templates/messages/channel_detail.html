@@ -42,6 +42,22 @@
                     {% endif %}
                 </div>
 
+                {% if messages and not search_mode %}
+                <div class="ai-summary-bar">
+                    <button type="button" class="btn btn-sm btn-outline-secondary ai-summary-btn"
+                        data-ai-summary data-channel-id="{{ channel_id }}">
+                        <i class="bi bi-stars me-1" aria-hidden="true"></i>Resumer la conversation
+                    </button>
+                    <div class="ai-summary-panel" data-ai-summary-panel hidden>
+                        <div class="ai-summary-status" data-ai-summary-spinner hidden>
+                            <span class="spinner-border spinner-border-sm me-2" role="status"
+                                aria-hidden="true"></span>Generation du resume...
+                        </div>
+                        <div class="ai-summary-output" data-ai-summary-output></div>
+                    </div>
+                </div>
+                {% endif %}
+
                 <div class="chat-messages" id="messages-container" aria-live="polite">
                     {% if pinned_messages and not is_direct and not search_mode %}
                     <div class="pinned-section">

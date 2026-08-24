@@ -16,6 +16,7 @@ logger = logging.getLogger(__name__)
 
 from app.application.container import UseCaseContainer
 from app.application.use_cases.admin_stats_use_case import GetAdminStats
+from app.application.use_cases.ai_use_cases import SummarizeChannelMessages
 from app.application.use_cases.admin_use_cases import (
     DeleteAnnouncement,
     DeleteChannel,
@@ -87,6 +88,7 @@ from app.config.settings import (
 )
 from app.domain.errors import DomainError
 from app.extensions import csrf, db, limiter, login_manager, socketio
+from app.infrastructure.ai.ollama_adapter import OllamaTextAssistant
 from app.infrastructure.auth.password_hasher import WerkzeugPasswordHasher
 from app.infrastructure.database.models import UserModel
 from app.infrastructure.notifications.socketio_service import (
@@ -119,6 +121,7 @@ from app.infrastructure.repositories.push_subscription_repository import (
 from app.infrastructure.repositories.user_repository import SQLAlchemyUserRepository
 from app.infrastructure.repositories.children_repository import SQLAlchemyChildrenRepository
 from app.interfaces.web.routes.announcements_routes import announcements_bp
+from app.interfaces.web.routes.ai_routes import ai_bp
 from app.interfaces.web.routes.admin_routes import admin_bp
 from app.interfaces.web.routes.auth_routes import auth_bp
 from app.interfaces.web.routes.dashboard_routes import dashboard_bp
@@ -160,6 +163,7 @@ def create_app(testing: bool = False):
     limiter.enabled = app.config.get("RATE_LIMIT_ENABLED", False)
 
     app.register_blueprint(auth_bp)
+    app.register_blueprint(ai_bp)
     app.register_blueprint(dashboard_bp)
     app.register_blueprint(admin_bp)
     app.register_blueprint(announcements_bp)
@@ -189,6 +193,10 @@ def create_app(testing: bool = False):
     children_repo = SQLAlchemyChildrenRepository()
     invitations_repo = SQLAlchemyInvitationRepository()
     hasher = WerkzeugPasswordHasher()
+    text_assistant = OllamaTextAssistant(
+        base_url=app.config.get("OLLAMA_BASE_URL", ""),
+        model=app.config.get("OLLAMA_MODEL", ""),
+    )
     realtime = SocketIONotificationService(
         socketio=socketio,
         push_subscriptions=push_subscriptions_repo,
@@ -210,6 +218,7 @@ def create_app(testing: bool = False):
         "children": children_repo,
         "invitations": invitations_repo,
         "hasher": hasher,
+        "text_assistant": text_assistant,
         "realtime_notifications": realtime,
     }
 
@@ -352,6 +361,11 @@ def create_app(testing: bool = False):
         ),
         find_parents_by_child=FindParentsByChild(
             children=children_repo, users=users_repo
+        ),
+        summarize_channel_messages=SummarizeChannelMessages(
+            messages=messages_repo,
+            channels=channels_repo,
+            assistant=text_assistant,
         ),
     )
 

@@ -1666,6 +1666,32 @@ textarea.form-control:focus {
     animation: none;
 }
 
+.ai-summary-bar {
+    margin-bottom: var(--space-3);
+}
+
+.ai-summary-panel {
+    border: 1px solid var(--line);
+    border-radius: var(--r-md);
+    padding: var(--space-3) var(--space-4);
+    margin-top: var(--space-2);
+    background: color-mix(in srgb, var(--brand) 6%, var(--surface));
+    box-shadow: var(--shadow-inset);
+}
+
+.ai-summary-status {
+    display: flex;
+    align-items: center;
+    font-size: 0.85rem;
+    color: var(--text-soft);
+}
+
+.ai-summary-output {
+    white-space: pre-wrap;
+    font-size: 0.9rem;
+    color: var(--text);
+}
+
 .chat-message .pin-form {
     display: flex;
     align-items: center;

@@ -441,6 +441,48 @@ function initFileZone() {
     });
 }
 
+function initAiSummary() {
+    const btn = document.querySelector("[data-ai-summary]");
+    if (!btn) {
+        return;
+    }
+
+    const panel = document.querySelector("[data-ai-summary-panel]");
+    const spinner = document.querySelector("[data-ai-summary-spinner]");
+    const output = document.querySelector("[data-ai-summary-output]");
+    if (!panel || !spinner || !output) {
+        return;
+    }
+
+    const csrfToken = document.querySelector("meta[name='csrf-token']")?.content || "";
+
+    btn.addEventListener("click", async () => {
+        btn.disabled = true;
+        panel.hidden = false;
+        spinner.hidden = false;
+        output.textContent = "";
+        try {
+            const response = await fetch(
+                `/ai/channels/${btn.dataset.channelId}/summary`,
+                {
+                    method: "POST",
+                    credentials: "same-origin",
+                    headers: { "X-CSRFToken": csrfToken },
+                }
+            );
+            const data = await response.json();
+            output.textContent = response.ok
+                ? data.summary
+                : (data.error || "Le resume a echoue.");
+        } catch (error) {
+            output.textContent = "Le resume a echoue.";
+        } finally {
+            spinner.hidden = true;
+            btn.disabled = false;
+        }
+    });
+}
+
 initThemeToggle();
 
 initCharCounters();
@@ -462,6 +504,8 @@ initAudiencePicker();
 initTemplateInsert();
 
 initCopyButtons();
+
+initAiSummary();
 
 if (isAuthenticated) {
     initPushNotifications().catch((error) => {

@@ -46,6 +46,7 @@ sécurité — ne pas revenir en arrière).
 | **Trouver un parent** (enseignant cherche un parent via l'enfant) | `messages_routes.py` (`/messages/find-parent`) | `FindParentsByChild` (garde TEACHER/ADMIN ; retourne `ParentSearchResult` = child + UserSummary) | `children_repository.py` (`find_by_name_like`), `user_repository.py` (`find_many_by_ids`) |
 | **Statistiques admin** (graphiques Chart.js) | `admin_routes.py` (`/admin/stats`) | `GetAdminStats` (agrégations ; read-rates d'annonces calculés dans le use case) | `user_repository.py`, `message_repository.py`, `announcement_repository.py`, `channel_repository.py`, `push_subscription_repository.py` |
 | Requêtes utilitaires (lecture) | routes diverses | `ListAllUsers`, `FindUsersByIds` (renvoient des `UserSummary` : `id`/`full_name`/`role` — **jamais** `email`/`password_hash`), `ListChannelMembers` (idem) | `user_repository.py` |
+| **Assistant IA — résumé de conversation** (Ollama local) | `ai_routes.py` (`POST /ai/channels/<id>/summary`, JSON, rate-limité) | `SummarizeChannelMessages` (garde membre ; 0 message → `ValidationError`) | `ai/ollama_adapter.py` (port `TextAssistantPort`) |
 
 Le temps réel n'apparaît pas dans un blueprint : `SocketIONotificationService`
 (`infrastructure/notifications/socketio_service.py`) implémente
@@ -116,10 +117,13 @@ une violation d'architecture.
     d'agrégation des stats admin (`UserRepositoryPort.count_total / count_active /
     count_by_role / count_grouped_by_date`) font des `GROUP BY date(created_at)`
     bruts — le padding des jours/semaines vides est fait dans `GetAdminStats`.
-  - `services.py` : `PasswordHasherPort`, `RealtimeNotificationPort`.
+  - `services.py` : `PasswordHasherPort`, `RealtimeNotificationPort`,
+    `TextAssistantPort` (`summarize(texts) -> str` — assistant IA, implémenté
+    par Ollama).
 - **`errors.py`** — hiérarchie d'erreurs métier :
   `DomainError` → `AuthenticationError`, `AuthorizationError`, `NotFoundError`,
-  `ValidationError`. **Le business logic lève ces erreurs**, jamais
+  `ValidationError`, `ServiceUnavailableError` (service externe injoignable,
+  ex. Ollama). **Le business logic lève ces erreurs**, jamais
   `flask.abort`.
 
 ### 2.2 `app/application/` — les use cases
@@ -153,12 +157,20 @@ une violation d'architecture.
 - **`notifications/socketio_service.py`** : `SocketIONotificationService`
   (port `RealtimeNotificationPort`). Émet via SocketIO + déclenche le web push
   dans un `ThreadPoolExecutor` (en arrière-plan).
+- **`ai/ollama_adapter.py`** : `OllamaTextAssistant` (port
+  `TextAssistantPort`). Appelle un serveur **Ollama local** (`POST
+  {base_url}/api/generate`, `stream=False`) — les données élèves/parents ne
+  quittent jamais le réseau de l'école. URL et modèle viennent de la config
+  (`OLLAMA_BASE_URL`, `OLLAMA_MODEL`) ; les erreurs réseau/HTTP sont converties
+  en `ServiceUnavailableError`. Les prompts français vivent dans l'adaptateur.
 
 ### 2.4 `app/interfaces/web/` — l'entrée HTTP
 
 - **`routes/`** : blueprints Flask (`auth_bp`, `dashboard_bp`, `admin_bp`,
   `announcements_bp`, `messages_bp`, `notifications_bp`, `push_bp`,
-  `parent_bp`).
+  `parent_bp`, `ai_bp`). Les endpoints JSON de `ai_routes.py` renvoient les
+  erreurs métier en JSON (`{"error": ...}` + code 400/403/404/503) au lieu du
+  flash+redirect, car ils sont consommés par `fetch`.
 - **`routes/utils.py`** : les **seuls** accès autorisés aux dépendances :
   - `get_use_cases()` → `app.extensions["use_cases"]`
   - `get_services()` → `app.extensions["services"]` (uniquement pour la
@@ -417,6 +429,7 @@ Point d'entrée : `run.py` → `create_app()` + `socketio.run(...)` (host/port v
 | `SESSION_COOKIE_SECURE` | Cookie session en HTTPS |
 | `APP_ENV=production` | Bascule sur `ProductionConfig` (cookie Secure, HSTS, expiration de session) |
 | `SESSION_LIFETIME_SECONDS` | Durée de session en production (défaut 43200 = 12 h) |
+| `OLLAMA_BASE_URL` / `OLLAMA_MODEL` | Serveur Ollama local pour l'assistant IA (défaut `http://192.168.1.28:11434`, modèle `llama3.2:3b`) |
 
 ---
 

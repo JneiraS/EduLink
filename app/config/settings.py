@@ -11,6 +11,8 @@ class BaseConfig:
     VAPID_PRIVATE_KEY = os.getenv("VAPID_PRIVATE_KEY", "")
     VAPID_SUBJECT = os.getenv("VAPID_SUBJECT", "mailto:admin@edulink.local")
     INVITATION_TTL_HOURS = 72
+    OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://192.168.1.28:11434")
+    OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "llama3.2:3b")
 
 
 class DevelopmentConfig(BaseConfig):

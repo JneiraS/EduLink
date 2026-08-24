@@ -11,6 +11,12 @@ class PasswordHasherPort(ABC):
         raise NotImplementedError
 
 
+class TextAssistantPort(ABC):
+    @abstractmethod
+    def summarize(self, texts: list[str]) -> str:
+        raise NotImplementedError
+
+
 class RealtimeNotificationPort(ABC):
     @abstractmethod
     def notify_user(self, user_id: int, payload: dict) -> None:
