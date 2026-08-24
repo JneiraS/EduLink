@@ -16,7 +16,10 @@ logger = logging.getLogger(__name__)
 
 from app.application.container import UseCaseContainer
 from app.application.use_cases.admin_stats_use_case import GetAdminStats
-from app.application.use_cases.ai_use_cases import SummarizeChannelMessages
+from app.application.use_cases.ai_use_cases import (
+    RephraseDraft,
+    SummarizeChannelMessages,
+)
 from app.application.use_cases.admin_use_cases import (
     DeleteAnnouncement,
     DeleteChannel,
@@ -367,6 +370,7 @@ def create_app(testing: bool = False):
             channels=channels_repo,
             assistant=text_assistant,
         ),
+        rephrase_draft=RephraseDraft(assistant=text_assistant),
     )
 
     register_socket_handlers(socketio)

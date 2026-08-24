@@ -1,6 +1,9 @@
 import pytest
 
-from app.application.use_cases.ai_use_cases import SummarizeChannelMessages
+from app.application.use_cases.ai_use_cases import (
+    RephraseDraft,
+    SummarizeChannelMessages,
+)
 from app.domain.entities.channel import Channel
 from app.domain.entities.message import Message
 from app.domain.entities.user import User, UserRole
@@ -35,13 +38,19 @@ class InMemoryChannels:
 
 
 class FakeAssistant:
-    def __init__(self, reply="Resume du fil"):
+    def __init__(self, reply="Resume du fil", rephrase_reply="Version reformulee"):
         self.calls = []
+        self.rephrase_calls = []
         self.reply = reply
+        self.rephrase_reply = rephrase_reply
 
     def summarize(self, texts):
         self.calls.append(list(texts))
         return self.reply
+
+    def rephrase(self, text):
+        self.rephrase_calls.append(text)
+        return self.rephrase_reply
 
 
 def _actor(uid=1, role=UserRole.TEACHER):
@@ -118,3 +127,25 @@ def test_summary_limits_messages_sent_to_assistant():
     use_case.execute(_actor(), channel_id=1)
 
     assert len(assistant.calls[0]) == 50
+
+
+def test_rephrase_returns_assistant_suggestion():
+    assistant = FakeAssistant(rephrase_reply="Bonjour, pourrions-nous en discuter ?")
+    use_case = RephraseDraft(assistant=assistant)
+
+    result = use_case.execute(content="  Donnez-moi reponse vite  ")
+
+    assert result == "Bonjour, pourrions-nous en discuter ?"
+    assert assistant.rephrase_calls == ["Donnez-moi reponse vite"]
+
+
+def test_rephrase_empty_content_raises_validation_error():
+    use_case = RephraseDraft(assistant=FakeAssistant())
+    with pytest.raises(ValidationError):
+        use_case.execute(content="   ")
+
+
+def test_rephrase_too_long_content_raises_validation_error():
+    use_case = RephraseDraft(assistant=FakeAssistant())
+    with pytest.raises(ValidationError):
+        use_case.execute(content="a" * 5001)

@@ -483,6 +483,82 @@ function initAiSummary() {
     });
 }
 
+function initAiRephrase() {
+    const btn = document.querySelector("[data-ai-rephrase]");
+    if (!btn) {
+        return;
+    }
+
+    const textarea = document.getElementById("content");
+    const panel = document.querySelector("[data-ai-rephrase-panel]");
+    const spinner = document.querySelector("[data-ai-rephrase-spinner]");
+    const output = document.querySelector("[data-ai-rephrase-output]");
+    const actions = document.querySelector("[data-ai-rephrase-actions]");
+    if (!textarea || !panel || !spinner || !output || !actions) {
+        return;
+    }
+
+    const csrfToken = document.querySelector("meta[name='csrf-token']")?.content || "";
+    let suggestion = "";
+
+    const hidePanel = () => {
+        panel.hidden = true;
+        spinner.hidden = true;
+        actions.hidden = true;
+        output.textContent = "";
+        suggestion = "";
+    };
+
+    document
+        .querySelector("[data-ai-rephrase-use]")
+        .addEventListener("click", () => {
+            textarea.value = suggestion;
+            textarea.dispatchEvent(new Event("input"));
+            hidePanel();
+            textarea.focus();
+        });
+
+    document
+        .querySelector("[data-ai-rephrase-discard]")
+        .addEventListener("click", hidePanel);
+
+    btn.addEventListener("click", async () => {
+        const content = textarea.value.trim();
+        if (!content) {
+            return;
+        }
+        btn.disabled = true;
+        panel.hidden = false;
+        spinner.hidden = false;
+        actions.hidden = true;
+        output.textContent = "";
+        try {
+            const response = await fetch("/ai/rephrase", {
+                method: "POST",
+                credentials: "same-origin",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": csrfToken,
+                },
+                body: JSON.stringify({ content }),
+            });
+            const data = await response.json();
+            if (!response.ok) {
+                output.textContent = data.error || "La reformulation a echoue.";
+            } else {
+                suggestion = data.suggestion || "";
+                output.textContent = suggestion;
+                actions.hidden = false;
+            }
+        } catch (error) {
+            output.textContent = "La reformulation a echoue.";
+        } finally {
+            spinner.hidden = true;
+            btn.disabled = false;
+        }
+    });
+}
+
 initThemeToggle();
 
 initCharCounters();
@@ -506,6 +582,8 @@ initTemplateInsert();
 initCopyButtons();
 
 initAiSummary();
+
+initAiRephrase();
 
 if (isAuthenticated) {
     initPushNotifications().catch((error) => {

@@ -145,10 +145,29 @@
                     <label class="visually-hidden" for="content">Votre message</label>
                     <textarea class="form-control" id="content" name="content" rows="1" maxlength="5000"
                         data-maxlength="5000" data-auto-grow placeholder="Votre message..."></textarea>
+                    <button type="button" class="btn btn-outline-secondary ai-rephrase-btn"
+                        data-ai-rephrase
+                        title="Reformuler le message de facon diplomatique"
+                        aria-label="Reformuler le message de facon diplomatique">
+                        <i class="bi bi-magic" aria-hidden="true"></i>
+                    </button>
                     <button class="btn btn-primary send-btn" type="submit" aria-label="Envoyer">
                         <i class="bi bi-send" aria-hidden="true"></i>
                     </button>
                 </form>
+                <div class="ai-rephrase-panel" data-ai-rephrase-panel hidden>
+                    <div class="ai-rephrase-status" data-ai-rephrase-spinner hidden>
+                        <span class="spinner-border spinner-border-sm me-2" role="status"
+                            aria-hidden="true"></span>Reformulation...
+                    </div>
+                    <div class="ai-rephrase-output" data-ai-rephrase-output></div>
+                    <div class="ai-rephrase-actions d-flex gap-2 mt-2" data-ai-rephrase-actions hidden>
+                        <button type="button" class="btn btn-sm btn-primary"
+                            data-ai-rephrase-use>Utiliser cette version</button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary"
+                            data-ai-rephrase-discard>Ignorer</button>
+                    </div>
+                </div>
                 <form method="get" class="search-form" role="search">
                     <input class="form-control form-control-sm" type="search" name="q" value="{{ search_query or '' }}"
                         placeholder="Rechercher dans les messages..." autocomplete="off" aria-label="Rechercher">

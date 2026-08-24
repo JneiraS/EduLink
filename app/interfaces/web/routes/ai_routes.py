@@ -1,4 +1,4 @@
-from flask import Blueprint, jsonify
+from flask import Blueprint, jsonify, request
 from flask_login import login_required
 
 from app.domain.errors import (
@@ -32,3 +32,18 @@ def channel_summary(channel_id: int):
             ServiceUnavailableError) as exc:
         return jsonify({"error": str(exc)}), _ERROR_STATUS[type(exc)]
     return jsonify({"summary": summary})
+
+
+@ai_bp.route("/rephrase", methods=["POST"])
+@login_required
+@limiter.limit("10 per minute")
+def rephrase():
+    payload = request.get_json(silent=True) or {}
+    try:
+        suggestion = get_use_cases().rephrase_draft.execute(
+            content=payload.get("content") or ""
+        )
+    except (ValidationError, AuthorizationError, NotFoundError,
+            ServiceUnavailableError) as exc:
+        return jsonify({"error": str(exc)}), _ERROR_STATUS[type(exc)]
+    return jsonify({"suggestion": suggestion})

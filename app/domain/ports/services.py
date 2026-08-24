@@ -16,6 +16,10 @@ class TextAssistantPort(ABC):
     def summarize(self, texts: list[str]) -> str:
         raise NotImplementedError
 
+    @abstractmethod
+    def rephrase(self, text: str) -> str:
+        raise NotImplementedError
+
 
 class RealtimeNotificationPort(ABC):
     @abstractmethod

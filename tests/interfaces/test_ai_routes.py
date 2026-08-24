@@ -59,3 +59,59 @@ def test_summary_unknown_channel_returns_404(app, client):
 
     assert response.status_code == 404
     assert response.get_json()["error"]
+
+
+class StubRephrase:
+    def __init__(self, suggestion="Version diplomatique"):
+        self.suggestion = suggestion
+        self.calls = []
+
+    def execute(self, content):
+        self.calls.append(content)
+        return self.suggestion
+
+
+def _install_rephrase_stub(app, stub):
+    app.extensions["use_cases"].rephrase_draft = stub
+
+
+def test_rephrase_requires_login(client):
+    response = client.post("/ai/rephrase", json={"content": "Coucou"})
+    assert response.status_code == 302
+
+
+def test_rephrase_returns_suggestion_for_logged_in_user(app, client):
+    user_id = create_user(app, role="TEACHER", email="rephrase.ai@test.local")
+    stub = StubRephrase("Bonjour, pourrions-nous en discuter ?")
+    _install_rephrase_stub(app, stub)
+    login(client, user_id)
+
+    response = client.post(
+        "/ai/rephrase", json={"content": "  Repondez vite  "}
+    )
+
+    assert response.status_code == 200
+    assert response.get_json() == {
+        "suggestion": "Bonjour, pourrions-nous en discuter ?"
+    }
+    assert stub.calls == ["  Repondez vite  "]
+
+
+def test_rephrase_empty_content_returns_400(app, client):
+    user_id = create_user(app, role="PARENT", email="empty.ai@test.local")
+    login(client, user_id)
+
+    response = client.post("/ai/rephrase", json={"content": "   "})
+
+    assert response.status_code == 400
+    assert response.get_json()["error"]
+
+
+def test_rephrase_missing_payload_returns_400(app, client):
+    user_id = create_user(app, role="PARENT", email="nopayload.ai@test.local")
+    login(client, user_id)
+
+    response = client.post("/ai/rephrase", json={})
+
+    assert response.status_code == 400
+    assert response.get_json()["error"]

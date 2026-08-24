@@ -20,6 +20,20 @@ class OllamaTextAssistant(TextAssistantPort):
             "points cles, de fagon neutre et concise. Ne reponds qu'avec le resume.\n\n"
             f"{conversation}"
         )
+        return self._generate(prompt)
+
+    def rephrase(self, text: str) -> str:
+        prompt = (
+            "Tu es un assistant pour une plateforme de communication scolaire.\n"
+            "Reformule le message suivant en version diplomatique, polie et "
+            "professionnelle, adaptee a la communication entre un enseignant ou "
+            "une ecole et des parents. Conserve le sens original et la langue du "
+            "message. Ne reponds qu'avec la version reformulee, sans commentaire.\n\n"
+            f"{text}"
+        )
+        return self._generate(prompt)
+
+    def _generate(self, prompt: str) -> str:
         try:
             response = requests.post(
                 f"{self.base_url}/api/generate",

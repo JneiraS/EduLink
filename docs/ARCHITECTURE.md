@@ -47,6 +47,7 @@ sécurité — ne pas revenir en arrière).
 | **Statistiques admin** (graphiques Chart.js) | `admin_routes.py` (`/admin/stats`) | `GetAdminStats` (agrégations ; read-rates d'annonces calculés dans le use case) | `user_repository.py`, `message_repository.py`, `announcement_repository.py`, `channel_repository.py`, `push_subscription_repository.py` |
 | Requêtes utilitaires (lecture) | routes diverses | `ListAllUsers`, `FindUsersByIds` (renvoient des `UserSummary` : `id`/`full_name`/`role` — **jamais** `email`/`password_hash`), `ListChannelMembers` (idem) | `user_repository.py` |
 | **Assistant IA — résumé de conversation** (Ollama local) | `ai_routes.py` (`POST /ai/channels/<id>/summary`, JSON, rate-limité) | `SummarizeChannelMessages` (garde membre ; 0 message → `ValidationError`) | `ai/ollama_adapter.py` (port `TextAssistantPort`) |
+| **Assistant IA — reformulation diplomatique** (brouillon du compositeur) | `ai_routes.py` (`POST /ai/rephrase`, JSON, rate-limité) | `RephraseDraft` (contenu vide → `ValidationError`, limite 5000) | `ai/ollama_adapter.py` |
 
 Le temps réel n'apparaît pas dans un blueprint : `SocketIONotificationService`
 (`infrastructure/notifications/socketio_service.py`) implémente
@@ -118,8 +119,8 @@ une violation d'architecture.
     count_by_role / count_grouped_by_date`) font des `GROUP BY date(created_at)`
     bruts — le padding des jours/semaines vides est fait dans `GetAdminStats`.
   - `services.py` : `PasswordHasherPort`, `RealtimeNotificationPort`,
-    `TextAssistantPort` (`summarize(texts) -> str` — assistant IA, implémenté
-    par Ollama).
+    `TextAssistantPort` (`summarize(texts) -> str` et
+    `rephrase(text) -> str` — assistant IA, implémenté par Ollama).
 - **`errors.py`** — hiérarchie d'erreurs métier :
   `DomainError` → `AuthenticationError`, `AuthorizationError`, `NotFoundError`,
   `ValidationError`, `ServiceUnavailableError` (service externe injoignable,
@@ -158,8 +159,9 @@ une violation d'architecture.
   (port `RealtimeNotificationPort`). Émet via SocketIO + déclenche le web push
   dans un `ThreadPoolExecutor` (en arrière-plan).
 - **`ai/ollama_adapter.py`** : `OllamaTextAssistant` (port
-  `TextAssistantPort`). Appelle un serveur **Ollama local** (`POST
-  {base_url}/api/generate`, `stream=False`) — les données élèves/parents ne
+  `TextAssistantPort`, méthodes `summarize` et `rephrase`). Appelle un serveur
+  **Ollama local** (`POST {base_url}/api/generate`, `stream=False`) via un
+  helper privé commun `_generate(prompt)` — les données élèves/parents ne
   quittent jamais le réseau de l'école. URL et modèle viennent de la config
   (`OLLAMA_BASE_URL`, `OLLAMA_MODEL`) ; les erreurs réseau/HTTP sont converties
   en `ServiceUnavailableError`. Les prompts français vivent dans l'adaptateur.
@@ -208,7 +210,12 @@ affichent/masquent la liste des canaux ciblés). Le point d'entrée
 Messagerie), pour éviter le cul-de-sac où l'on ne peut pas créer un premier
 modèle sans en posséder déjà un. Sur la page Messagerie, le CTA
 « Nouvelle conversation » est porté par l'**en-tête de page** (bouton primaire
-à droite), donc visible en haut même sans canal existant.
+à droite), donc visible en haut même sans canal existant. Le compositeur du
+canal propose aussi l'**IA** : bouton « Résumer » (`initAiSummary`) qui affiche
+le résumé des 50 derniers messages dans un panneau, et bouton baguette
+« Reformuler » (`initAiRephrase`) qui soumet le brouillon du textarea à
+`POST /ai/rephrase` et propose « Utiliser cette version » / « Ignorer »
+(remplit le textarea + événement `input` pour l'auto-grow).
 
 ---
 

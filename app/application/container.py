@@ -1,7 +1,10 @@
 from dataclasses import dataclass
 
 from app.application.use_cases.admin_stats_use_case import GetAdminStats
-from app.application.use_cases.ai_use_cases import SummarizeChannelMessages
+from app.application.use_cases.ai_use_cases import (
+    RephraseDraft,
+    SummarizeChannelMessages,
+)
 from app.application.use_cases.admin_use_cases import (
     DeleteAnnouncement,
     DeleteChannel,
@@ -121,3 +124,4 @@ class UseCaseContainer:
     delete_announcement: DeleteAnnouncement
     delete_channel: DeleteChannel
     summarize_channel_messages: SummarizeChannelMessages
+    rephrase_draft: RephraseDraft
