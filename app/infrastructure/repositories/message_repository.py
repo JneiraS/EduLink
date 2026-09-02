@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from app.domain.entities.message import Message
 from app.domain.ports.repositories import MessageRepositoryPort
 from app.extensions import db
@@ -74,12 +76,9 @@ class SQLAlchemyMessageRepository(MessageRepositoryPort):
             .group_by(MessageModel.channel_id)
             .all()
         )
-        rows = (
-            MessageModel.query.filter(
-                MessageModel.id.in_([message_id for _, message_id in latest_ids])
-            )
-            .all()
-        )
+        rows = MessageModel.query.filter(
+            MessageModel.id.in_([message_id for _, message_id in latest_ids])
+        ).all()
         by_id = {row.id: self._to_entity(row) for row in rows}
         return {
             channel_id: by_id[message_id]
@@ -97,9 +96,7 @@ class SQLAlchemyMessageRepository(MessageRepositoryPort):
             .group_by(db.func.date(MessageModel.created_at))
             .all()
         )
-        return [
-            {"date": parse_date(row[0]), "count": row[1]} for row in rows
-        ]
+        return [{"date": parse_date(row[0]), "count": row[1]} for row in rows]
 
     def count_top_channels(self, limit: int = 5) -> list[dict]:
         rows = (
