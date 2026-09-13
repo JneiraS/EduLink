@@ -1,0 +1,62 @@
+<%- include('../partials/header') %>
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <span class="kicker">Annonces</span>
+                <h1 class="page-title mb-4">Publier une annonce</h1>
+                <form method="post" action="/announcements/new" enctype="multipart/form-data">
+                    <input type="hidden" name="csrf_token" value="<%= csrf_token %>">
+                    <div class="mb-3">
+                        <label class="form-label" for="title">Titre</label>
+                        <input class="form-control" id="title" name="title" required maxlength="255"
+                            placeholder="Ex: Sortie pédagogique ou réunion parents-profs">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" for="content">Contenu</label>
+                        <textarea class="form-control" id="content" name="content" rows="5" required
+                            maxlength="5000" placeholder="Rédigez les détails de l'annonce..."></textarea>
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label">Audience</label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="audience" id="audience-all"
+                                value="all" checked onchange="document.getElementById('target-channels').classList.add('d-none')">
+                            <label class="form-check-label" for="audience-all">Tous les utilisateurs (Annonce générale)</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="audience" id="audience-channels"
+                                value="channels" onchange="document.getElementById('target-channels').classList.remove('d-none')">
+                            <label class="form-check-label" for="audience-channels">Uniquement les membres d'un canal sélectionné</label>
+                        </div>
+                    </div>
+                    <div class="mb-4 d-none" id="target-channels">
+                        <label class="form-label">Canal cible</label>
+                        <select class="form-select" name="channel_id">
+                            <option value="">Sélectionnez un canal</option>
+                            <% if (channels && channels.length > 0) { %>
+                                <% channels.forEach(function(c) { %>
+                                <option value="<%= c.id %>"><%= c.name %></option>
+                                <% }); %>
+                            <% } %>
+                        </select>
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label" for="document">Document PDF (optionnel)</label>
+                        <input class="form-control" id="document" name="document" type="file" accept="application/pdf">
+                        <small class="text-muted">Maximum 5 Mo, format PDF uniquement.</small>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <a href="/announcements" class="btn btn-outline-secondary">Annuler</a>
+                        <button class="btn btn-primary" type="submit">
+                            <i class="bi bi-send me-2" aria-hidden="true"></i>Publier l'annonce
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<%- include('../partials/footer') %>

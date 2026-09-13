@@ -1,0 +1,161 @@
+<%- include('../partials/header') %>
+
+<div class="d-flex align-items-center justify-content-between gap-3 mb-4 flex-wrap">
+    <div>
+        <div class="d-flex align-items-center gap-2 mb-1">
+            <span class="badge bg-primary-subtle text-primary border border-primary-subtle">Messagerie scolaire</span>
+            <span class="text-muted small">• Canaux & Échanges directs</span>
+        </div>
+        <h1 class="h3 fw-bold mb-0 text-body">Messagerie</h1>
+    </div>
+    <div class="d-flex gap-2">
+        <a class="btn btn-outline-secondary shadow-sm d-inline-flex align-items-center gap-2" href="/messages/templates">
+            <i class="bi bi-lightning-charge"></i> Mes modèles
+        </a>
+        <a class="btn btn-primary shadow-sm d-inline-flex align-items-center gap-2" href="/messages/new">
+            <i class="bi bi-chat-plus" aria-hidden="true"></i> Nouvelle conversation
+        </a>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Left Column: Channel list -->
+    <div class="col-lg-7">
+        <!-- Direct Messages -->
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-body p-4">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div>
+                        <h2 class="h6 fw-bold mb-0 text-body">Échanges individuels</h2>
+                        <small class="text-muted">Discussions directes avec les parents ou enseignants</small>
+                    </div>
+                    <span class="badge bg-secondary-subtle text-secondary-emphasis"><%= direct_channels ? direct_channels.length : 0 %></span>
+                </div>
+
+                <% if (direct_channels && direct_channels.length > 0) { %>
+                <div class="list-group list-group-flush border-0">
+                    <% direct_channels.forEach(function(channel) { %>
+                    <a class="list-group-item list-group-item-action px-3 py-3 rounded-2 mb-1 d-flex align-items-center justify-content-between border"
+                        href="/messages/channels/<%= channel.id %>">
+                        <div class="d-flex align-items-center gap-3">
+                            <span class="avatar avatar--parent" style="width: 38px; height: 38px; font-size: 0.9rem;">
+                                <i class="bi bi-person-fill"></i>
+                            </span>
+                            <div>
+                                <div class="fw-bold text-dark mb-0"><%= channel.name %></div>
+                                <small class="text-muted"><%= channel.member_count %> participants</small>
+                            </div>
+                        </div>
+                        <i class="bi bi-chevron-right text-muted"></i>
+                    </a>
+                    <% }); %>
+                </div>
+                <% } else { %>
+                <div class="text-center py-4 text-muted">
+                    <i class="bi bi-person fs-3 d-block mb-1"></i>
+                    <div class="fw-semibold">Aucun échange direct</div>
+                    <small>Démarrez une conversation via le bouton "Nouvelle conversation".</small>
+                </div>
+                <% } %>
+            </div>
+        </div>
+
+        <!-- Group Channels -->
+        <div class="card shadow-sm border-0">
+            <div class="card-body p-4">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div>
+                        <h2 class="h6 fw-bold mb-0 text-body">Canaux de groupe & Classes</h2>
+                        <small class="text-muted">Échanges collectifs pour les classes et équipes</small>
+                    </div>
+                    <span class="badge bg-secondary-subtle text-secondary-emphasis"><%= group_channels ? group_channels.length : 0 %></span>
+                </div>
+
+                <% if (group_channels && group_channels.length > 0) { %>
+                <div class="list-group list-group-flush border-0">
+                    <% group_channels.forEach(function(channel) { %>
+                    <a class="list-group-item list-group-item-action px-3 py-3 rounded-2 mb-1 d-flex align-items-center justify-content-between border"
+                        href="/messages/channels/<%= channel.id %>">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="d-flex align-items-center justify-content-center rounded-3 bg-primary-subtle text-primary" style="width: 38px; height: 38px; font-size: 1.1rem;">
+                                <i class="bi bi-hash"></i>
+                            </div>
+                            <div>
+                                <div class="fw-bold text-dark mb-0"><%= channel.name %></div>
+                                <small class="text-muted"><%= channel.member_count %> membres</small>
+                            </div>
+                        </div>
+                        <i class="bi bi-chevron-right text-muted"></i>
+                    </a>
+                    <% }); %>
+                </div>
+                <% } else { %>
+                <div class="text-center py-4 text-muted">
+                    <i class="bi bi-hash fs-3 d-block mb-1"></i>
+                    <div class="fw-semibold">Aucun canal de classe</div>
+                    <small>Vous n'êtes membre d'aucun groupe collectif pour le moment.</small>
+                </div>
+                <% } %>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column: Create Channel (for Teacher/Admin) or Quick Guide -->
+    <div class="col-lg-5">
+        <% if (can_manage) { %>
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-body p-4">
+                <h2 class="h6 fw-bold mb-1 text-body">Créer un nouveau canal</h2>
+                <p class="text-muted small mb-3">Créez un espace de discussion pour une classe, un projet ou une commission.</p>
+                <form method="post" action="/messages/channels">
+                    <input type="hidden" name="csrf_token" value="<%= csrf_token %>">
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold" for="name">Nom du canal</label>
+                        <input class="form-control" id="name" name="name" required maxlength="120"
+                            placeholder="Ex. Classe CM2-B, Sortie Musée...">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Sélectionner les membres</label>
+                        <div class="border rounded-3 p-3 bg-light-subtle" style="max-height: 220px; overflow-y: auto;">
+                            <% if (all_users && all_users.length > 0) { %>
+                                <% all_users.forEach(function(u) { %>
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" name="members" value="<%= u.id %>"
+                                        id="user_<%= u.id %>" <%= u.id === current_user.id ? 'checked disabled' : '' %>>
+                                    <label class="form-check-label d-flex align-items-center gap-2 small" for="user_<%= u.id %>">
+                                        <span class="avatar avatar-sm avatar--<%= (u.role || '').toLowerCase() %>" style="width: 24px; height: 24px; font-size: 0.65rem;"><%= u.full_name ? u.full_name[0].toUpperCase() : 'U' %></span>
+                                        <span class="fw-medium text-dark"><%= u.full_name %></span>
+                                        <span class="badge badge-role badge-role--<%= (u.role || '').toLowerCase() %> ms-auto" style="font-size: 0.65rem;"><%= u.role %></span>
+                                    </label>
+                                </div>
+                                <% }); %>
+                            <% } %>
+                        </div>
+                    </div>
+                    <button class="btn btn-primary w-100 shadow-sm" type="submit">
+                        <i class="bi bi-plus-lg me-1" aria-hidden="true"></i>Créer le canal
+                    </button>
+                </form>
+            </div>
+        </div>
+        <% } %>
+
+        <div class="card shadow-sm border-0">
+            <div class="card-body p-4">
+                <div class="d-flex align-items-center gap-2 mb-2">
+                    <i class="bi bi-shield-lock-fill text-primary fs-5"></i>
+                    <h2 class="h6 fw-bold mb-0 text-body">Communication sécurisée</h2>
+                </div>
+                <p class="text-muted small mb-3">
+                    Tous les échanges sur EduLink respectent le cadre de la protection des données scolaires (RGPD). Les conversations restent privées entre les participants autorisés.
+                </p>
+                <div class="p-3 rounded-3 bg-light-subtle border small">
+                    <div class="fw-semibold text-dark mb-1"><i class="bi bi-stars text-primary me-1"></i>Assistant IA intégré :</div>
+                    <span class="text-muted">Utilisez l'assistant IA disponible dans chaque canal pour résumer les longues discussions ou reformuler vos messages avec bienveillance.</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<%- include('../partials/footer') %>

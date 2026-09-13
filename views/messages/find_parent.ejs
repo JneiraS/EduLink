@@ -1,0 +1,64 @@
+<%- include('../partials/header') %>
+
+<div class="row justify-content-center reveal-group">
+    <div class="col-lg-7">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <span class="kicker">Messagerie</span>
+                <h1 class="page-title mb-2">Trouver un parent</h1>
+                <p class="text-muted mb-4">Recherchez un élève pour contacter directement son parent responsable.</p>
+
+                <form method="get" action="/messages/find-parent" class="mb-4" role="search">
+                    <div class="input-group">
+                        <input class="form-control" type="search" name="q"
+                            value="<%= search_query || '' %>"
+                            placeholder="Nom de l'enfant (ex: Lucas, Martin, Emma)..." autocomplete="off"
+                            aria-label="Nom de l'enfant">
+                        <button class="btn btn-primary" type="submit">
+                            <i class="bi bi-search" aria-hidden="true"></i>
+                        </button>
+                    </div>
+                </form>
+
+                <% if (results && results.length > 0) { %>
+                <div class="d-flex flex-column gap-3">
+                    <% results.forEach(function(result) { %>
+                    <div class="card border">
+                        <div class="card-body d-flex justify-content-between align-items-center">
+                            <div>
+                                <div class="fw-semibold">
+                                    <i class="bi bi-person me-2 text-muted" aria-hidden="true"></i>
+                                    <%= result.child.full_name %>
+                                </div>
+                                <small class="text-muted">
+                                    Classe: <%= result.child.class_name %> &mdash; Parent: <strong><%= result.parent.full_name %></strong> (<%= result.parent.email %>)
+                                </small>
+                            </div>
+                            <form method="post" action="/messages/find-parent" class="d-inline">
+                                <input type="hidden" name="csrf_token" value="<%= csrf_token %>">
+                                <input type="hidden" name="parent_id" value="<%= result.parent.id %>">
+                                <button class="btn btn-sm btn-outline-primary" type="submit">
+                                    <i class="bi bi-chat-dots me-1" aria-hidden="true"></i>Contacter
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                    <% }); %>
+                </div>
+                <% } else if (search_query) { %>
+                <div class="empty-state text-center py-4">
+                    <span class="empty-icon text-muted fs-3" aria-hidden="true"><i class="bi bi-search"></i></span>
+                    <div class="empty-title fw-semibold mt-2">Aucun enfant trouvé</div>
+                    <div class="empty-hint text-muted small">Essayez avec un autre nom ou prénom.</div>
+                </div>
+                <% } else { %>
+                <div class="text-muted small text-center py-3">
+                    Indiquez le nom ou prénom d'un élève ci-dessus pour afficher la fiche de ses parents.
+                </div>
+                <% } %>
+            </div>
+        </div>
+    </div>
+</div>
+
+<%- include('../partials/footer') %>

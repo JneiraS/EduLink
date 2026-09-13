@@ -1,0 +1,464 @@
+<%- include('../partials/header') %>
+
+<!-- Calendar Page Header -->
+<div class="d-flex justify-content-between align-items-end mb-4 gap-3 flex-wrap">
+    <div>
+        <div class="d-flex align-items-center gap-2 mb-1">
+            <span class="badge bg-primary-subtle text-primary border border-primary-subtle">Vie de l’établissement</span>
+            <span class="text-muted small">• Année scolaire 2026-2027</span>
+        </div>
+        <h1 class="h3 fw-bold mb-0 text-body">Calendrier & Échéances scolaires</h1>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+        <% if (can_manage) { %>
+        <button class="btn btn-primary shadow-sm d-inline-flex align-items-center gap-2" type="button" data-bs-toggle="modal" data-bs-target="#addEventModal">
+            <i class="bi bi-calendar-plus" aria-hidden="true"></i> Ajouter une date
+        </button>
+        <% } %>
+        <button class="btn btn-outline-secondary d-inline-flex align-items-center gap-1" onclick="window.print()" title="Imprimer le calendrier">
+            <i class="bi bi-printer"></i> Imprimer
+        </button>
+    </div>
+</div>
+
+<!-- Quick Highlights Cards -->
+<div class="row g-3 mb-4">
+    <% 
+        const now = new Date('2026-09-13T07:41:00');
+        const upcomingDeadlines = events.filter(e => e.type === 'deadline');
+        const nextDeadline = upcomingDeadlines.length > 0 ? upcomingDeadlines[0] : null;
+        let daysToDeadline = null;
+        if (nextDeadline) {
+            const diffTime = new Date(nextDeadline.start_date) - now;
+            daysToDeadline = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        }
+        const septEvents = events.filter(e => new Date(e.start_date).getMonth() === 8);
+        const holidays = events.find(e => e.type === 'holiday');
+    %>
+    <div class="col-sm-6 col-lg-4">
+        <div class="card border-0 shadow-sm h-100 p-3 bg-surface">
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <span class="text-muted small fw-bold text-uppercase d-block" style="font-size: 0.7rem; letter-spacing: 0.05em;">Prochaine échéance</span>
+                    <% if (nextDeadline) { %>
+                    <div class="fw-bold text-dark text-truncate mt-1" style="font-size: 0.95rem; max-width: 200px;"><%= nextDeadline.title %></div>
+                    <small class="text-danger fw-semibold d-inline-flex align-items-center gap-1" style="font-size: 0.78rem;">
+                        <i class="bi bi-clock-history"></i>
+                        <%= daysToDeadline > 0 ? `Dans ${daysToDeadline} jour${daysToDeadline > 1 ? 's' : ''}` : 'Aujourd’hui' %>
+                        (<%= new Date(nextDeadline.start_date).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' }) %>)
+                    </small>
+                    <% } else { %>
+                    <div class="fw-bold text-dark mt-1">Aucune échéance urgente</div>
+                    <small class="text-muted" style="font-size: 0.78rem;">Tout est à jour</small>
+                    <% } %>
+                </div>
+                <div class="d-flex align-items-center justify-content-center rounded-3 bg-danger-subtle text-danger flex-shrink-0" style="width: 44px; height: 44px; font-size: 1.25rem;">
+                    <i class="bi bi-exclamation-octagon"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-sm-6 col-lg-4">
+        <div class="card border-0 shadow-sm h-100 p-3 bg-surface">
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <span class="text-muted small fw-bold text-uppercase d-block" style="font-size: 0.7rem; letter-spacing: 0.05em;">Événements en Septembre</span>
+                    <div class="h3 fw-bold mb-0 mt-1 text-body"><%= septEvents.length %></div>
+                    <small class="text-muted" style="font-size: 0.78rem;">Réunions, photos & rentrée</small>
+                </div>
+                <div class="d-flex align-items-center justify-content-center rounded-3 bg-primary-subtle text-primary flex-shrink-0" style="width: 44px; height: 44px; font-size: 1.25rem;">
+                    <i class="bi bi-calendar3"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-sm-6 col-lg-4">
+        <div class="card border-0 shadow-sm h-100 p-3 bg-surface">
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <span class="text-muted small fw-bold text-uppercase d-block" style="font-size: 0.7rem; letter-spacing: 0.05em;">Prochaines vacances</span>
+                    <div class="fw-bold text-dark mt-1" style="font-size: 0.95rem;">Toussaint 2026</div>
+                    <small class="text-success fw-semibold" style="font-size: 0.78rem;">Du 17 oct. au 02 nov. 2026</small>
+                </div>
+                <div class="d-flex align-items-center justify-content-center rounded-3 bg-success-subtle text-success flex-shrink-0" style="width: 44px; height: 44px; font-size: 1.25rem;">
+                    <i class="bi bi-sun"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filters and View Switcher -->
+<div class="card shadow-sm border-0 mb-4">
+    <div class="card-body p-3">
+        <form method="get" action="/calendar" class="row g-2 align-items-center">
+            <!-- Filter Type -->
+            <div class="col-md-4 col-lg-3">
+                <div class="input-group input-group-sm">
+                    <span class="input-group-text bg-light-subtle"><i class="bi bi-funnel"></i></span>
+                    <select name="type" class="form-select form-select-sm" onchange="this.form.submit()">
+                        <option value="all" <%= selected_type === 'all' ? 'selected' : '' %>>Tous les types</option>
+                        <option value="deadline" <%= selected_type === 'deadline' ? 'selected' : '' %>>⚠️ Échéances académiques</option>
+                        <option value="event" <%= selected_type === 'event' ? 'selected' : '' %>>📅 Événements & Réunions</option>
+                        <option value="holiday" <%= selected_type === 'holiday' ? 'selected' : '' %>>🏖️ Vacances scolaires</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Filter Class Target -->
+            <div class="col-md-4 col-lg-3">
+                <div class="input-group input-group-sm">
+                    <span class="input-group-text bg-light-subtle"><i class="bi bi-people"></i></span>
+                    <select name="class_name" class="form-select form-select-sm" onchange="this.form.submit()">
+                        <option value="all" <%= selected_class === 'all' ? 'selected' : '' %>>Toutes les classes</option>
+                        <% classes.forEach(function(c) { %>
+                        <option value="<%= c %>" <%= selected_class === c ? 'selected' : '' %>><%= c %></option>
+                        <% }); %>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Filter Category -->
+            <div class="col-md-4 col-lg-3">
+                <div class="input-group input-group-sm">
+                    <span class="input-group-text bg-light-subtle"><i class="bi bi-tag"></i></span>
+                    <select name="category" class="form-select form-select-sm" onchange="this.form.submit()">
+                        <option value="all" <%= selected_category === 'all' ? 'selected' : '' %>>Toutes catégories</option>
+                        <option value="administrative" <%= selected_category === 'administrative' ? 'selected' : '' %>>Administratif & Dossiers</option>
+                        <option value="academic" <%= selected_category === 'academic' ? 'selected' : '' %>>Pédagogique & Élections</option>
+                        <option value="meeting" <%= selected_category === 'meeting' ? 'selected' : '' %>>Réunions parents-profs</option>
+                        <option value="outing" <%= selected_category === 'outing' ? 'selected' : '' %>>Sorties & Événements sportifs</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- View switcher -->
+            <div class="col-lg-3 d-flex justify-content-lg-end gap-1 mt-2 mt-lg-0">
+                <div class="btn-group btn-group-sm" role="group" aria-label="Mode d'affichage">
+                    <button type="button" class="btn btn-outline-primary active" id="btn-view-list" onclick="switchCalendarView('list')">
+                        <i class="bi bi-list-ul me-1"></i>Chronologie
+                    </button>
+                    <button type="button" class="btn btn-outline-primary" id="btn-view-grid" onclick="switchCalendarView('grid')">
+                        <i class="bi bi-grid-3x3 me-1"></i>Grille mensuelle
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- View 1: List & Timeline View (Default) -->
+<div id="calendar-view-list">
+    <div class="card shadow-sm border-0">
+        <div class="card-body p-4">
+            <% if (events && events.length > 0) { %>
+            <div class="calendar-timeline">
+                <% 
+                   let lastMonthYear = '';
+                   events.forEach(function(evt) {
+                       const d = new Date(evt.start_date);
+                       const monthYear = d.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+                       const isDeadline = evt.type === 'deadline';
+                       const isHoliday = evt.type === 'holiday';
+                       
+                       const diffTime = d - now;
+                       const daysRemaining = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                %>
+                
+                <% if (monthYear !== lastMonthYear) { 
+                   lastMonthYear = monthYear;
+                %>
+                <div class="timeline-month-separator d-flex align-items-center gap-3 my-4">
+                    <span class="badge bg-secondary-subtle text-secondary-emphasis text-capitalize px-3 py-2 fw-bold" style="font-size: 0.85rem;">
+                        <i class="bi bi-calendar-range me-1"></i><%= monthYear %>
+                    </span>
+                    <hr class="flex-grow-1 border-secondary-subtle m-0">
+                </div>
+                <% } %>
+
+                <div class="p-3 mb-3 rounded-3 border <%= isDeadline ? 'border-warning-subtle bg-warning-subtle-light' : isHoliday ? 'border-success-subtle bg-success-subtle-light' : 'bg-surface' %> event-card-item transition">
+                    <div class="d-flex align-items-start gap-3">
+                        <!-- Date Badge -->
+                        <div class="calendar-date-badge <%= isDeadline ? 'calendar-date-badge--deadline' : isHoliday ? 'calendar-date-badge--holiday' : 'calendar-date-badge--event' %> flex-shrink-0 text-center">
+                            <span class="calendar-date-month text-uppercase"><%= d.toLocaleDateString('fr-FR', { month: 'short' }) %></span>
+                            <span class="calendar-date-day"><%= d.getDate() %></span>
+                            <span class="calendar-date-weekday"><%= d.toLocaleDateString('fr-FR', { weekday: 'short' }) %></span>
+                        </div>
+
+                        <!-- Content Details -->
+                        <div class="flex-grow-1 min-w-0">
+                            <div class="d-flex justify-content-between align-items-start gap-2 flex-wrap mb-1">
+                                <div class="d-flex align-items-center gap-2 flex-wrap">
+                                    <% if (isDeadline) { %>
+                                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle">
+                                        <i class="bi bi-clock-fill me-1"></i>Échéance limite
+                                    </span>
+                                    <% } else if (isHoliday) { %>
+                                    <span class="badge bg-success-subtle text-success border border-success-subtle">
+                                        <i class="bi bi-sun-fill me-1"></i>Vacances scolaires
+                                    </span>
+                                    <% } else { %>
+                                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle">
+                                        <i class="bi bi-calendar-event-fill me-1"></i>Événement
+                                    </span>
+                                    <% } %>
+
+                                    <span class="badge bg-light text-muted border">
+                                        <i class="bi bi-people me-1"></i><%= evt.class_name %>
+                                    </span>
+
+                                    <% if (evt.category) { %>
+                                    <span class="badge bg-light-subtle text-secondary border">
+                                        <%= evt.category === 'administrative' ? 'Administratif' : evt.category === 'academic' ? 'Pédagogique' : evt.category === 'meeting' ? 'Réunion' : evt.category === 'outing' ? 'Sortie scolaire' : 'Général' %>
+                                    </span>
+                                    <% } %>
+                                </div>
+
+                                <div class="d-flex align-items-center gap-2">
+                                    <% if (isDeadline && daysRemaining >= 0) { %>
+                                    <span class="badge <%= daysRemaining <= 3 ? 'bg-danger text-white' : 'bg-warning-subtle text-warning-emphasis border' %> px-2 py-1" style="font-size: 0.72rem;">
+                                        <i class="bi bi-hourglass-split me-1"></i>
+                                        <%= daysRemaining === 0 ? 'Dernier jour !' : `Dans ${daysRemaining} jour${daysRemaining > 1 ? 's' : ''}` %>
+                                    </span>
+                                    <% } %>
+
+                                    <% if (can_manage) { %>
+                                    <form method="post" action="/calendar/events/<%= evt.id %>/delete" class="m-0" onsubmit="return confirm('Confirmer la suppression de cette date du calendrier ?');">
+                                        <input type="hidden" name="csrf_token" value="<%= csrf_token %>">
+                                        <button type="submit" class="btn btn-link btn-sm text-muted p-0" title="Supprimer">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
+                                    <% } %>
+                                </div>
+                            </div>
+
+                            <h3 class="h6 fw-bold mb-1 text-dark"><%= evt.title %></h3>
+                            <% if (evt.description) { %>
+                            <p class="text-muted small mb-2" style="line-height: 1.5;"><%= evt.description %></p>
+                            <% } %>
+
+                            <div class="d-flex align-items-center gap-3 text-muted small flex-wrap" style="font-size: 0.78rem;">
+                                <% if (evt.end_date) { %>
+                                <span><i class="bi bi-clock me-1 text-primary"></i>Du <%= d.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' }) %> au <%= new Date(evt.end_date).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' }) %></span>
+                                <% } else { %>
+                                <span><i class="bi bi-clock me-1 text-primary"></i><%= d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) !== '00:00' ? d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : 'Toute la journée' %></span>
+                                <% } %>
+
+                                <% if (evt.location) { %>
+                                <span><i class="bi bi-geo-alt me-1 text-primary"></i><%= evt.location %></span>
+                                <% } %>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <% }); %>
+            </div>
+            <% } else { %>
+            <div class="text-center py-5 text-muted">
+                <i class="bi bi-calendar-x fs-1 d-block mb-2 text-secondary"></i>
+                <h3 class="h6 fw-bold text-dark">Aucune date pour ces critères</h3>
+                <p class="small text-muted">Ajustez vos filtres pour visualiser les autres événements scolaires.</p>
+                <a href="/calendar" class="btn btn-sm btn-outline-primary mt-1">Réinitialiser les filtres</a>
+            </div>
+            <% } %>
+        </div>
+    </div>
+</div>
+
+<!-- View 2: Month Grid View (Toggleable) -->
+<div id="calendar-view-grid" class="d-none">
+    <div class="card shadow-sm border-0">
+        <div class="card-body p-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h2 class="h5 fw-bold mb-0 text-body" id="grid-month-title">Septembre 2026</h2>
+                <div class="d-flex gap-2 align-items-center">
+                    <span class="badge bg-danger-subtle text-danger me-1"><span class="dot-indicator bg-danger me-1"></span>Échéance</span>
+                    <span class="badge bg-primary-subtle text-primary me-1"><span class="dot-indicator bg-primary me-1"></span>Événement</span>
+                    <span class="badge bg-success-subtle text-success"><span class="dot-indicator bg-success me-1"></span>Vacances</span>
+                </div>
+            </div>
+
+            <!-- Month Calendar Grid -->
+            <div class="calendar-grid-container border rounded-3 overflow-hidden">
+                <div class="calendar-grid-header d-grid text-center fw-bold bg-light text-muted small py-2" style="grid-template-columns: repeat(7, 1fr);">
+                    <div>Lun</div>
+                    <div>Mar</div>
+                    <div>Mer</div>
+                    <div>Jeu</div>
+                    <div>Ven</div>
+                    <div>Sam</div>
+                    <div>Dim</div>
+                </div>
+                <div class="calendar-grid-days d-grid" style="grid-template-columns: repeat(7, 1fr);">
+                    <% 
+                       // September 2026 starts on Tuesday (1st is Tuesday -> 1 empty cell on Monday)
+                       // 30 days in September
+                    %>
+                    <!-- Empty previous month pad (Monday) -->
+                    <div class="calendar-day-cell text-muted p-2 border bg-light-subtle opacity-50" style="min-height: 85px;">
+                        <span class="small">31</span>
+                    </div>
+
+                    <% for (let day = 1; day <= 30; day++) { 
+                       const isToday = day === 13;
+                       const currentDayEvents = events.filter(e => {
+                           const ed = new Date(e.start_date);
+                           return ed.getMonth() === 8 && ed.getDate() === day;
+                       });
+                    %>
+                    <div class="calendar-day-cell p-2 border position-relative <%= isToday ? 'bg-primary-subtle-light' : 'bg-surface' %>" style="min-height: 85px;">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="calendar-day-number <%= isToday ? 'badge bg-primary text-white rounded-circle' : 'small fw-semibold text-dark' %>" style="<%= isToday ? 'width: 22px; height: 22px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.72rem;' : '' %>">
+                                <%= day %>
+                            </span>
+                            <% if (isToday) { %>
+                            <span class="badge bg-primary" style="font-size: 0.6rem;">Aujourd'hui</span>
+                            <% } %>
+                        </div>
+
+                        <!-- Mini event indicators in cell -->
+                        <div class="d-flex flex-column gap-1">
+                            <% currentDayEvents.slice(0, 2).forEach(function(evt) { %>
+                            <div class="calendar-pill-mini text-truncate px-1 py-0 rounded <%= evt.type === 'deadline' ? 'bg-danger text-white' : evt.type === 'holiday' ? 'bg-success text-white' : 'bg-primary text-white' %>" style="font-size: 0.68rem; line-height: 1.3;" title="<%= evt.title %> (<%= evt.class_name %>)">
+                                <%= evt.title %>
+                            </div>
+                            <% }); %>
+                            <% if (currentDayEvents.length > 2) { %>
+                            <span class="text-muted" style="font-size: 0.65rem;">+<%= currentDayEvents.length - 2 %> autre(s)</span>
+                            <% } %>
+                        </div>
+                    </div>
+                    <% } %>
+
+                    <!-- Next month padding to fill row -->
+                    <% for (let pad = 1; pad <= 4; pad++) { %>
+                    <div class="calendar-day-cell text-muted p-2 border bg-light-subtle opacity-50" style="min-height: 85px;">
+                        <span class="small"><%= pad %></span>
+                    </div>
+                    <% } %>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Add Event (Admin & Teacher) -->
+<% if (can_manage) { %>
+<div class="modal fade" id="addEventModal" tabindex="-1" aria-labelledby="addEventModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header border-bottom">
+                <h2 class="modal-title h5 fw-bold" id="addEventModalLabel">
+                    <i class="bi bi-calendar-plus text-primary me-2"></i>Ajouter au calendrier scolaire
+                </h2>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+            </div>
+            <form method="post" action="/calendar/events">
+                <input type="hidden" name="csrf_token" value="<%= csrf_token %>">
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold" for="evt-title">Titre de l'événement ou de l'échéance *</label>
+                        <input class="form-control" id="evt-title" name="title" required placeholder="Ex. Date limite restitution fiches cantine">
+                    </div>
+
+                    <div class="row g-2 mb-3">
+                        <div class="col-sm-6">
+                            <label class="form-label small fw-semibold" for="evt-type">Type d'entrée *</label>
+                            <select class="form-select" id="evt-type" name="type" required>
+                                <option value="deadline">⚠️ Échéance / Date limite</option>
+                                <option value="event" selected>📅 Événement scolaire / Réunion</option>
+                                <option value="holiday">🏖️ Vacances scolaires</option>
+                            </select>
+                        </div>
+                        <div class="col-sm-6">
+                            <label class="form-label small fw-semibold" for="evt-category">Catégorie</label>
+                            <select class="form-select" id="evt-category" name="category">
+                                <option value="administrative">Administratif</option>
+                                <option value="academic" selected>Pédagogique</option>
+                                <option value="meeting">Réunion parents-profs</option>
+                                <option value="outing">Sortie scolaire / Sport</option>
+                                <option value="holiday">Vacances</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row g-2 mb-3">
+                        <div class="col-sm-6">
+                            <label class="form-label small fw-semibold" for="evt-start">Date & Heure de début *</label>
+                            <input class="form-control" type="datetime-local" id="evt-start" name="start_date" required value="2026-09-20T18:00">
+                        </div>
+                        <div class="col-sm-6">
+                            <label class="form-label small fw-semibold" for="evt-end">Date de fin (optionnel)</label>
+                            <input class="form-control" type="datetime-local" id="evt-end" name="end_date">
+                        </div>
+                    </div>
+
+                    <div class="row g-2 mb-3">
+                        <div class="col-sm-6">
+                            <label class="form-label small fw-semibold" for="evt-class">Public concerné</label>
+                            <select class="form-select" id="evt-class" name="class_name">
+                                <option value="Tous les niveaux" selected>Tous les niveaux</option>
+                                <option value="Classe de CM2-A">Classe de CM2-A</option>
+                                <option value="Classe de CE1-B">Classe de CE1-B</option>
+                                <option value="CM1 / CM2">CM1 / CM2</option>
+                                <option value="Demi-pensionnaires">Demi-pensionnaires</option>
+                                <option value="Parents d’élèves">Parents d’élèves</option>
+                            </select>
+                        </div>
+                        <div class="col-sm-6">
+                            <label class="form-label small fw-semibold" for="evt-priority">Priorité</label>
+                            <select class="form-select" id="evt-priority" name="priority">
+                                <option value="normal" selected>Normal</option>
+                                <option value="high">Élevé</option>
+                                <option value="urgent">Urgent</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold" for="evt-location">Lieu ou modalité</label>
+                        <input class="form-control" id="evt-location" name="location" placeholder="Ex. Salle polyvalente, En ligne, Préau...">
+                    </div>
+
+                    <div class="mb-0">
+                        <label class="form-label small fw-semibold" for="evt-desc">Description / Instructions</label>
+                        <textarea class="form-control" id="evt-desc" name="description" rows="3" placeholder="Précisions pour les familles ou l’équipe pédagogique..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer border-top p-3 bg-light-subtle">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-primary px-4 shadow-sm">
+                        <i class="bi bi-check2 me-1"></i>Enregistrer
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<% } %>
+
+<script>
+    function switchCalendarView(mode) {
+        const listView = document.getElementById('calendar-view-list');
+        const gridView = document.getElementById('calendar-view-grid');
+        const btnList = document.getElementById('btn-view-list');
+        const btnGrid = document.getElementById('btn-view-grid');
+
+        if (mode === 'grid') {
+            listView.classList.add('d-none');
+            gridView.classList.remove('d-none');
+            btnList.classList.remove('active');
+            btnGrid.classList.add('active');
+        } else {
+            gridView.classList.add('d-none');
+            listView.classList.remove('d-none');
+            btnGrid.classList.remove('active');
+            btnList.classList.add('active');
+        }
+    }
+</script>
+
+<%- include('../partials/footer') %>

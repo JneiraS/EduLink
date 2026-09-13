@@ -1,0 +1,56 @@
+<%- include('../partials/header') %>
+
+<div class="d-flex justify-content-between align-items-end mb-4 gap-3 flex-wrap reveal-group">
+    <div>
+        <span class="kicker">Administration</span>
+        <h1 class="page-title">Gestion des annonces</h1>
+    </div>
+    <a class="btn btn-primary" href="/announcements/new">
+        <i class="bi bi-plus-lg me-2" aria-hidden="true"></i>Créer une annonce
+    </a>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead>
+                    <tr>
+                        <th>Titre</th>
+                        <th>Cible</th>
+                        <th>Pièce jointe</th>
+                        <th>Date</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% if (announcements && announcements.length > 0) { %>
+                        <% announcements.forEach(function(a) { %>
+                        <tr>
+                            <td><strong><%= a.title %></strong></td>
+                            <td>
+                                <span class="badge text-bg-<%= a.channel_id ? 'light' : 'primary-subtle' %> border">
+                                    <%= a.channel_name || 'Tous les utilisateurs' %>
+                                </span>
+                            </td>
+                            <td>
+                                <% if (a.pdf_filename) { %>
+                                <span class="text-danger"><i class="bi bi-file-earmark-pdf me-1"></i>PDF</span>
+                                <% } else { %>
+                                <span class="text-muted">-</span>
+                                <% } %>
+                            </td>
+                            <td><%= a.created_at ? new Date(a.created_at).toLocaleDateString('fr-FR') : '' %></td>
+                            <td class="text-end">
+                                <a href="/announcements" class="btn btn-sm btn-outline-secondary">Voir</a>
+                            </td>
+                        </tr>
+                        <% }); %>
+                    <% } %>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<%- include('../partials/footer') %>

@@ -1,0 +1,55 @@
+<%- include('../partials/header') %>
+
+<div class="d-flex justify-content-between align-items-end mb-4 gap-3 flex-wrap reveal-group">
+    <div>
+        <span class="kicker">Administration</span>
+        <h1 class="page-title">Gestion des canaux</h1>
+    </div>
+    <a class="btn btn-primary" href="/messages">
+        <i class="bi bi-plus-lg me-2" aria-hidden="true"></i>Créer un canal
+    </a>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead>
+                    <tr>
+                        <th>Nom du canal</th>
+                        <th>Type</th>
+                        <th>Membres</th>
+                        <th>Créé le</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% if (channels && channels.length > 0) { %>
+                        <% channels.forEach(function(c) { %>
+                        <tr>
+                            <td>
+                                <i class="bi <%= c.kind === 'direct' ? 'bi-person' : 'bi-hash' %> me-2 text-muted"></i>
+                                <strong><%= c.name %></strong>
+                            </td>
+                            <td>
+                                <span class="badge text-bg-<%= c.kind === 'direct' ? 'info' : 'primary' %>-subtle border">
+                                    <%= c.kind === 'direct' ? 'Privé' : 'Groupe / Classe' %>
+                                </span>
+                            </td>
+                            <td><%= (c.member_ids || []).length %> membres</td>
+                            <td><%= c.created_at ? new Date(c.created_at).toLocaleDateString('fr-FR') : '' %></td>
+                            <td class="text-end">
+                                <a href="/messages/channels/<%= c.id %>" class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-box-arrow-up-right me-1"></i>Ouvrir
+                                </a>
+                            </td>
+                        </tr>
+                        <% }); %>
+                    <% } %>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<%- include('../partials/footer') %>
