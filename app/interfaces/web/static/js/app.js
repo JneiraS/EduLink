@@ -27,7 +27,7 @@ if (socket) {
         const channelId = payload.channel_id;
 
         const item = document.createElement("li");
-        item.className = "timeline-item";
+        item.className = "timeline-item timeline-item--new";
 
         const dot = document.createElement("span");
         dot.className = "timeline-dot timeline-dot--message";
@@ -241,9 +241,21 @@ function initThemeToggle() {
     };
 
     const setTheme = (theme) => {
+        // Suppress transitions during theme switch
+        const style = document.createElement("style");
+        style.innerHTML = `*,*::before,*::after{transition:none !important}`;
+        document.head.appendChild(style);
+
         root.setAttribute("data-theme", theme);
         localStorage.setItem("edulink-theme", theme);
         applyThemeUi(theme);
+        
+        // Force reflow
+        void document.documentElement.offsetWidth;
+        
+        // Remove style
+        document.head.removeChild(style);
+
         document.dispatchEvent(new CustomEvent("edulink:themechange", { detail: theme }));
     };
 

@@ -1,106 +1,111 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h1><i class="bi bi-people-fill me-2"></i>Gestion des enfants</h1>
-    <a href="{{ url_for('admin.members') }}" class="btn btn-outline-secondary">
-        <i class="bi bi-arrow-left me-2"></i>Retour aux membres
-    </a>
-</div>
+<header class="page-header reveal-group">
+    <div class="page-header-row">
+        <div>
+            <span class="kicker">Administration</span>
+            <h1 class="page-title">Gestion des enfants</h1>
+        </div>
+        <a href="{{ url_for('admin.members') }}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-2" aria-hidden="true"></i>Retour aux membres
+        </a>
+    </div>
+</header>
 
-<div class="card mb-4">
-    <div class="card-header">
-        <h5 class="mb-0">Ajouter un enfant</h5>
-    </div>
-    <div class="card-body">
-        <form method="post" action="{{ url_for('admin.create_child') }}" class="row g-3">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            <div class="col-md-4">
-                <label for="parent_id" class="form-label">Parent <span class="text-danger">*</span></label>
-                <select class="form-select" id="parent_id" name="parent_id" required>
-                    <option value="">Sélectionner un parent</option>
-                    {% for p in parents %}
-                        {% if p.role.value == 'PARENT' %}
-                        <option value="{{ p.id }}">{{ p.full_name }} ({{ p.email }})</option>
-                        {% endif %}
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="col-md-4">
-                <label for="full_name" class="form-label">Nom complet <span class="text-danger">*</span></label>
-                <input type="text" class="form-control" id="full_name" name="full_name" maxlength="120" required placeholder="Prénom Nom">
-            </div>
-            <div class="col-md-3">
-                <label for="class_name" class="form-label">Classe <span class="text-danger">*</span></label>
-                <input type="text" class="form-control" id="class_name" name="class_name" list="class-list" maxlength="120" required placeholder="ex: CM2, 6ème A" autocomplete="off">
-                <datalist id="class-list">
-                    {% for class_name in class_names %}
-                    <option value="{{ class_name }}"></option>
-                    {% endfor %}
-                </datalist>
-            </div>
-            <div class="col-md-1 d-flex align-items-end">
-                <button type="submit" class="btn btn-primary w-100">
-                    <i class="bi bi-plus-lg"></i>
-                </button>
-            </div>
-        </form>
-    </div>
-</div>
-
-<div class="card">
-    <div class="card-header">
-        <h5 class="mb-0">Enfants rattachés</h5>
-    </div>
-    <div class="card-body">
-        {% if parent_children %}
-            <div class="table-responsive">
-                <table class="table table-hover align-middle">
-                    <thead>
-                        <tr>
-                            <th>Enfant</th>
-                            <th>Classe</th>
-                            <th>Parent</th>
-                            <th class="text-end">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for parent_id, children in parent_children.items() %}
-                            {% for child in children %}
-                            <tr>
-                                <td>{{ child.full_name }}</td>
-                                <td>{{ child.class_name }}</td>
-                                <td>
-                                    {% set parent = parents|selectattr('id', 'equalto', child.parent_id)|first %}
-                                    {% if parent %}{{ parent.full_name }} ({{ parent.email }}){% else %}Inconnu{% endif %}
-                                </td>
-                                <td class="text-end">
-                                    <!-- <form method="post" action="{{ url_for('admin.link_child_channels', child_id=child.id) }}" class="d-inline me-2" data-confirm="Lier ce parent aux canaux de la classe {{ child.class_name }} ?">
-                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                        <button type="submit" class="btn btn-sm btn-outline-primary" title="Lier aux canaux de classe">
-                                            <i class="bi bi-link-45deg"></i>
-                                        </button>
-                                    </form> -->
-                                    <form method="post" action="{{ url_for('admin.delete_child', child_id=child.id) }}" class="d-inline" data-confirm="Supprimer cet enfant ?">
-                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Supprimer">
-                                            <i class="bi bi-trash"></i>
-                                        </button>
-                                    </form>
-                                </td>
-                            </tr>
+<div class="row g-4 reveal-group">
+    <div class="col-lg-5">
+        <section class="card shadow-sm h-100">
+            <div class="card-body">
+                <h2 class="section-title"><i class="bi bi-person-plus" aria-hidden="true"></i>Ajouter un enfant</h2>
+                <form method="post" action="{{ url_for('admin.create_child') }}" class="row g-3">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <div class="col-12">
+                        <label for="parent_id" class="form-label">Parent <span class="text-danger">*</span></label>
+                        <select class="form-select" id="parent_id" name="parent_id" required>
+                            <option value="">Selectionner un parent</option>
+                            {% for p in parents %}
+                                {% if p.role.value == 'PARENT' %}
+                                <option value="{{ p.id }}">{{ p.full_name }} ({{ p.email }})</option>
+                                {% endif %}
                             {% endfor %}
-                        {% endfor %}
-                    </tbody>
-                </table>
+                        </select>
+                    </div>
+                    <div class="col-12">
+                        <label for="full_name" class="form-label">Nom complet <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="full_name" name="full_name" maxlength="120" required placeholder="Prenom Nom">
+                    </div>
+                    <div class="col-12">
+                        <label for="class_name" class="form-label">Classe <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="class_name" name="class_name" list="class-list" maxlength="120" required placeholder="ex: CM2, 6eme A" autocomplete="off">
+                        <datalist id="class-list">
+                            {% for class_name in class_names %}
+                            <option value="{{ class_name }}"></option>
+                            {% endfor %}
+                        </datalist>
+                    </div>
+                    <div class="col-12">
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="bi bi-plus-lg me-2" aria-hidden="true"></i>Ajouter l'enfant
+                        </button>
+                    </div>
+                </form>
             </div>
-        {% else %}
-            <div class="text-center py-5 text-muted">
-                <i class="bi bi-people" style="font-size: 3rem;"></i>
-                <p class="mt-2">Aucun enfant rattaché pour le moment.</p>
-                <p class="small">Utilisez le formulaire ci-dessus pour ajouter un enfant.</p>
+        </section>
+    </div>
+
+    <div class="col-lg-7">
+        <section class="card shadow-sm h-100">
+            <div class="card-body">
+                <h2 class="section-title"><i class="bi bi-people" aria-hidden="true"></i>Enfants rattaches</h2>
+                {% if parent_children %}
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle admin-table">
+                        <thead>
+                            <tr>
+                                <th scope="col">Enfant</th>
+                                <th scope="col">Classe</th>
+                                <th scope="col">Parent</th>
+                                <th scope="col" class="text-end">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for parent_id, children in parent_children.items() %}
+                                {% for child in children %}
+                                <tr>
+                                    <td>
+                                        <span class="fw-semibold">{{ child.full_name }}</span>
+                                    </td>
+                                    <td>
+                                        <span class="badge text-bg-light border">{{ child.class_name }}</span>
+                                    </td>
+                                    <td>
+                                        {% set parent = parents|selectattr('id', 'equalto', child.parent_id)|first %}
+                                        {% if parent %}{{ parent.full_name }} <small class="text-muted">({{ parent.email }})</small>{% else %}Inconnu{% endif %}
+                                    </td>
+                                    <td class="text-end">
+                                        <form method="post" action="{{ url_for('admin.delete_child', child_id=child.id) }}" class="d-inline" data-confirm="Supprimer cet enfant ?">
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Supprimer">
+                                                <i class="bi bi-trash" aria-hidden="true"></i>
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="empty-state">
+                    <span class="empty-icon" aria-hidden="true"><i class="bi bi-person-plus"></i></span>
+                    <div class="empty-title">Aucun enfant rattache</div>
+                    <div class="empty-hint">Utilisez le formulaire ci-contre pour ajouter un enfant a un parent.</div>
+                </div>
+                {% endif %}
             </div>
-        {% endif %}
+        </section>
     </div>
 </div>
 {% endblock %}

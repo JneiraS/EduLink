@@ -39,7 +39,7 @@ def test_login_post_with_csrf_token_succeeds(app, client):
         follow_redirects=True,
     )
     assert response.status_code == 200
-    assert b"Plateforme de communication scolaire centralisee" in response.data
+    assert b"Bonjour" in response.data
 
 
 def test_push_subscribe_without_csrf_header_rejected(app, client):
