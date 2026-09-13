@@ -475,6 +475,71 @@ les membres changent.
 
 ---
 
+### Exemple fil rouge n°8 : le calendrier scolaire
+
+Feature « calendrier & échéances scolaires » — nouvelle table + nouvelle page
++ nouveaux composants JS. Suivez ses fichiers :
+
+1. **Tests use cases** — `tests/application/test_calendar_use_cases.py` (fakes
+   `InMemoryCalendar`) : garde `ADMIN`/`TEACHER` sur `CreateCalendarEvent` et
+   `DeleteCalendarEvent` (`AuthorizationError` pour un `PARENT`), validation du
+   titre (requis, ≤120), type invalide → `ValidationError`, catégorie invalide →
+   `ValidationError`, `end_date < start_date` → `ValidationError`, défauts
+   (`category` = `academic`, `class_name` = `Tous les niveaux`, `priority` =
+   `normal`), trim des espaces, `ListCalendarEvents` trié par `start_date` et
+   filtres type/classe/catégorie validés, `DeleteCalendarEvent` → `NotFoundError`.
+2. **Entité + enums** — `app/domain/entities/calendar_event.py` :
+   `CalendarEvent` (dataclass `slots=True`) avec `EventType`
+   (`deadline`/`event`/`holiday`) et `EventCategory`
+   (`administrative`/`academic`/`meeting`/`outing`/`holiday`).
+3. **Ports** — `CalendarRepositoryPort` (`save`, `list_events(type, class,
+   category)`, `count_total`, `delete`) dans `domain/ports/repositories.py`.
+4. **Adapter + modèle + migration** — `SQLAlchemyCalendarRepository` ;
+   `CalendarEventModel` (table `calendar_events`, colonnes `title`/`type`/
+   `category`/`class_name`/`description`/`location`/`priority`/`start_date`
+   (indexé)/`end_date`/`created_at`) ; migration
+   `9c14f2e6a7bd_add_calendar_events_table` (chaînée sur `78466f6d8b58`).
+   Helper `add_calendar_event` ajouté dans `tests/helpers.py`.
+5. **Use cases** — `app/application/use_cases/calendar_use_cases.py`
+   (`CreateCalendarEvent`, `ListCalendarEvents`, `DeleteCalendarEvent`) ;
+   garde factorisée dans `_require_manage(actor)`.
+6. **Câblage** — champs `list_calendar_events`/`create_calendar_event`/
+   `delete_calendar_event` dans `container.py` + instances dans `create_app()`
+   (`calendar_repo` sur `services["calendar"]`, blueprint `calendar_bp`
+   enregistré).
+7. **Route** — `app/interfaces/web/routes/calendar_routes.py` : GET `/calendar/`
+   (filtres `?type=`/`?class_name=`/`?category=`, agrégats de la page — prochaine
+   échéance, nb d'événements en septembre, prochaines vacances — calculés dans la
+   route, `class_names` = `ListClassNames` ∪ classes des événements), POST
+   `/calendar/events` (parse `datetime-local` → `datetime.fromisoformat`, flash +
+   redirect sur `DomainError`), POST `/calendar/events/<id>/delete`.
+8. **Template + CSS + JS** — `templates/calendar/index.html` (chronologie par
+   groupes de mois + grille mensuelle Septembre 2026 + modal d'ajout conditionné
+   par `can_manage`) ; styles calendrier dans `app.css` (`.calendar-date-badge`,
+   `.calendar-pill-mini`, `.dot-indicator`, …) ; **aucun script inline** :
+   `initCalendarViewSwitch` (boutons `data-calendar-view`), `initCalendarAutoSubmit`
+   (`select[data-calendar-autosubmit]`), `initCalendarPrint` (`#print-calendar-btn`)
+   dans `app.js` ; suppression via `data-confirm` existant. Lien « Calendrier »
+   (nav-pill) dans `base.html` + action rapide « Voir le calendrier » sur le
+   dashboard.
+9. **Tests interface** — `tests/interfaces/test_calendar_routes.py` : 302
+   anonyme, rendu liste/état vide, filtre par type, tri, échéance « Dans X
+   jours », bouton « Ajouter une date » et formulaire de suppression **cachés**
+   pour un `PARENT`, création par `TEACHER`/`ADMIN` (persistance DB),
+   suppression par l'admin, refus de suppression pour un `PARENT`
+   (`AuthorizationError` flashée), dropdown de classes alimenté.
+
+**Leçons** : (1) une feature « lecture seule + écriture réservée » garde
+l'écriture **dans le use case** (`AuthorizationError`) alors que le template ne
+fait que masquer l'UI (`can_manage`) ; (2) le « pourquoi » des filtres et des
+agrégats d'affichage est une fonction simple mais reste une **lecture** :
+`ListCalendarEvents` exécute les filtres en base et **valide** les valeurs de
+filtre, la route ne fait que du rendu ; (3) CSP sans `'unsafe-inline'` → tout
+interactif passe par des `data-*` hooks branchés dans `app.js` (même
+`window.print`).
+
+---
+
 ## 4. Checklist finale avant de considérer une fonctionnalité terminée
 
 - [ ] Use case testé en premier (TDD) ; validation/droits dans le use case,

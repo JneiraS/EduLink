@@ -75,6 +75,11 @@ from app.application.use_cases.notification_use_cases import (
     ToggleChannelNotifications,
     UnsubscribePushNotifications,
 )
+from app.application.use_cases.calendar_use_cases import (
+    CreateCalendarEvent,
+    DeleteCalendarEvent,
+    ListCalendarEvents,
+)
 from app.application.use_cases.user_query_use_cases import FindUsersByIds, ListAllUsers
 from app.application.use_cases.children_use_cases import (
     CreateChild,
@@ -123,10 +128,12 @@ from app.infrastructure.repositories.push_subscription_repository import (
 )
 from app.infrastructure.repositories.user_repository import SQLAlchemyUserRepository
 from app.infrastructure.repositories.children_repository import SQLAlchemyChildrenRepository
+from app.infrastructure.repositories.calendar_repository import SQLAlchemyCalendarRepository
 from app.interfaces.web.routes.announcements_routes import announcements_bp
 from app.interfaces.web.routes.ai_routes import ai_bp
 from app.interfaces.web.routes.admin_routes import admin_bp
 from app.interfaces.web.routes.auth_routes import auth_bp
+from app.interfaces.web.routes.calendar_routes import calendar_bp
 from app.interfaces.web.routes.dashboard_routes import dashboard_bp
 from app.interfaces.web.routes.messages_routes import messages_bp
 from app.interfaces.web.routes.notifications_routes import notifications_bp
@@ -169,6 +176,7 @@ def create_app(testing: bool = False):
     app.register_blueprint(ai_bp)
     app.register_blueprint(dashboard_bp)
     app.register_blueprint(admin_bp)
+    app.register_blueprint(calendar_bp)
     app.register_blueprint(announcements_bp)
     app.register_blueprint(messages_bp)
     app.register_blueprint(notifications_bp)
@@ -195,6 +203,7 @@ def create_app(testing: bool = False):
     message_templates_repo = SQLAlchemyMessageTemplateRepository()
     children_repo = SQLAlchemyChildrenRepository()
     invitations_repo = SQLAlchemyInvitationRepository()
+    calendar_repo = SQLAlchemyCalendarRepository()
     hasher = WerkzeugPasswordHasher()
     text_assistant = OllamaTextAssistant(
         base_url=app.config.get("OLLAMA_BASE_URL", ""),
@@ -220,6 +229,7 @@ def create_app(testing: bool = False):
         "message_templates": message_templates_repo,
         "children": children_repo,
         "invitations": invitations_repo,
+        "calendar": calendar_repo,
         "hasher": hasher,
         "text_assistant": text_assistant,
         "realtime_notifications": realtime,
@@ -371,6 +381,9 @@ def create_app(testing: bool = False):
             assistant=text_assistant,
         ),
         rephrase_draft=RephraseDraft(assistant=text_assistant),
+        list_calendar_events=ListCalendarEvents(events=calendar_repo),
+        create_calendar_event=CreateCalendarEvent(events=calendar_repo),
+        delete_calendar_event=DeleteCalendarEvent(events=calendar_repo),
     )
 
     register_socket_handlers(socketio)
@@ -403,6 +416,15 @@ def create_app(testing: bool = False):
     def handle_domain_error(exc):
         flash(str(exc), "danger")
         return redirect(url_for("dashboard.home"))
+
+    @app.context_processor
+    def _inject_static_version():
+        def static_version(filename):
+            try:
+                return str(int(os.path.getmtime(os.path.join(app.static_folder, filename))))
+            except OSError:
+                return "0"
+        return {"static_version": static_version}
 
     return app
 

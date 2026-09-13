@@ -48,6 +48,7 @@ sécurité — ne pas revenir en arrière).
 | Requêtes utilitaires (lecture) | routes diverses | `ListAllUsers`, `FindUsersByIds` (renvoient des `UserSummary` : `id`/`full_name`/`role` — **jamais** `email`/`password_hash`), `ListChannelMembers` (idem) | `user_repository.py` |
 | **Assistant IA — résumé de conversation** (Ollama local) | `ai_routes.py` (`POST /ai/channels/<id>/summary`, JSON, rate-limité) | `SummarizeChannelMessages` (garde membre ; 0 message → `ValidationError`) | `ai/ollama_adapter.py` (port `TextAssistantPort`) |
 | **Assistant IA — reformulation diplomatique** (brouillon du compositeur) | `ai_routes.py` (`POST /ai/rephrase`, JSON, rate-limité) | `RephraseDraft` (contenu vide → `ValidationError`, limite 5000) | `ai/ollama_adapter.py` |
+| **Calendrier scolaire** (chronologie + grille mensuelle, filtres type/classe/catégorie) | `calendar_routes.py` (`/calendar`) | `ListCalendarEvents` (filtres validés), `CreateCalendarEvent` (garde ADMIN/TEACHER), `DeleteCalendarEvent` (garde ADMIN/TEACHER) | `calendar_repository.py` (`list_events`, `save`, `delete`, `count_total`) |
 
 Le temps réel n'apparaît pas dans un blueprint : `SocketIONotificationService`
 (`infrastructure/notifications/socketio_service.py`) implémente
@@ -83,7 +84,10 @@ une violation d'architecture.
   (avec `is_pinned`), `Announcement` (avec `target_channel_ids` pour le
   ciblage), `Notification`, `PushSubscription`, `MessageTemplate`, `Child`
   (enfant rattaché à un parent,
-  avec `parent_id` et `class_name`), et `UserSummary` (DTO de lecture :
+  avec `parent_id` et `class_name`), `CalendarEvent` (avec les enums
+  `EventType` `deadline`/`event`/`holiday` et `EventCategory`
+  `administrative`/`academic`/`meeting`/`outing`/`holiday`), et `UserSummary`
+  (DTO de lecture :
   `id`/`full_name`/`role` uniquement). Exemple :
   `app/domain/entities/user.py`.
   - `UserRole` (enum) : `PARENT` / `TEACHER` / `ADMIN`.
@@ -100,6 +104,9 @@ une violation d'architecture.
     — dernier message par canal, une requête groupée, pour l'aperçu du dashboard,
     plus `count_grouped_by_date(since)` et `count_top_channels(limit)` pour les
     statistiques admin),
+    `CalendarRepositoryPort` (`save`, `list_events(type_filter, class_name,
+    category)`, `count_total`, `delete` — filtres optionnels appliqués en base,
+    tri par `start_date` croissant),
     `NotificationRepositoryPort` (dont `count_unread` pour la stat « non lus » et
     `mark_channel_read` — marque lues les notifications d'un canal quand on
     l'ouvre),
@@ -146,7 +153,8 @@ une violation d'architecture.
 - **`database/models.py`** : modèles SQLAlchemy (`UserModel`,
   `AnnouncementModel`, `AnnouncementReadModel`, `ChannelModel` (avec `kind`),
   `MessageModel`, `NotificationModel`, `PushSubscriptionModel`,
-  `MessageTemplateModel`, `ChildModel` (table `children`), tables
+  `MessageTemplateModel`, `ChildModel` (table `children`), `CalendarEventModel`
+  (table `calendar_events`, index sur `start_date`), tables
   d'association `channel_members` et `announcement_channels`).
 - **`repositories/`** : implémentations SQLAlchemy des ports. Chaque repo a une
   méthode privée **`_to_entity(model) -> Entity`** : c'est le **seul endroit**
@@ -170,7 +178,7 @@ une violation d'architecture.
 
 - **`routes/`** : blueprints Flask (`auth_bp`, `dashboard_bp`, `admin_bp`,
   `announcements_bp`, `messages_bp`, `notifications_bp`, `push_bp`,
-  `parent_bp`, `ai_bp`). Les endpoints JSON de `ai_routes.py` renvoient les
+  `parent_bp`, `ai_bp`, `calendar_bp`). Les endpoints JSON de `ai_routes.py` renvoient les
   erreurs métier en JSON (`{"error": ...}` + code 400/403/404/503) au lieu du
   flash+redirect, car ils sont consommés par `fetch`.
 - **`routes/utils.py`** : les **seuls** accès autorisés aux dépendances :
@@ -186,7 +194,8 @@ une violation d'architecture.
 - **`templates/`** : Jinja2. **`static/`** : CSS/JS custom, manifest PWA.
   La navigation principale vit dans `base.html` : une navbar Bootstrap
   responsive (`navbar-expand-lg`) avec bouton hamburger sur écran < 992px.
-  Les liens principaux (Annonces, Messagerie) sont des nav-pills ; pour
+  Les liens principaux (Annonces, Messagerie, Calendrier) sont des nav-pills ;
+  pour
   `ADMIN`, les sections Membres, Enfants, Annonces et Canaux sont regroupées
   dans un menu déroulant « Administration » ; pour `PARENT`, le lien
   « Mes enfants » — il n'y a plus de sous-navigation `admin/_nav.html`.
@@ -276,6 +285,11 @@ Tout est assemblé dans **`app/__init__.py` → `create_app()`** :
    script de thème vit dans `static/js/app.js`.
 10. Errorhandler global `DomainError` : flash + redirect dashboard (filet de
     sécurité).
+11. `context_processor` injectant `static_version(filename)` : retourne le
+    mtime (epoch entière) du fichier statique, pour cache-busting via
+    `?v={{ static_version('css/app.css') }}` dans `base.html`. Toute
+    modification de `app.css` / `app.js` produit une URL nouvelle, forçant le
+    rechargement par le navigateur.
 
 Point d'entrée : `run.py` → `create_app()` + `socketio.run(...)` (host/port via
 `EDULINK_HOST`/`EDULINK_PORT`, défaut `0.0.0.0:5050`).
@@ -293,7 +307,9 @@ Point d'entrée : `run.py` → `create_app()` + `socketio.run(...)` (host/port v
 - Limites de longueur → `ValidationError` **dans le use case**, jamais dans la
   route. Limites actuelles : `full_name` ≤120, email ≤254, password 8–128,
   titre d'annonce ≤255, contenu d'annonce ≤5000, nom de canal ≤120, contenu de
-  message ≤5000, label de modèle de message ≤80, contenu de modèle ≤5000.
+  message ≤5000, label de modèle de message ≤80, contenu de modèle ≤5000,
+  titre d'événement calendrier ≤120, description d'événement ≤2000, lieu ≤255,
+  public concerné (classe) ≤120.
 
 ### Annonces ciblées & accusés de réception
 
@@ -347,6 +363,39 @@ Point d'entrée : `run.py` → `create_app()` + `socketio.run(...)` (host/port v
 - La page parent `/parent/children/<id>/channels` liste les canaux du parent
   dont le nom correspond à la classe de l'enfant (`list_user_channels` filtré
   par `class_name`). Un enfant d'un autre parent est introuvable → redirect.
+
+### Calendrier scolaire
+
+- Le calendrier vit dans `calendar_routes.py` (`/calendar/`, `/calendar/events`
+  POST, `/calendar/events/<id>/delete` POST) et sa page `calendar/index.html` :
+  chronologie triée par `start_date` (par défaut) + grille mensuelle
+  (basculables via `static/js/app.js` `initCalendarViewSwitch` — **aucun script
+  inline**, la CSP l'interdit). Les filtres (type, classe, catégorie) sont des
+  selects qui soumettent la page (`initCalendarAutoSubmit`).
+- `ListCalendarEvents` applique les filtres en base via
+  `CalendarRepositoryPort.list_events` et **valide** les valeurs de filtre
+  (`type` ∈ `deadline`/`event`/`holiday`, catégorie ∈ valeurs de
+  `EventCategory`) → `ValidationError`. La route construit le menu déroulant
+  des classes depuis `ListClassNames` (enfants) **union** des classes présentes
+  dans les événements.
+- `CreateCalendarEvent` et `DeleteCalendarEvent` sont réservés à
+  `ADMIN`/`TEACHER` (`_require_manage` → `AuthorizationError`). La création
+  valide le titre, le type, la cohérence `end_date >= start_date` et les
+  longueurs (voir « Erreurs métier »). Le bouton « Ajouter une date » (modal)
+  et la suppression ne sont affichés que si `can_manage` (garde dans le
+  template, la route ré-applique la garde côté serveur). Le modal est piloté
+  par les tokens (`app.css` : `.modal-content`, `.modal-header`,
+  `.modal-footer`, `html[data-theme="dark"] .btn-close` — le footer utilise
+  `--surface-muted`, pas la classe utilitaire `bg-light-subtle` figée en
+  clair). Le préfixe des filtres est un `.input-group-text` tokenisé
+  (fond `--surface-muted`, icône `--text-soft`, bordure `--line`).
+  Les utilitaires Bootstrap à couleurs **fixes** (`bg-light`,
+  `*-subtle`, `text-dark`, `border-*-subtle`) sont re-mappés vers les tokens
+  dans un bloc dédié `html[data-theme="dark"]` d'`app.css` ; les classes
+  custom `bg-surface` / `bg-*-subtle-light` (fond de surface / teintes
+  calquées sur `color-mix`) sont déclarées une fois, pour les deux thèmes.
+  Pas de `data-bs-theme` Bootstrap : toute la page suit donc automatiquement
+  le thème clair/sombre de l'application.
 
 ### Sécurité
 

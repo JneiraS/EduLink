@@ -1144,6 +1144,12 @@ textarea.form-control:focus {
     color: var(--text);
 }
 
+.input-group-text {
+    background-color: var(--surface-muted);
+    color: var(--text-soft);
+    border-color: var(--line);
+}
+
 .char-counter {
     display: block;
     margin-top: 0.3rem;
@@ -2220,4 +2226,196 @@ hr {
         width: 100%;
         border-radius: var(--r-full);
     }
+}
+
+/* ============================================================
+   Calendar
+   ============================================================ */
+.calendar-date-badge {
+    width: 56px;
+    border-radius: var(--r-md);
+    background: color-mix(in srgb, var(--brand) 10%, var(--surface));
+    border: 1px solid color-mix(in srgb, var(--brand) 25%, var(--line));
+    padding: 0.4rem 0;
+}
+
+.calendar-date-badge .calendar-date-month {
+    display: block;
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: var(--brand);
+}
+
+.calendar-date-badge .calendar-date-day {
+    display: block;
+    font-size: 1.35rem;
+    font-weight: 800;
+    line-height: 1.1;
+    color: var(--text);
+}
+
+.calendar-date-badge .calendar-date-weekday {
+    display: block;
+    font-size: 0.62rem;
+    font-weight: 600;
+    color: var(--text-soft);
+}
+
+.calendar-date-badge--deadline {
+    background: color-mix(in srgb, var(--danger) 10%, var(--surface));
+    border-color: color-mix(in srgb, var(--danger) 30%, var(--line));
+}
+
+.calendar-date-badge--deadline .calendar-date-month,
+.calendar-date-badge--deadline .calendar-date-weekday {
+    color: var(--danger);
+}
+
+.calendar-date-badge--holiday {
+    background: color-mix(in srgb, var(--ok) 10%, var(--surface));
+    border-color: color-mix(in srgb, var(--ok) 30%, var(--line));
+}
+
+.calendar-date-badge--holiday .calendar-date-month,
+.calendar-date-badge--holiday .calendar-date-weekday {
+    color: var(--ok);
+}
+
+.event-card-item {
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.event-card-item:hover {
+    border-color: color-mix(in srgb, var(--brand) 40%, var(--line));
+    box-shadow: var(--shadow-1);
+}
+
+.dot-indicator {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    vertical-align: 1px;
+}
+
+.calendar-day-cell {
+    min-height: 85px;
+}
+
+.calendar-pill-mini {
+    display: block;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+/* ============================================================
+   Modal — piloté par les tokens (thème clair/sombre)
+   ============================================================ */
+.modal-content {
+    background-color: var(--surface);
+    color: var(--text);
+    border: 1px solid var(--line);
+    border-radius: var(--r-lg);
+    box-shadow: var(--shadow-3);
+}
+
+.modal-header {
+    border-color: var(--line);
+}
+
+.modal-footer {
+    background-color: var(--surface-muted);
+    border-color: var(--line);
+}
+
+.modal-header .modal-title {
+    color: var(--text);
+}
+
+html[data-theme="dark"] .btn-close {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23a8aec8'%3e%3cpath d='M.293.293a1 1 0 0 1 1.414 0L8 6.586 14.293.293a1 1 0 1 1 1.414 1.414L9.414 8l6.293 6.293a1 1 0 0 1-1.414 1.414L8 9.414l-6.293 6.293a1 1 0 0 1-1.414-1.414L6.586 8 .293 1.707a1 1 0 0 1 0-1.414z'/%3e%3c/svg%3e");
+    opacity: 0.85;
+}
+
+/* ============================================================
+   Calendrier — utilitaires de surface (tokens, clair + sombre)
+   ============================================================ */
+.bg-surface {
+    background-color: var(--surface);
+}
+
+.bg-primary-subtle-light {
+    background-color: color-mix(in srgb, var(--brand) 12%, var(--surface));
+}
+
+.bg-warning-subtle-light {
+    background-color: color-mix(in srgb, var(--warn) 14%, var(--surface));
+}
+
+.bg-success-subtle-light {
+    background-color: color-mix(in srgb, var(--ok) 14%, var(--surface));
+}
+
+.calendar-grid-header {
+    background-color: var(--surface-muted);
+    color: var(--text-soft);
+}
+
+.calendar-day-cell--empty {
+    background-color: color-mix(in srgb, var(--surface-strong) 75%, var(--surface));
+}
+
+.calendar-day-number {
+    color: var(--text);
+}
+
+/* ============================================================
+   Thème sombre — utilitaires Bootstrap figés → tokens
+   (surface plate, badge, chip : `.bg-light`, `*-subtle`,
+   `.text-dark`, … ont des couleurs fixes hors `data-bs-theme`)
+   ============================================================ */
+html[data-theme="dark"] .bg-light,
+html[data-theme="dark"] .bg-light-subtle {
+    background-color: var(--surface-muted) !important;
+}
+
+html[data-theme="dark"] .text-dark {
+    color: var(--text) !important;
+}
+
+html[data-theme="dark"] .text-secondary-emphasis {
+    color: var(--text-soft) !important;
+}
+
+html[data-theme="dark"] .text-warning-emphasis {
+    color: var(--warn) !important;
+}
+
+html[data-theme="dark"] .bg-primary-subtle,
+html[data-theme="dark"] .bg-secondary-subtle,
+html[data-theme="dark"] .bg-danger-subtle,
+html[data-theme="dark"] .bg-success-subtle,
+html[data-theme="dark"] .bg-warning-subtle {
+    background-color: color-mix(in srgb, var(--surface) 82%, var(--line)) !important;
+}
+
+html[data-theme="dark"] .border-primary-subtle {
+    border-color: color-mix(in srgb, var(--brand) 45%, var(--line)) !important;
+}
+
+html[data-theme="dark"] .border-secondary-subtle {
+    border-color: color-mix(in srgb, var(--text-soft) 35%, var(--line)) !important;
+}
+
+html[data-theme="dark"] .border-danger-subtle {
+    border-color: color-mix(in srgb, var(--danger) 45%, var(--line)) !important;
+}
+
+html[data-theme="dark"] .border-success-subtle {
+    border-color: color-mix(in srgb, var(--ok) 45%, var(--line)) !important;
+}
+
+html[data-theme="dark"] .border-warning-subtle {
+    border-color: color-mix(in srgb, var(--warn) 40%, var(--line)) !important;
 }

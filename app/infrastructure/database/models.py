@@ -166,3 +166,19 @@ class ChannelNotificationSettingModel(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey(USERS_ID_FK), primary_key=True)
     channel_id = db.Column(db.Integer, db.ForeignKey("channels.id"), primary_key=True)
     enabled = db.Column(db.Boolean, default=True, nullable=False)
+
+
+class CalendarEventModel(db.Model):
+    __tablename__ = "calendar_events"
+
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(120), nullable=False)
+    type = db.Column(db.String(20), nullable=False)
+    category = db.Column(db.String(20), nullable=False, default="academic")
+    class_name = db.Column(db.String(120), nullable=False, default="Tous les niveaux")
+    description = db.Column(db.Text, nullable=True)
+    location = db.Column(db.String(255), nullable=True)
+    priority = db.Column(db.String(20), nullable=False, default="normal")
+    start_date = db.Column(db.DateTime, nullable=False, index=True)
+    end_date = db.Column(db.DateTime, nullable=True)
+    created_at = db.Column(db.DateTime, default=utc_now, nullable=False)

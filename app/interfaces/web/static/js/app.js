@@ -571,6 +571,41 @@ function initAiRephrase() {
     });
 }
 
+function initCalendarViewSwitch() {
+    const listView = document.getElementById("calendar-view-list");
+    const gridView = document.getElementById("calendar-view-grid");
+    const buttons = document.querySelectorAll("[data-calendar-view]");
+    if (!listView || !gridView || !buttons.length) {
+        return;
+    }
+
+    buttons.forEach((button) => {
+        button.addEventListener("click", () => {
+            const mode = button.dataset.calendarView;
+            const showGrid = mode === "grid";
+            listView.classList.toggle("d-none", showGrid);
+            gridView.classList.toggle("d-none", !showGrid);
+            buttons.forEach((btn) => btn.classList.remove("active"));
+            button.classList.add("active");
+        });
+    });
+}
+
+function initCalendarAutoSubmit() {
+    document.querySelectorAll("select[data-calendar-autosubmit]").forEach((select) => {
+        select.addEventListener("change", () => {
+            select.form?.submit();
+        });
+    });
+}
+
+function initCalendarPrint() {
+    const printButton = document.getElementById("print-calendar-btn");
+    if (printButton) {
+        printButton.addEventListener("click", () => window.print());
+    }
+}
+
 initThemeToggle();
 
 initCharCounters();
@@ -596,6 +631,12 @@ initCopyButtons();
 initAiSummary();
 
 initAiRephrase();
+
+initCalendarViewSwitch();
+
+initCalendarAutoSubmit();
+
+initCalendarPrint();
 
 if (isAuthenticated) {
     initPushNotifications().catch((error) => {

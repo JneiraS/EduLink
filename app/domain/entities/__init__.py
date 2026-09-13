@@ -7,6 +7,7 @@ from app.domain.entities.push_subscription import PushSubscription
 from app.domain.entities.message_template import MessageTemplate
 from app.domain.entities.invitation import Invitation
 from app.domain.entities.child import Child
+from app.domain.entities.calendar_event import CalendarEvent, EventType, EventCategory
 
 __all__ = [
     "User",
@@ -19,4 +20,7 @@ __all__ = [
     "MessageTemplate",
     "Invitation",
     "Child",
+    "CalendarEvent",
+    "EventType",
+    "EventCategory",
 ]
