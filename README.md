@@ -8,7 +8,7 @@ Plateforme de communication scolaire avec architecture hexagonale (Ports & Adapt
 - Flask, Flask-Login, Flask-SocketIO, Flask-WTF
 - SQLAlchemy (Flask-SQLAlchemy)
 - SQLite
-- Bootstrap 5
+- CSS custom et Bootstrap Icons
 
 ## Architecture
 
