@@ -78,3 +78,36 @@ def add_notification(app, user_id, content, channel_id=None, is_read=False):
         db.session.add(notification)
         db.session.commit()
         return notification.id
+
+
+def add_calendar_event(
+    app,
+    title,
+    type_value="event",
+    category="academic",
+    class_name="Tous les niveaux",
+    description=None,
+    location=None,
+    priority="normal",
+    start_date=None,
+    end_date=None,
+):
+    from datetime import datetime
+
+    from app.infrastructure.database.models import CalendarEventModel
+
+    with app.app_context():
+        event = CalendarEventModel(
+            title=title,
+            type=type_value,
+            category=category,
+            class_name=class_name,
+            description=description,
+            location=location,
+            priority=priority,
+            start_date=start_date or datetime(2026, 9, 20, 18, 0),
+            end_date=end_date,
+        )
+        db.session.add(event)
+        db.session.commit()
+        return event.id

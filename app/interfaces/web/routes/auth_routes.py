@@ -44,7 +44,7 @@ def login():
 @login_required
 def logout():
     logout_user()
-    flash("Deconnexion reussie", "success")
+    flash("Déconnexion réussie", "success")
     return redirect(url_for("auth.login"))
 
 
@@ -52,7 +52,7 @@ def logout():
 @login_required
 def create_user():
     if current_user.role != UserRole.ADMIN.value:
-        flash("Acces reserve a l'administration", "danger")
+        flash("Accès réservé à l'administration", "danger")
         return redirect(url_for(DASHBOARD_HOME))
 
     invitation_url = None
@@ -68,7 +68,7 @@ def create_user():
                 email=email,
                 role=role,
             )
-            flash("Compte cree avec succes", "success")
+            flash("Compte créé avec succès", "success")
             invitation_url = url_for(
                 "auth.invite", token=invitation.token, _external=True
             )
@@ -98,14 +98,14 @@ def invite(token: str):
         password = request.form.get("password", "")
         confirm = request.form.get("confirm", "")
         if password != confirm:
-            flash("Passwords do not match", "danger")
+            flash("Les mots de passe ne correspondent pas", "danger")
             return render_template("auth/set_password.html", user=user, token=token)
         try:
             accepted = get_use_cases().accept_invitation.execute(token, password)
             session.clear()
             session.permanent = True
             login_user(get_services()["users"].get_auth_model(accepted.id))
-            flash("Mot de passe defini, bienvenue !", "success")
+            flash("Mot de passe défini, bienvenue !", "success")
             return redirect(url_for(DASHBOARD_HOME))
         except AuthenticationError as exc:
             flash(str(exc), "danger")

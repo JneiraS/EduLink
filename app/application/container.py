@@ -68,6 +68,11 @@ from app.application.use_cases.children_use_cases import (
     ListChildren,
     ListClassNames,
 )
+from app.application.use_cases.calendar_use_cases import (
+    CreateCalendarEvent,
+    DeleteCalendarEvent,
+    ListCalendarEvents,
+)
 from app.application.use_cases.user_query_use_cases import FindUsersByIds, ListAllUsers
 
 
@@ -125,3 +130,6 @@ class UseCaseContainer:
     delete_channel: DeleteChannel
     summarize_channel_messages: SummarizeChannelMessages
     rephrase_draft: RephraseDraft
+    list_calendar_events: ListCalendarEvents
+    create_calendar_event: CreateCalendarEvent
+    delete_calendar_event: DeleteCalendarEvent

@@ -13,8 +13,8 @@ from app.domain.ports.repositories import (
 )
 from app.domain.ports.services import RealtimeNotificationPort
 
-CHANNEL_NOT_FOUND = "Channel not found"
-NOT_A_MEMBER = "User is not member of this channel"
+CHANNEL_NOT_FOUND = "Canal introuvable"
+NOT_A_MEMBER = "Vous n'êtes pas membre de ce canal"
 MAX_MESSAGE_LENGTH = 5000
 
 
@@ -41,11 +41,11 @@ class SendMessage:
         if not self.channels.is_member(channel_id, actor.id or 0):
             raise AuthorizationError(NOT_A_MEMBER)
         if not content.strip():
-            raise ValidationError("Message content is required")
+            raise ValidationError("Le contenu du message est requis")
         content = content.strip()
         if len(content) > MAX_MESSAGE_LENGTH:
             raise ValidationError(
-                f"Message must be at most {MAX_MESSAGE_LENGTH} characters"
+                f"Le message ne doit pas dépasser {MAX_MESSAGE_LENGTH} caractères"
             )
 
         message = Message(
@@ -124,10 +124,10 @@ class SearchChannelMessages:
         _assert_channel_access(self.channels, actor, channel_id)
         term = query.strip()
         if not term:
-            raise ValidationError("Search query is required")
+            raise ValidationError("Le terme de recherche est requis")
         if len(term) > MAX_MESSAGE_LENGTH:
             raise ValidationError(
-                f"Search query must be at most {MAX_MESSAGE_LENGTH} characters"
+                f"La recherche ne doit pas dépasser {MAX_MESSAGE_LENGTH} caractères"
             )
         return self.messages.search_by_channel(channel_id, term, limit)
 
@@ -153,11 +153,11 @@ class PinMessage:
         _assert_channel_access(self.channels, actor, channel_id)
         if actor.role not in {UserRole.ADMIN, UserRole.TEACHER}:
             raise AuthorizationError(
-                "Only admins and teachers can pin messages"
+                "Seuls l'administrateur et les enseignants peuvent épingler des messages"
             )
         message = self.messages.find_by_id(message_id)
         if message is None:
-            raise NotFoundError("Message not found")
+            raise NotFoundError("Message introuvable")
         if message.channel_id != channel_id:
             raise AuthorizationError(NOT_A_MEMBER)
         self.messages.set_pinned(message_id, pinned)

@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from datetime import datetime
 
 from app.domain.entities.announcement import Announcement
+from app.domain.entities.calendar_event import CalendarEvent
 from app.domain.entities.channel import Channel
 from app.domain.entities.child import Child
 from app.domain.entities.invitation import Invitation
@@ -334,4 +335,27 @@ class ChildrenRepositoryPort(ABC):
 
     @abstractmethod
     def find_by_name_like(self, query: str, limit: int = 20) -> list[Child]:
+        raise NotImplementedError
+
+
+class CalendarRepositoryPort(ABC):
+    @abstractmethod
+    def save(self, event: CalendarEvent) -> CalendarEvent:
+        raise NotImplementedError
+
+    @abstractmethod
+    def list_events(
+        self,
+        type_filter: str | None = None,
+        class_name: str | None = None,
+        category: str | None = None,
+    ) -> list[CalendarEvent]:
+        raise NotImplementedError
+
+    @abstractmethod
+    def count_total(self) -> int:
+        raise NotImplementedError
+
+    @abstractmethod
+    def delete(self, event_id: int) -> CalendarEvent | None:
         raise NotImplementedError

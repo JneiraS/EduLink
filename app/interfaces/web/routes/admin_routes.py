@@ -17,7 +17,7 @@ ADMIN_CHILDREN = "admin.children"
 def _guard_admin():
     actor = current_actor()
     if actor.role != UserRole.ADMIN:
-        flash("Acces reserve a l'administration", "danger")
+        flash("Accès réservé à l'administration", "danger")
         return redirect(url_for("dashboard.home"))
     return None
 
@@ -51,7 +51,7 @@ def change_role(user_id: int):
         get_use_cases().update_user_role.execute(
             current_actor(), user_id=user_id, role=request.form.get("role", "")
         )
-        flash("Role mis a jour", "success")
+        flash("Rôle mis à jour", "success")
     except DomainError as exc:
         flash(str(exc), "danger")
     return redirect(url_for(ADMIN_MEMBERS))
@@ -66,9 +66,9 @@ def toggle_active(user_id: int):
     try:
         updated = get_use_cases().toggle_user_active.execute(current_actor(), user_id)
         if updated.is_active:
-            flash("Compte active", "success")
+            flash("Compte activé", "success")
         else:
-            flash("Compte desactive", "success")
+            flash("Compte désactivé", "success")
     except DomainError as exc:
         flash(str(exc), "danger")
     return redirect(url_for(ADMIN_MEMBERS))
@@ -85,7 +85,7 @@ def invite_user(user_id: int):
             current_actor(), user_id
         )
         invite_url = url_for("auth.invite", token=invitation.token, _external=True)
-        flash(f"Lien invitation : {invite_url}", "success")
+        flash(f"Lien d'invitation : {invite_url}", "success")
     except DomainError as exc:
         flash(str(exc), "danger")
     return redirect(url_for(ADMIN_MEMBERS))
@@ -119,7 +119,7 @@ def delete_announcement(announcement_id: int):
             current_actor(), announcement_id
         )
         _remove_pdf(deleted.pdf_filename)
-        flash("Annonce supprimee", "success")
+        flash("Annonce supprimée", "success")
     except DomainError as exc:
         flash(str(exc), "danger")
     return redirect(url_for("admin.announcements"))
@@ -143,7 +143,7 @@ def delete_channel(channel_id: int):
         return guard
     try:
         get_use_cases().delete_channel.execute(current_actor(), channel_id)
-        flash("Canal supprime", "success")
+        flash("Canal supprimé", "success")
     except DomainError as exc:
         flash(str(exc), "danger")
     return redirect(url_for("admin.channels"))
@@ -188,13 +188,13 @@ def create_child():
             parent_id=parent_id,
         )
         flash(
-            f"Enfant {child.full_name} cree et lie aux canaux de classe {child.class_name}",
+            f"Enfant {child.full_name} créé et lié aux canaux de classe {child.class_name}",
             "success",
         )
     except DomainError as exc:
         flash(str(exc), "danger")
     except (ValueError, TypeError):
-        flash("Donnees invalides", "danger")
+        flash("Données invalides", "danger")
     return redirect(url_for(ADMIN_CHILDREN))
 
 
@@ -206,7 +206,7 @@ def delete_child(child_id: int):
         return guard
     try:
         get_use_cases().delete_child.execute(current_actor(), child_id)
-        flash("Enfant supprime", "success")
+        flash("Enfant supprimé", "success")
     except DomainError as exc:
         flash(str(exc), "danger")
     return redirect(url_for(ADMIN_CHILDREN))
@@ -220,7 +220,7 @@ def link_child_channels(child_id: int):
         return guard
     try:
         get_use_cases().link_child_to_class_channels.execute(current_actor(), child_id)
-        flash("Canaux de classe lies", "success")
+        flash("Canaux de classe liés", "success")
     except DomainError as exc:
         flash(str(exc), "danger")
     return redirect(url_for(ADMIN_CHILDREN))

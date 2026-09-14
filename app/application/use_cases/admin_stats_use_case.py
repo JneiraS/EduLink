@@ -32,7 +32,7 @@ class GetAdminStats:
 
     def execute(self, actor: User) -> dict:
         if actor.role != UserRole.ADMIN:
-            raise AuthorizationError("Acces reserve a l'administration")
+            raise AuthorizationError("Accès réservé à l'administration")
 
         now = datetime.now(timezone.utc)
         registrations_since = now - timedelta(days=REGISTRATIONS_WINDOW_DAYS)

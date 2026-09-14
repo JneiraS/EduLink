@@ -1,0 +1,413 @@
+{% extends 'base.html' %}
+
+{% block content %}
+{% set is_deadline_shortcut = next_deadline is not none %}
+<div class="d-flex justify-content-between align-items-end mb-4 gap-3 flex-wrap reveal-group">
+    <div>
+        <div class="d-flex align-items-center gap-2 mb-2 flex-wrap">
+            <span class="kicker">Vie de l'établissement</span>
+            <span class="text-muted small">Année scolaire 2026-2027</span>
+        </div>
+        <h1 class="page-title">Calendrier &amp; échéances scolaires</h1>
+    </div>
+    <div class="d-flex gap-2 flex-wrap calendar-actions">
+        {% if can_manage %}
+        <button class="btn btn-primary d-inline-flex align-items-center gap-2 shadow-sm" type="button"
+            data-bs-toggle="modal" data-bs-target="#addEventModal">
+            <i class="bi bi-calendar-plus" aria-hidden="true"></i> Ajouter une date
+        </button>
+        {% endif %}
+        <button class="btn btn-outline-secondary d-inline-flex align-items-center gap-1" type="button" id="print-calendar-btn"
+            title="Imprimer le calendrier">
+            <i class="bi bi-printer" aria-hidden="true"></i> Imprimer
+        </button>
+    </div>
+</div>
+
+<div class="row g-3 mb-4 reveal-group">
+    <div class="col-sm-6 col-lg-4">
+        <div class="card border-0 shadow-sm h-100 p-3 bg-surface">
+            <div class="d-flex align-items-center justify-content-between gap-2">
+                <div class="min-w-0">
+                    <span class="label-sm text-muted fw-bold text-uppercase d-block">Prochaine échéance</span>
+                    {% if next_deadline %}
+                    <div class="stat-title text-dark text-truncate mt-1 stat-truncate">{{ next_deadline.title }}</div>
+                    <small class="text-xs text-danger fw-semibold d-inline-flex align-items-center gap-1">
+                        <i class="bi bi-clock-history"></i>
+                        {% if days_to_deadline > 0 %}
+                        Dans {{ days_to_deadline }} jour{{ 's' if days_to_deadline > 1 else '' }}
+                        {% else %}
+                        Aujourd'hui
+                        {% endif %}
+                        ({{ next_deadline.start_date.strftime('%d %b') }})
+                    </small>
+                    {% else %}
+                    <div class="stat-title text-dark mt-1">Aucune échéance urgente</div>
+                    <small class="text-xs text-muted">Tout est à jour</small>
+                    {% endif %}
+                </div>
+                <div class="icon-chip rounded-3 bg-danger-subtle text-danger">
+                    <i class="bi bi-exclamation-octagon"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-sm-6 col-lg-4">
+        <div class="card border-0 shadow-sm h-100 p-3 bg-surface">
+            <div class="d-flex align-items-center justify-content-between gap-2">
+                <div>
+                    <span class="label-sm text-muted fw-bold text-uppercase d-block">Événements en {{ grid_month_lower }}</span>
+                    <div class="h3 fw-bold mb-0 mt-1 text-body">{{ month_count }}</div>
+                    <small class="text-xs text-muted">Échéances, réunions &amp; sorties du mois</small>
+                </div>
+                <div class="icon-chip rounded-3 bg-primary-subtle text-primary">
+                    <i class="bi bi-calendar3"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-sm-6 col-lg-4">
+        <div class="card border-0 shadow-sm h-100 p-3 bg-surface">
+            <div class="d-flex align-items-center justify-content-between gap-2">
+                <div>
+                    <span class="label-sm text-muted fw-bold text-uppercase d-block">Prochaines vacances</span>
+                    {% if next_holiday %}
+                    <div class="stat-title text-dark mt-1">{{ next_holiday.title }}</div>
+                    <small class="text-xs text-success fw-semibold">
+                        {{ next_holiday.start_date.strftime('Du %d %b.') }}
+                        {% if next_holiday.end_date %}
+                        au {{ next_holiday.end_date.strftime('%d %b. %Y') }}
+                        {% endif %}
+                    </small>
+                    {% else %}
+                    <div class="stat-title text-dark mt-1">Aucune date</div>
+                    <small class="text-xs text-muted">Les vacances apparaîtront ici</small>
+                    {% endif %}
+                </div>
+                <div class="icon-chip rounded-3 bg-success-subtle text-success">
+                    <i class="bi bi-sun"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card shadow-sm border-0 mb-4 reveal-group calendar-filters">
+    <div class="card-body p-3">
+        <form method="get" action="{{ url_for('calendar.index') }}" class="row g-2 align-items-center">
+            <div class="col-md-4 col-lg-3">
+                <div class="input-group input-group-sm">
+                    <span class="input-group-text"><i class="bi bi-funnel"></i></span>
+                    <select name="type" class="form-select form-select-sm" data-calendar-autosubmit>
+                        <option value="all" {{ 'selected' if selected_type == 'all' else '' }}>Tous les types</option>
+                        <option value="deadline" {{ 'selected' if selected_type == 'deadline' else '' }}>Échéances académiques</option>
+                        <option value="event" {{ 'selected' if selected_type == 'event' else '' }}>Événements &amp; réunions</option>
+                        <option value="holiday" {{ 'selected' if selected_type == 'holiday' else '' }}>Vacances scolaires</option>
+                    </select>
+                </div>
+            </div>
+            <div class="col-md-4 col-lg-3">
+                <div class="input-group input-group-sm">
+                    <span class="input-group-text"><i class="bi bi-people"></i></span>
+                    <select name="class_name" class="form-select form-select-sm" data-calendar-autosubmit>
+                        <option value="all" {{ 'selected' if selected_class == 'all' else '' }}>Toutes les classes</option>
+                        {% for c in class_names %}
+                        <option value="{{ c }}" {{ 'selected' if selected_class == c else '' }}>{{ c }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div class="col-md-4 col-lg-3">
+                <div class="input-group input-group-sm">
+                    <span class="input-group-text"><i class="bi bi-tag"></i></span>
+                    <select name="category" class="form-select form-select-sm" data-calendar-autosubmit>
+                        <option value="all" {{ 'selected' if selected_category == 'all' else '' }}>Toutes catégories</option>
+                        <option value="administrative" {{ 'selected' if selected_category == 'administrative' else '' }}>Administratif &amp; dossiers</option>
+                        <option value="academic" {{ 'selected' if selected_category == 'academic' else '' }}>Pédagogique &amp; élections</option>
+                        <option value="meeting" {{ 'selected' if selected_category == 'meeting' else '' }}>Réunions parents-profs</option>
+                        <option value="outing" {{ 'selected' if selected_category == 'outing' else '' }}>Sorties &amp; événements sportifs</option>
+                    </select>
+                </div>
+            </div>
+            <div class="col-lg-3 d-flex justify-content-lg-end gap-1 mt-2 mt-lg-0">
+                <div class="btn-group btn-group-sm" role="group" aria-label="Mode d'affichage">
+                    <button type="button" class="btn btn-outline-primary active" data-calendar-view="list">
+                        <i class="bi bi-list-ul me-1"></i>Chronologie
+                    </button>
+                    <button type="button" class="btn btn-outline-primary" data-calendar-view="grid">
+                        <i class="bi bi-grid-3x3 me-1"></i>Grille mensuelle
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div id="calendar-view-list">
+    <div class="card shadow-sm border-0 reveal-group">
+        <div class="card-body p-4">
+            {% if events %}
+            <div class="calendar-timeline">
+                {% set ns = namespace(last_month_year='') %}
+                {% for evt in events %}
+                {% set evt_type = evt.type.value %}
+                {% set evt_category = evt.category.value %}
+                {% set month_year = fr_months[evt.start_date.month - 1] ~ ' ' ~ evt.start_date.year %}
+                {% set is_deadline = evt_type == 'deadline' %}
+                {% set is_holiday = evt_type == 'holiday' %}
+                {% set days_left = None %}
+                {% if is_deadline and evt.start_date.date() >= today %}
+                {% set days_left = (evt.start_date.date() - today).days %}
+                {% endif %}
+                {% set is_all_day = evt.start_date.strftime('%H:%M') == '00:00' %}
+
+                {% if month_year != ns.last_month_year %}
+                {% set ns.last_month_year = month_year %}
+                <div class="timeline-month-separator d-flex align-items-center gap-3 my-4">
+                    <span class="badge bg-secondary-subtle text-secondary-emphasis px-3 py-2 fw-bold text-xs">
+                        <i class="bi bi-calendar-range me-1"></i>{{ month_year }}
+                    </span>
+                    <hr class="flex-grow-1 border-secondary-subtle m-0">
+                </div>
+                {% endif %}
+
+                <div class="p-3 mb-3 rounded-3 border event-card-item transition {% if is_deadline %}border-warning-subtle bg-warning-subtle-light{% elif is_holiday %}border-success-subtle bg-success-subtle-light{% else %}bg-surface{% endif %}">
+                    <div class="d-flex align-items-start gap-3">
+                        <div class="calendar-date-badge flex-shrink-0 text-center {% if is_deadline %}calendar-date-badge--deadline{% elif is_holiday %}calendar-date-badge--holiday{% else %}calendar-date-badge--event{% endif %}">
+                            <span class="calendar-date-month text-uppercase">{{ fr_month_abbr[evt.start_date.month - 1] }}</span>
+                            <span class="calendar-date-day">{{ evt.start_date.day }}</span>
+                            <span class="calendar-date-weekday">{{ fr_day_abbr[evt.start_date.weekday()] }}</span>
+                        </div>
+                        <div class="flex-grow-1 min-w-0">
+                            <div class="d-flex justify-content-between align-items-start gap-2 flex-wrap mb-1">
+                                <div class="d-flex align-items-center gap-2 flex-wrap">
+                                    {% if is_deadline %}
+                                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle">
+                                        <i class="bi bi-clock-fill me-1"></i>Échéance limite
+                                    </span>
+                                    {% elif is_holiday %}
+                                    <span class="badge bg-success-subtle text-success border border-success-subtle">
+                                        <i class="bi bi-sun-fill me-1"></i>Vacances scolaires
+                                    </span>
+                                    {% else %}
+                                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle">
+                                        <i class="bi bi-calendar-event-fill me-1"></i>Événement
+                                    </span>
+                                    {% endif %}
+                                    <span class="badge bg-light text-muted border">
+                                        <i class="bi bi-people me-1"></i>{{ evt.class_name }}
+                                    </span>
+                                    {% if evt_category %}
+                                    <span class="badge bg-light-subtle text-secondary border">
+                                        {% if evt_category == 'administrative' %}Administratif
+                                        {% elif evt_category == 'academic' %}Pédagogique
+                                        {% elif evt_category == 'meeting' %}Réunion
+                                        {% elif evt_category == 'outing' %}Sortie scolaire
+                                        {% else %}Général{% endif %}
+                                    </span>
+                                    {% endif %}
+                                </div>
+                                <div class="d-flex align-items-center gap-2">
+                                    {% if days_left is not none %}
+                                    <span class="badge {% if days_left <= 3 %}bg-danger text-white{% else %}bg-warning-subtle text-warning-emphasis border{% endif %} px-2 py-1 text-xs">
+                                        <i class="bi bi-hourglass-split me-1"></i>
+                                        {% if days_left == 0 %}Dernier jour !{% else %}Dans {{ days_left }} jour{{ 's' if days_left > 1 else '' }}{% endif %}
+                                    </span>
+                                    {% endif %}
+                                    {% if can_manage %}
+                                    <form method="post" action="{{ url_for('calendar.delete_event', event_id=evt.id) }}" class="m-0">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <button type="submit" data-confirm="Confirmer la suppression de cette date du calendrier ?"
+                                            class="btn btn-link btn-sm text-muted p-0" title="Supprimer">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <h2 class="h6 fw-bold mb-1 text-dark">{{ evt.title }}</h2>
+                            {% if evt.description %}
+                            <p class="text-muted small mb-2">{{ evt.description }}</p>
+                            {% endif %}
+                            <div class="d-flex align-items-center gap-3 text-muted small flex-wrap text-xs">
+                                {% if evt.end_date %}
+                                <span><i class="bi bi-clock me-1 text-primary"></i>Du {{ evt.start_date.strftime('%d %b') }} au {{ evt.end_date.strftime('%d %b %Y') }}</span>
+                                {% else %}
+                                <span><i class="bi bi-clock me-1 text-primary"></i>{{ evt.start_date.strftime('%H:%M') if not is_all_day else 'Toute la journée' }}</span>
+                                {% endif %}
+                                {% if evt.location %}
+                                <span><i class="bi bi-geo-alt me-1 text-primary"></i>{{ evt.location }}</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <span class="empty-icon" aria-hidden="true"><i class="bi bi-calendar-x"></i></span>
+                <div class="empty-title">Aucune date pour ces critères</div>
+                <div class="empty-hint">Ajustez vos filtres pour visualiser les autres événements scolaires.</div>
+                <a href="{{ url_for('calendar.index') }}" class="btn btn-sm btn-outline-primary mt-2">
+                    <i class="bi bi-arrow-counterclockwise me-1"></i>Réinitialiser les filtres
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div id="calendar-view-grid" class="d-none">
+    <div class="card shadow-sm border-0 reveal-group">
+        <div class="card-body p-4">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+                <div class="d-flex align-items-center gap-2">
+                    {% if prev_month %}
+                    <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('calendar.index', month=prev_month, type=selected_type, class_name=selected_class, category=selected_category) }}"
+                        title="Mois précédent" aria-label="Mois précédent">
+                        <i class="bi bi-chevron-left" aria-hidden="true"></i>
+                    </a>
+                    {% endif %}
+                    <h2 class="h5 fw-bold mb-0 text-body" id="grid-month-title">{{ grid_month_label }}</h2>
+                    {% if next_month %}
+                    <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('calendar.index', month=next_month, type=selected_type, class_name=selected_class, category=selected_category) }}"
+                        title="Mois suivant" aria-label="Mois suivant">
+                        <i class="bi bi-chevron-right" aria-hidden="true"></i>
+                    </a>
+                    {% endif %}
+                </div>
+                <div class="d-flex gap-2 align-items-center">
+                    <span class="badge bg-danger-subtle text-danger me-1"><span class="dot-indicator bg-danger me-1"></span>Échéance</span>
+                    <span class="badge bg-primary-subtle text-primary me-1"><span class="dot-indicator bg-primary me-1"></span>Événement</span>
+                    <span class="badge bg-success-subtle text-success"><span class="dot-indicator bg-success me-1"></span>Vacances</span>
+                </div>
+            </div>
+            <div class="calendar-grid-container border rounded-3 overflow-hidden">
+                <div class="calendar-grid-header d-grid calendar-grid-cols text-center fw-bold small py-2">
+                    <div>Lun</div><div>Mar</div><div>Mer</div><div>Jeu</div><div>Ven</div><div>Sam</div><div>Dim</div>
+                </div>
+                <div class="calendar-grid-days d-grid calendar-grid-cols">
+                    {% for week in calendar_weeks %}
+                    {% for cell in week %}
+                    {% if cell %}
+                    <div class="calendar-day-cell p-2 border position-relative {% if cell.is_today %}calendar-day-cell--today{% else %}bg-surface{% endif %}">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="calendar-day-number {% if cell.is_today %}calendar-day-number--today{% else %}small fw-semibold{% endif %}">
+                                {{ cell.day }}
+                            </span>
+                            {% if cell.is_today %}
+                            <span class="badge calendar-today-badge">Aujourd'hui</span>
+                            {% endif %}
+                        </div>
+                        <div class="d-flex flex-column gap-1">
+                            {% for evt in cell.events[:2] %}
+                            <div class="calendar-pill-mini text-truncate px-1 py-0 rounded {% if evt.type.value == 'deadline' %}bg-danger text-white{% elif evt.type.value == 'holiday' %}bg-success text-white{% else %}bg-primary text-white{% endif %}" title="{{ evt.title }} ({{ evt.class_name }})">
+                                {{ evt.title }}
+                            </div>
+                            {% endfor %}
+                            {% if cell.events | length > 2 %}
+                            <span class="text-muted text-xs">{{ cell.extra }} autre{{ 's' if cell.extra > 1 else '' }}</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="calendar-day-cell calendar-day-cell--empty p-2 border opacity-50"></div>
+                    {% endif %}
+                    {% endfor %}
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if can_manage %}
+<div class="modal fade" id="addEventModal" tabindex="-1" aria-labelledby="addEventModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header border-bottom">
+                <h2 class="modal-title h5 fw-bold" id="addEventModalLabel">
+                    <i class="bi bi-calendar-plus text-primary me-2"></i>Ajouter au calendrier scolaire
+                </h2>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+            </div>
+            <form method="post" action="{{ url_for('calendar.create_event') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold" for="evt-title">Titre de l'événement ou de l'échéance *</label>
+                        <input class="form-control" id="evt-title" name="title" required maxlength="120" placeholder="Ex. Date limite restitution fiches cantine">
+                    </div>
+                    <div class="row g-2 mb-3">
+                        <div class="col-sm-6">
+                            <label class="form-label small fw-semibold" for="evt-type">Type d'entrée *</label>
+                            <select class="form-select" id="evt-type" name="type" required>
+                                <option value="deadline">Échéance / date limite</option>
+                                <option value="event" selected>Événement scolaire / réunion</option>
+                                <option value="holiday">Vacances scolaires</option>
+                            </select>
+                        </div>
+                        <div class="col-sm-6">
+                            <label class="form-label small fw-semibold" for="evt-category">Catégorie</label>
+                            <select class="form-select" id="evt-category" name="category">
+                                <option value="administrative">Administratif</option>
+                                <option value="academic" selected>Pédagogique</option>
+                                <option value="meeting">Réunion parents-profs</option>
+                                <option value="outing">Sortie scolaire / sport</option>
+                                <option value="holiday">Vacances</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row g-2 mb-3">
+                        <div class="col-sm-6">
+                            <label class="form-label small fw-semibold" for="evt-start">Date &amp; heure de début *</label>
+                            <input class="form-control" type="datetime-local" id="evt-start" name="start_date" required value="{{ default_start }}">
+                        </div>
+                        <div class="col-sm-6">
+                            <label class="form-label small fw-semibold" for="evt-end">Date de fin (optionnel)</label>
+                            <input class="form-control" type="datetime-local" id="evt-end" name="end_date">
+                        </div>
+                    </div>
+                    <div class="row g-2 mb-3">
+                        <div class="col-sm-6">
+                            <label class="form-label small fw-semibold" for="evt-class">Public concerné</label>
+                            <select class="form-select" id="evt-class" name="class_name">
+                                <option value="Tous les niveaux" selected>Tous les niveaux</option>
+                                {% for c in class_names %}
+                                <option value="{{ c }}">{{ c }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-sm-6">
+                            <label class="form-label small fw-semibold" for="evt-priority">Priorité</label>
+                            <select class="form-select" id="evt-priority" name="priority">
+                                <option value="normal" selected>Normal</option>
+                                <option value="high">Élevée</option>
+                                <option value="urgent">Urgente</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold" for="evt-location">Lieu ou modalité</label>
+                        <input class="form-control" id="evt-location" name="location" maxlength="255" placeholder="Ex. Salle polyvalente, en ligne, préau...">
+                    </div>
+                    <div class="mb-0">
+                        <label class="form-label small fw-semibold" for="evt-desc">Description / instructions</label>
+                        <textarea class="form-control" id="evt-desc" name="description" rows="3" maxlength="2000" placeholder="Précisions pour les familles ou l'équipe pédagogique..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer border-top p-3">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-primary px-4 shadow-sm">
+                        <i class="bi bi-check2 me-1"></i>Enregistrer
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

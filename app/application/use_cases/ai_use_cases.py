@@ -27,7 +27,7 @@ class SummarizeChannelMessages:
         _assert_channel_access(self.channels, actor, channel_id)
         messages, _ = self.messages.list_by_channel(channel_id, limit)
         if not messages:
-            raise ValidationError("No messages to summarize")
+            raise ValidationError("Aucun message à résumer")
         return self.assistant.summarize([m.content for m in messages])
 
 
@@ -38,9 +38,9 @@ class RephraseDraft:
     def execute(self, content: str) -> str:
         content = content.strip()
         if not content:
-            raise ValidationError("Message content is required")
+            raise ValidationError("Le contenu du message est requis")
         if len(content) > MAX_MESSAGE_LENGTH:
             raise ValidationError(
-                f"Message must be at most {MAX_MESSAGE_LENGTH} characters"
+                f"Le message ne doit pas dépasser {MAX_MESSAGE_LENGTH} caractères"
             )
         return self.assistant.rephrase(content)

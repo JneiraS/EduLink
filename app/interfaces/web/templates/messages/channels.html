@@ -15,7 +15,7 @@
         {% if can_manage %}
         <div class="card shadow-sm h-100">
             <div class="card-body">
-                <h2 class="h5 mb-3">Creer un canal</h2>
+                <h2 class="section-title"><i class="bi bi-plus-circle" aria-hidden="true"></i>Créer un canal</h2>
                 <form method="post">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <div class="mb-3">
@@ -25,7 +25,7 @@
                     </div>
                     <div class="mb-3">
                         <label class="form-label" for="member-search">Membres</label>
-                        <p class="form-text mb-2">Recherchez et selectionnez les membres. Vous serez automatiquement
+                        <p class="form-text mb-2">Recherchez et sélectionnez les membres. Vous serez automatiquement
                             membre du canal.</p>
 
                         <div class="member-picker border rounded p-3" data-member-picker>
@@ -34,12 +34,12 @@
                                     type="search" data-member-search placeholder="Rechercher un membre..."
                                     aria-label="Rechercher un membre" autocomplete="off">
                                 <span class="member-picker-count" data-selected-count
-                                    aria-live="polite">0 selectionne(s)</span>
+                                    aria-live="polite">0 sélectionné(s)</span>
                                 <button type="button" class="member-picker-clear" data-clear-selection>Effacer</button>
                             </div>
 
                             <div class="member-picker-empty" data-search-empty hidden>
-                                Aucun membre ne correspond a la recherche.
+                                Aucun membre ne correspond à la recherche.
                             </div>
 
                             <div class="member-picker-groups">
@@ -49,7 +49,7 @@
                                     <legend class="member-group-header">
                                         <label class="member-group-toggle">
                                             <input type="checkbox" class="form-check-input" data-group-toggle
-                                                aria-label="Tout selectionner les {{ group_label|lower }}">
+                                                aria-label="Tout sélectionner les {{ group_label|lower }}">
                                             <span class="member-group-label">{{ group_label }}</span>
                                             <span class="badge text-bg-light" data-group-count>{{ group_users|length }}</span>
                                         </label>
@@ -72,11 +72,11 @@
                             </div>
 
                             <div class="member-picker-summary" data-selected-summary
-                                aria-label="Membres selectionnes"></div>
+                                aria-label="Membres sélectionnés"></div>
                         </div>
                     </div>
                     <button class="btn btn-primary" type="submit">
-                        <i class="bi bi-plus-lg me-2" aria-hidden="true"></i>Creer
+                        <i class="bi bi-plus-lg me-2" aria-hidden="true"></i>Créer
                     </button>
                 </form>
             </div>
@@ -85,10 +85,10 @@
 
         <div class="card shadow-sm mt-3">
             <div class="card-body">
-                <h2 class="h5 mb-2">Mes modeles de messages</h2>
-                <p class="text-muted mb-3">Reutilisez vos messages frequents dans les conversations.</p>
+                <h2 class="section-title"><i class="bi bi-file-earmark-text" aria-hidden="true"></i>Mes modèles de messages</h2>
+                <p class="text-muted mb-3">Réutilisez vos messages fréquents dans les conversations.</p>
                 <a class="btn btn-outline-secondary" href="{{ url_for('messages.templates') }}">
-                    <i class="bi bi-file-earmark-text me-2" aria-hidden="true"></i>Gerer mes modeles
+                    <i class="bi bi-file-earmark-text me-2" aria-hidden="true"></i>Gérer mes modèles
                 </a>
             </div>
         </div>
@@ -99,9 +99,9 @@
             <div class="card-body">
                 <div class="d-flex flex-column gap-1 mb-3">
                     <div class="d-flex align-items-center justify-content-between">
-                        <h2 class="h5 mb-0">Conversations</h2>
+                        <h2 class="section-title mb-0">Conversations</h2>
                         <form method="post" action="{{ url_for('messages.set_global_notifications') }}"
-                            class="notif-global-toggle" title="Activer ou desactiver toutes les notifications"
+                            class="notif-global-toggle" title="Activer ou désactiver toutes les notifications"
                             data-global-notif-form>
                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                             <div class="form-check form-switch mb-0">
@@ -113,7 +113,7 @@
                             </div>
                         </form>
                     </div>
-                    <small class="text-muted">Lorsque desactive, aucune notification (sonnerie ou push) n'est emise.</small>
+                    <small class="text-muted">Lorsque désactivé, aucune notification (sonnerie ou push) n'est émise.</small>
                 </div>
                 {% if direct_channels %}
                 <div class="list-group">
@@ -133,15 +133,15 @@
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 {% if channel_enabled %}
                                 <button type="submit" class="notif-btn notif-btn--on"
-                                    data-confirm="Desactiver les notifications de cette conversation ?"
-                                    aria-pressed="true" aria-label="Desactiver les notifications"
+                                    data-confirm="Désactiver les notifications de cette conversation ?"
+                                    aria-pressed="true" aria-label="Désactiver les notifications"
                                     title="Notifications actives">
                                     <i class="bi bi-bell" aria-hidden="true"></i>
                                 </button>
                                 {% else %}
                                 <button type="submit" class="notif-btn notif-btn--off"
                                     aria-pressed="false" aria-label="Activer les notifications"
-                                    title="Notifications desactivees">
+                                    title="Notifications désactivées">
                                     <i class="bi bi-bell-slash" aria-hidden="true"></i>
                                 </button>
                                 {% endif %}
@@ -154,7 +154,7 @@
                 <div class="empty-state">
                     <span class="empty-icon" aria-hidden="true"><i class="bi bi-person"></i></span>
                     <div class="empty-title">Aucune conversation</div>
-                    <div class="empty-hint">Lancez une conversation privee avec un contact.</div>
+                    <div class="empty-hint">Lancez une conversation privée avec un contact.</div>
                 </div>
                 {% endif %}
             </div>
@@ -162,7 +162,7 @@
 
         <div class="card shadow-sm mt-3">
             <div class="card-body">
-                <h2 class="h5 mb-3">Canaux</h2>
+                <h2 class="section-title"><i class="bi bi-hash" aria-hidden="true"></i>Canaux</h2>
                 {% if group_channels %}
                 <div class="list-group">
                     {% for channel in group_channels %}
@@ -181,15 +181,15 @@
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 {% if channel_enabled %}
                                 <button type="submit" class="notif-btn notif-btn--on"
-                                    data-confirm="Desactiver les notifications de cette conversation ?"
-                                    aria-pressed="true" aria-label="Desactiver les notifications"
+                                    data-confirm="Désactiver les notifications de cette conversation ?"
+                                    aria-pressed="true" aria-label="Désactiver les notifications"
                                     title="Notifications actives">
                                     <i class="bi bi-bell" aria-hidden="true"></i>
                                 </button>
                                 {% else %}
                                 <button type="submit" class="notif-btn notif-btn--off"
                                     aria-pressed="false" aria-label="Activer les notifications"
-                                    title="Notifications desactivees">
+                                    title="Notifications désactivées">
                                     <i class="bi bi-bell-slash" aria-hidden="true"></i>
                                 </button>
                                 {% endif %}
@@ -202,7 +202,7 @@
                 <div class="empty-state">
                     <span class="empty-icon" aria-hidden="true"><i class="bi bi-chat-dots"></i></span>
                     <div class="empty-title">Aucun canal</div>
-                    <div class="empty-hint">Creez votre premier canal pour discuter avec votre equipe.</div>
+                    <div class="empty-hint">Créez votre premier canal pour discuter avec votre équipe.</div>
                 </div>
                 {% endif %}
             </div>

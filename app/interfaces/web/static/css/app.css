@@ -1,25 +1,17 @@
 @font-face {
-    font-family: "Fraunces";
+    font-family: "Inter";
     font-style: normal;
-    font-weight: 600 700;
+    font-weight: 100 900;
     font-display: swap;
-    src: url("../fonts/fraunces-latin.woff2") format("woff2");
-}
-
-@font-face {
-    font-family: "Plus Jakarta Sans";
-    font-style: normal;
-    font-weight: 400 700;
-    font-display: swap;
-    src: url("../fonts/jakarta-latin.woff2") format("woff2");
+    src: url("../fonts/inter-latin-wght-normal.woff2") format("woff2");
 }
 
 /* ============================================================
    Design tokens — "Warm editorial"
    ============================================================ */
 :root {
-    --font-display: "Helvetica Neue", Helvetica, Arial, system-ui, sans-serif;
-    --font-body: "Plus Jakarta Sans", "Segoe UI", system-ui, sans-serif;
+    --font-display: "Inter", "Helvetica Neue", Arial, ui-sans-serif, system-ui, sans-serif;
+    --font-body: "Inter", "Segoe UI", system-ui, sans-serif;
 
     --bg-1: #f6f4ee;
     --bg-2: #ece8dc;
@@ -42,9 +34,9 @@
     --aura-1: rgba(79, 70, 229, 0.10);
     --aura-2: rgba(14, 116, 144, 0.08);
 
-    --shadow-1: 0 1px 2px rgba(31, 35, 55, 0.06), 0 4px 14px rgba(31, 35, 55, 0.05);
-    --shadow-2: 0 8px 26px rgba(31, 35, 55, 0.09);
-    --shadow-3: 0 18px 44px rgba(31, 35, 55, 0.13);
+    --shadow-1: 0 1px 3px rgba(31, 35, 55, 0.08), 0 10px 20px rgba(31, 35, 55, 0.04);
+    --shadow-2: 0 4px 6px rgba(31, 35, 55, 0.07), 0 20px 40px rgba(31, 35, 55, 0.06);
+    --shadow-3: 0 10px 15px rgba(31, 35, 55, 0.1), 0 30px 60px rgba(31, 35, 55, 0.12);
     --shadow-inset: inset 0 1px 0 rgba(255, 255, 255, 0.6);
 
     --nav-bg: rgba(255, 255, 255, 0.82);
@@ -177,6 +169,9 @@ body {
         radial-gradient(900px 520px at -8% 108%, var(--aura-2), transparent 60%);
     background-attachment: fixed;
     min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
 }
 
 h1,
@@ -196,8 +191,10 @@ h1,
 h2,
 h3 {
     font-family: var(--font-display);
-    font-weight: 600;
-    letter-spacing: -0.01em;
+    font-weight: 700;
+    letter-spacing: -0.015em;
+    line-height: 1.25;
+    text-wrap: balance;
 }
 
 .chart-box {
@@ -210,6 +207,11 @@ li,
 small,
 span {
     color: var(--text);
+}
+
+p,
+li {
+    text-wrap: pretty;
 }
 
 a {
@@ -273,10 +275,115 @@ small.text-muted {
 }
 
 .page-title {
-    font-size: clamp(1.5rem, 2.4vw, 2rem);
-    font-weight: 650;
-    letter-spacing: -0.02em;
+    font-size: clamp(1.6rem, 2.6vw, 2.25rem);
+    font-weight: 700;
+    letter-spacing: -0.015em;
+    line-height: 1.2;
     margin-bottom: 0;
+    text-wrap: balance;
+}
+
+.label-sm {
+    font-size: 0.7rem;
+    letter-spacing: 0.05em;
+}
+
+.text-xs {
+    font-size: 0.78rem;
+}
+
+.stat-title {
+    font-size: 0.95rem;
+    font-weight: 700;
+}
+
+.stat-truncate {
+    max-width: 200px;
+}
+
+.icon-chip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 44px;
+    height: 44px;
+    font-size: 1.25rem;
+    border-radius: var(--r-md);
+}
+
+/* ============================================================
+   Page header
+   ============================================================ */
+.page-header {
+    padding: var(--space-1) 0 var(--space-4);
+}
+
+.page-header-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: var(--space-4);
+}
+
+.date-line {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding-bottom: 0.4rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-soft);
+    white-space: nowrap;
+}
+
+.priority-line {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: var(--space-3);
+    padding: 0.35rem 0.9rem;
+    border-radius: var(--r-full);
+    background: color-mix(in srgb, var(--warn) 10%, var(--surface));
+    border: 1px solid color-mix(in srgb, var(--warn) 35%, var(--line));
+    font-size: 0.86rem;
+    font-weight: 600;
+    color: var(--text);
+}
+
+.priority-line i {
+    color: var(--warn);
+}
+
+.priority-line--clear {
+    background: color-mix(in srgb, var(--ok) 8%, var(--surface));
+    border-color: color-mix(in srgb, var(--ok) 30%, var(--line));
+}
+
+.priority-line--clear i {
+    color: var(--ok);
+}
+
+/* ============================================================
+   Section titles (in-card, quiet sectioning)
+   ============================================================ */
+.section-title {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-soft);
+    margin-bottom: var(--space-3);
+    text-wrap: balance;
+}
+
+.section-title i {
+    color: var(--brand);
+    font-size: 0.9rem;
 }
 
 /* ============================================================
@@ -285,7 +392,7 @@ small.text-muted {
 @keyframes rise {
     from {
         opacity: 0;
-        transform: translateY(14px);
+        transform: translateY(8px);
     }
     to {
         opacity: 1;
@@ -320,35 +427,33 @@ small.text-muted {
 }
 
 .reveal-group > * {
-    animation: rise var(--dur-slow) var(--ease) both;
-}
-
-.reveal-group > *:nth-child(1) {
-    animation-delay: 0ms;
+    animation: rise var(--dur-med) var(--ease) both;
 }
 
 .reveal-group > *:nth-child(2) {
-    animation-delay: 60ms;
+    animation-delay: 100ms;
 }
 
 .reveal-group > *:nth-child(3) {
-    animation-delay: 120ms;
+    animation-delay: 200ms;
 }
 
 .reveal-group > *:nth-child(4) {
-    animation-delay: 180ms;
-}
-
-.reveal-group > *:nth-child(5) {
-    animation-delay: 240ms;
-}
-
-.reveal-group > *:nth-child(n + 6) {
     animation-delay: 300ms;
 }
 
+.reveal-group > *:nth-child(5) {
+    animation-delay: 400ms;
+}
+
+.reveal-group > *:nth-child(n + 6) {
+    animation-delay: 500ms;
+}
+
 .theme-toggle-btn i {
-    transition: transform var(--dur-med) var(--ease);
+    transition-property: transform;
+    transition-duration: var(--dur-med);
+    transition-timing-function: var(--ease);
 }
 
 .theme-toggle-btn:hover i {
@@ -405,7 +510,7 @@ small.text-muted {
     font-family: var(--font-display);
     font-size: 1.28rem;
     font-weight: 650;
-    letter-spacing: -0.02em;
+    letter-spacing: -0.015em;
     color: var(--nav-brand);
 }
 
@@ -422,6 +527,10 @@ small.text-muted {
     white-space: nowrap;
 }
 
+.navbar-actions--bare {
+    margin-left: auto;
+}
+
 .nav-pill {
     background: var(--nav-btn-bg);
     display: inline-flex;
@@ -432,13 +541,16 @@ small.text-muted {
     font-size: 0.88rem;
     font-weight: 600;
     color: var(--nav-link);
-    transition: background-color var(--dur-fast) ease, color var(--dur-fast) ease;
+    transition-property: background-color, color, border-color, box-shadow;
+    transition-duration: var(--dur-fast);
+    transition-timing-function: var(--ease);
     border: 1px solid var(--nav-border);
 }
 
 .nav-pill:hover {
     color: var(--nav-brand);
     background: var(--nav-link-hover-bg);
+    box-shadow: var(--shadow-1);
 }
 
 .nav-pill.active {
@@ -476,7 +588,9 @@ html[data-theme="dark"] .nav-pill.active {
     font-size: 0.88rem;
     font-weight: 600;
     color: var(--nav-link);
-    transition: background-color var(--dur-fast) ease, color var(--dur-fast) ease;
+    transition-property: background-color, color, box-shadow;
+    transition-duration: var(--dur-fast);
+    transition-timing-function: var(--ease);
 }
 
 .admin-nav-link:hover {
@@ -667,10 +781,15 @@ html[data-theme="dark"] .admin-nav-link.active {
     border-radius: var(--r-lg);
     box-shadow: var(--shadow-1);
     background: var(--surface);
+    transition: box-shadow var(--dur-med) var(--ease);
+}
+
+.card:hover {
+    box-shadow: var(--shadow-2);
 }
 
 .card .card-body {
-    padding: var(--space-4) var(--space-5);
+    padding: var(--space-5);
 }
 
 .card-header {
@@ -683,8 +802,14 @@ html[data-theme="dark"] .admin-nav-link.active {
    ============================================================ */
 .stat-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    grid-template-columns: 1.5fr 1fr 1fr;
     gap: var(--space-4);
+}
+
+@media (max-width: 991.98px) {
+    .stat-grid {
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    }
 }
 
 .stat-card {
@@ -696,6 +821,22 @@ html[data-theme="dark"] .admin-nav-link.active {
     border-radius: var(--r-md);
     background: var(--surface);
     box-shadow: var(--shadow-1), var(--shadow-inset);
+    transition-property: box-shadow, transform;
+    transition-duration: var(--dur-fast);
+    transition-timing-function: var(--ease);
+}
+
+.stat-card:hover {
+    box-shadow: var(--shadow-2), var(--shadow-inset);
+}
+
+.stat-card--attention {
+    background: color-mix(in srgb, var(--warn) 8%, var(--surface));
+    border-color: color-mix(in srgb, var(--warn) 32%, var(--line));
+}
+
+.stat-card--attention .stat-value {
+    color: var(--warn);
 }
 
 .stat-icon {
@@ -725,14 +866,16 @@ html[data-theme="dark"] .admin-nav-link.active {
 }
 
 .stat-value {
-    font-size: 1.5rem;
+    font-size: 1.6rem;
     font-weight: 700;
     line-height: 1.1;
     color: var(--text);
+    font-variant-numeric: tabular-nums;
 }
 
 .stat-label {
     font-size: 0.78rem;
+    font-weight: 600;
     color: var(--text-soft);
     margin-top: 0.1rem;
 }
@@ -758,7 +901,9 @@ html[data-theme="dark"] .admin-nav-link.active {
     padding: var(--space-3) var(--space-2);
     border-radius: var(--r-md);
     color: var(--text);
-    transition: background-color var(--dur-fast) ease;
+    transition-property: background-color, color, box-shadow;
+    transition-duration: var(--dur-fast);
+    transition-timing-function: var(--ease);
 }
 
 .conversation-item:hover {
@@ -798,6 +943,7 @@ html[data-theme="dark"] .admin-nav-link.active {
     font-size: 0.72rem;
     color: var(--text-soft);
     white-space: nowrap;
+    font-variant-numeric: tabular-nums;
 }
 
 /* ============================================================
@@ -812,7 +958,9 @@ html[data-theme="dark"] .admin-nav-link.active {
     border-radius: var(--r-md);
     background: var(--surface);
     color: var(--text);
-    transition: border-color var(--dur-fast) ease, box-shadow var(--dur-fast) ease;
+    transition-property: border-color, box-shadow;
+    transition-duration: var(--dur-fast);
+    transition-timing-function: var(--ease);
 }
 
 .child-card:hover {
@@ -870,7 +1018,7 @@ html[data-theme="dark"] .admin-nav-link.active {
 .alert {
     display: flex;
     align-items: flex-start;
-    gap: 0.6rem;
+    gap: var(--space-2);
     border-radius: var(--r-md);
     border: 1px solid var(--line);
     background: var(--alert-bg);
@@ -909,13 +1057,14 @@ html[data-theme="dark"] .admin-nav-link.active {
     border-radius: var(--r-full);
     font-weight: 600;
     letter-spacing: 0.01em;
-    transition: transform var(--dur-fast) ease, filter var(--dur-fast) ease,
-        background-color var(--dur-fast) ease, border-color var(--dur-fast) ease,
-        color var(--dur-fast) ease;
+    transition-property: transform, filter, background-color, border-color, color,
+        box-shadow;
+    transition-duration: var(--dur-fast);
+    transition-timing-function: var(--ease);
 }
 
 .btn:active {
-    transform: translateY(1px) scale(0.99);
+    transform: scale(0.96);
 }
 
 .btn-primary {
@@ -979,8 +1128,8 @@ html[data-theme="dark"] .btn-primary:hover {
 }
 
 .icon-btn {
-    width: 36px;
-    height: 36px;
+    width: 40px;
+    height: 40px;
     padding: 0;
     display: inline-flex;
     align-items: center;
@@ -1018,6 +1167,12 @@ textarea.form-control:focus {
     box-shadow: 0 0 0 0.2rem color-mix(in srgb, var(--brand) 18%, transparent);
     background-color: var(--input-bg-focus);
     color: var(--text);
+}
+
+.input-group-text {
+    background-color: var(--surface-muted);
+    color: var(--text-soft);
+    border-color: var(--line);
 }
 
 .char-counter {
@@ -1404,6 +1559,10 @@ textarea.form-control:focus {
     padding: 0.55rem 0;
 }
 
+.timeline-item--new {
+    animation: rise var(--dur-fast) var(--ease) both;
+}
+
 .timeline-dot {
     position: relative;
     z-index: 1;
@@ -1446,6 +1605,7 @@ textarea.form-control:focus {
     font-size: 0.75rem;
     font-weight: 600;
     white-space: nowrap;
+    font-variant-numeric: tabular-nums;
 }
 
 .unread-dot {
@@ -2090,5 +2250,258 @@ hr {
     .theme-toggle-btn, .btn.btn-outline-light {
         width: 100%;
         border-radius: var(--r-full);
+    }
+
+    .navbar-actions--bare .theme-toggle-btn {
+        width: auto;
+        flex-shrink: 0;
+    }
+}
+
+/* ============================================================
+   Calendar
+   ============================================================ */
+.calendar-date-badge {
+    width: 56px;
+    border-radius: var(--r-md);
+    background: color-mix(in srgb, var(--brand) 10%, var(--surface));
+    border: 1px solid color-mix(in srgb, var(--brand) 25%, var(--line));
+    padding: 0.4rem 0;
+}
+
+.calendar-date-badge .calendar-date-month {
+    display: block;
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: var(--brand);
+}
+
+.calendar-date-badge .calendar-date-day {
+    display: block;
+    font-size: 1.35rem;
+    font-weight: 800;
+    line-height: 1.1;
+    color: var(--text);
+}
+
+.calendar-date-badge .calendar-date-weekday {
+    display: block;
+    font-size: 0.62rem;
+    font-weight: 600;
+    color: var(--text-soft);
+}
+
+.calendar-date-badge--deadline {
+    background: color-mix(in srgb, var(--danger) 10%, var(--surface));
+    border-color: color-mix(in srgb, var(--danger) 30%, var(--line));
+}
+
+.calendar-date-badge--deadline .calendar-date-month,
+.calendar-date-badge--deadline .calendar-date-weekday {
+    color: var(--danger);
+}
+
+.calendar-date-badge--holiday {
+    background: color-mix(in srgb, var(--ok) 10%, var(--surface));
+    border-color: color-mix(in srgb, var(--ok) 30%, var(--line));
+}
+
+.calendar-date-badge--holiday .calendar-date-month,
+.calendar-date-badge--holiday .calendar-date-weekday {
+    color: var(--ok);
+}
+
+.event-card-item {
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.event-card-item:hover {
+    border-color: color-mix(in srgb, var(--brand) 40%, var(--line));
+    box-shadow: var(--shadow-1);
+}
+
+.dot-indicator {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    vertical-align: 1px;
+}
+
+.calendar-day-cell {
+    min-height: 85px;
+}
+
+.calendar-day-cell--today {
+    background: color-mix(in srgb, var(--brand) 12%, var(--surface));
+}
+
+.calendar-grid-cols {
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+
+.calendar-day-number--today {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    font-size: 0.72rem;
+    border-radius: 50%;
+    background: var(--brand);
+    color: #fff;
+}
+
+.calendar-today-badge {
+    font-size: 0.6rem;
+    background: var(--brand);
+    color: #fff;
+}
+
+.calendar-pill-mini {
+    display: block;
+    overflow: hidden;
+    white-space: nowrap;
+    font-size: 0.68rem;
+    line-height: 1.3;
+}
+
+/* ============================================================
+   Modal — piloté par les tokens (thème clair/sombre)
+   ============================================================ */
+.modal-content {
+    background-color: var(--surface);
+    color: var(--text);
+    border: 1px solid var(--line);
+    border-radius: var(--r-lg);
+    box-shadow: var(--shadow-3);
+}
+
+.modal-header {
+    border-color: var(--line);
+}
+
+.modal-footer {
+    background-color: var(--surface-muted);
+    border-color: var(--line);
+}
+
+.modal-header .modal-title {
+    color: var(--text);
+}
+
+html[data-theme="dark"] .btn-close {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23a8aec8'%3e%3cpath d='M.293.293a1 1 0 0 1 1.414 0L8 6.586 14.293.293a1 1 0 1 1 1.414 1.414L9.414 8l6.293 6.293a1 1 0 0 1-1.414 1.414L8 9.414l-6.293 6.293a1 1 0 0 1-1.414-1.414L6.586 8 .293 1.707a1 1 0 0 1 0-1.414z'/%3e%3c/svg%3e");
+    opacity: 0.85;
+}
+
+/* ============================================================
+   Calendrier — utilitaires de surface (tokens, clair + sombre)
+   ============================================================ */
+.bg-surface {
+    background-color: var(--surface);
+}
+
+.bg-primary-subtle-light {
+    background-color: color-mix(in srgb, var(--brand) 12%, var(--surface));
+}
+
+.bg-warning-subtle-light {
+    background-color: color-mix(in srgb, var(--warn) 14%, var(--surface));
+}
+
+.bg-success-subtle-light {
+    background-color: color-mix(in srgb, var(--ok) 14%, var(--surface));
+}
+
+.calendar-grid-header {
+    background-color: var(--surface-muted);
+    color: var(--text-soft);
+}
+
+.calendar-day-cell--empty {
+    background-color: color-mix(in srgb, var(--surface-strong) 75%, var(--surface));
+}
+
+.calendar-day-number {
+    color: var(--text);
+}
+
+/* ============================================================
+   Thème sombre — utilitaires Bootstrap figés → tokens
+   (surface plate, badge, chip : `.bg-light`, `*-subtle`,
+   `.text-dark`, … ont des couleurs fixes hors `data-bs-theme`)
+   ============================================================ */
+html[data-theme="dark"] .bg-light,
+html[data-theme="dark"] .bg-light-subtle {
+    background-color: var(--surface-muted) !important;
+}
+
+html[data-theme="dark"] .text-dark {
+    color: var(--text) !important;
+}
+
+html[data-theme="dark"] .text-secondary-emphasis {
+    color: var(--text-soft) !important;
+}
+
+html[data-theme="dark"] .text-warning-emphasis {
+    color: var(--warn) !important;
+}
+
+html[data-theme="dark"] .bg-primary-subtle,
+html[data-theme="dark"] .bg-secondary-subtle,
+html[data-theme="dark"] .bg-danger-subtle,
+html[data-theme="dark"] .bg-success-subtle,
+html[data-theme="dark"] .bg-warning-subtle {
+    background-color: color-mix(in srgb, var(--surface) 82%, var(--line)) !important;
+}
+
+html[data-theme="dark"] .border-primary-subtle {
+    border-color: color-mix(in srgb, var(--brand) 45%, var(--line)) !important;
+}
+
+html[data-theme="dark"] .border-secondary-subtle {
+    border-color: color-mix(in srgb, var(--text-soft) 35%, var(--line)) !important;
+}
+
+html[data-theme="dark"] .border-danger-subtle {
+    border-color: color-mix(in srgb, var(--danger) 45%, var(--line)) !important;
+}
+
+html[data-theme="dark"] .border-success-subtle {
+    border-color: color-mix(in srgb, var(--ok) 45%, var(--line)) !important;
+}
+
+html[data-theme="dark"] .border-warning-subtle {
+    border-color: color-mix(in srgb, var(--warn) 40%, var(--line)) !important;
+}
+
+/* ============================================================
+   Impression — le calendrier s'imprime en chronologie propre
+   ============================================================ */
+@media print {
+    .navbar,
+    .skip-link,
+    #print-calendar-btn,
+    #calendar-view-grid,
+    .calendar-filters,
+    .calendar-actions {
+        display: none !important;
+    }
+
+    body {
+        background: #fff !important;
+    }
+
+    .card {
+        border: none !important;
+        box-shadow: none !important;
+    }
+
+    .reveal-group {
+        opacity: 1 !important;
+        transform: none !important;
     }
 }

@@ -34,7 +34,7 @@ def test_create_user_requires_admin(client, app):
     parent_id = create_user(app, role="PARENT", email="p@t.local")
     login(client, parent_id)
     response = client.get("/auth/users/new", follow_redirects=True)
-    assert b"Acces reserve" in response.data
+    assert b"Acc\xc3\xa8s r\xc3\xa9serv\xc3\xa9" in response.data
 
 
 def test_create_user_admin_success(client, app):
@@ -49,8 +49,8 @@ def test_create_user_admin_success(client, app):
         },
     )
     assert response.status_code == 200
-    assert b"Compte cree" in response.data
-    assert b"Invitation creee" in response.data
+    assert b"Compte cr\xc3\xa9\xc3\xa9" in response.data
+    assert b"Invitation cr\xc3\xa9\xc3\xa9e" in response.data
     assert b"/auth/invite/" in response.data
 
 
@@ -63,4 +63,4 @@ def test_create_user_validation_error(client, app):
         follow_redirects=True,
     )
     assert response.status_code == 200
-    assert b"All fields are required" in response.data
+    assert b"Tous les champs sont requis" in response.data

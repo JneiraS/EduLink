@@ -1,5 +1,6 @@
 from tests.helpers import (
     add_announcement,
+    add_calendar_event,
     add_message,
     add_notification,
     create_channel,
@@ -86,8 +87,8 @@ def test_admin_sees_platform_stats_and_recent_signups(app, client):
 
     login(client, admin_id)
     resp = client.get("/")
-    assert b"Plateforme" in resp.data
-    assert b"Inscriptions recentes" in resp.data
+    assert b"plateforme" in resp.data
+    assert b"Inscriptions r\xc3\xa9centes" in resp.data
     assert b"Teacher Two" in resp.data
     assert b"1" in resp.data
 
@@ -97,4 +98,32 @@ def test_dashboard_renders_empty_state_when_no_activity(app, client):
     login(client, user_id)
     resp = client.get("/")
     assert resp.status_code == 200
-    assert b"Aucune activite recente" in resp.data
+    assert b"Aucune activit\xc3\xa9 r\xc3\xa9cente" in resp.data
+
+
+def test_dashboard_shows_calendar_summary_with_upcoming_deadline(app, client):
+    parent_id = create_user(app, role="PARENT", email="dash.calendar@t.local")
+    from datetime import datetime, timedelta
+
+    add_calendar_event(
+        app,
+        "Rendu fiches cantine",
+        type_value="deadline",
+        start_date=datetime.now() + timedelta(days=5),
+    )
+    login(client, parent_id)
+    resp = client.get("/")
+    assert resp.status_code == 200
+    assert b"Calendrier scolaire" in resp.data
+    assert b"Rendu fiches cantine" in resp.data
+    assert b"Voir le calendrier" in resp.data
+
+
+def test_dashboard_shows_calendar_empty_state_when_no_events(app, client):
+    user_id = create_user(app, role="TEACHER", email="dash.calendar.empty@t.local")
+    login(client, user_id)
+    resp = client.get("/")
+    assert resp.status_code == 200
+    assert b"Calendrier scolaire" in resp.data
+    assert "Aucune date planifiée".encode() in resp.data
+    assert b"Ouvrir le calendrier" in resp.data

@@ -1,8 +1,10 @@
 from dataclasses import dataclass
+from datetime import date
 
 from app.domain.entities.user import User, UserRole
 from app.domain.ports.repositories import (
     AnnouncementRepositoryPort,
+    CalendarRepositoryPort,
     ChannelRepositoryPort,
     ChildrenRepositoryPort,
     MessageRepositoryPort,
@@ -19,8 +21,10 @@ class GetDashboard:
     messages: MessageRepositoryPort
     children: ChildrenRepositoryPort
     users: UserRepositoryPort
+    events: CalendarRepositoryPort
 
-    def execute(self, actor: User) -> dict:
+    def execute(self, actor: User, today: date | None = None) -> dict:
+        today = today or date.today()
         user_id = actor.id or 0
         role_message = {
             UserRole.ADMIN: "Espace administration",
@@ -70,6 +74,8 @@ class GetDashboard:
             "notifications": notifications[:5],
         }
 
+        data["calendar"] = self._calendar_summary(today)
+
         if actor.role == UserRole.PARENT:
             data["children"] = self.children.list_by_parent(user_id)
         elif actor.role == UserRole.ADMIN:
@@ -90,3 +96,30 @@ class GetDashboard:
             data["recent_users"] = all_users[:5]
 
         return data
+
+    def _calendar_summary(self, today: date) -> dict:
+        all_events = self.events.list_events()
+        upcoming = [e for e in all_events if e.start_date.date() >= today]
+
+        next_deadline = next(
+            (e for e in upcoming if e.type.value == "deadline"), None
+        )
+        days_to_deadline = None
+        if next_deadline is not None:
+            days_to_deadline = max(
+                (next_deadline.start_date.date() - today).days, 0
+            )
+
+        return {
+            "next_deadline": next_deadline,
+            "days_to_deadline": days_to_deadline,
+            "next_holiday": next(
+                (e for e in upcoming if e.type.value == "holiday"), None
+            ),
+            "month_count": sum(
+                1
+                for e in all_events
+                if e.start_date.month == today.month
+                and e.start_date.year == today.year
+            ),
+        }

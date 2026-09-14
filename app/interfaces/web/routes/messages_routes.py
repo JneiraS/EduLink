@@ -32,7 +32,7 @@ def channels():
 
         try:
             get_use_cases().create_channel.execute(actor, name=name, members=member_ids)
-            flash("Canal cree", "success")
+            flash("Canal créé", "success")
             return redirect(url_for(MESSAGES_CHANNELS))
         except (ValidationError, AuthorizationError) as exc:
             flash(str(exc), "danger")
@@ -40,6 +40,13 @@ def channels():
     channels_data = get_use_cases().list_user_channels.execute(actor)
     direct_channels = [c for c in channels_data if c.kind == "direct"]
     group_channels = [c for c in channels_data if c.kind != "direct"]
+
+    target_channel_id = request.args.get("channel_id", type=int)
+    if target_channel_id and any(
+        channel.id == target_channel_id for channel in channels_data
+    ):
+        return redirect(url_for(CHANNEL_DETAIL, channel_id=target_channel_id))
+
     notif_settings = get_use_cases().get_notification_settings.execute(actor)
     users = sorted(
         get_use_cases().list_all_users.execute(),
@@ -69,7 +76,7 @@ def toggle_channel_notifications(channel_id: int):
             actor, channel_id
         )
         flash(
-            "Notifications activees" if enabled else "Notifications desactivees",
+            "Notifications activées" if enabled else "Notifications désactivées",
             "success",
         )
     except (NotFoundError, AuthorizationError) as exc:
@@ -83,9 +90,9 @@ def set_global_notifications():
     enabled = request.form.get("enabled") == "1"
     get_use_cases().set_global_notifications.execute(current_actor(), enabled)
     flash(
-        "Notifications globales activees"
+        "Notifications globales activées"
         if enabled
-        else "Notifications globales desactivees",
+        else "Notifications globales désactivées",
         "success",
     )
     return redirect(url_for(MESSAGES_CHANNELS))
@@ -98,14 +105,14 @@ def new_conversation():
     if request.method == "POST":
         member_id = request.form.get("member", "")
         if not member_id.isdigit():
-            flash("Selectionnez un contact", "danger")
+            flash("Sélectionnez un contact", "danger")
             return redirect(url_for("messages.new_conversation"))
 
         try:
             channel = get_use_cases().open_direct_conversation.execute(
                 actor, other_user_id=int(member_id)
             )
-            flash("Conversation creee", "success")
+            flash("Conversation créée", "success")
             return redirect(url_for(CHANNEL_DETAIL, channel_id=channel.id))
         except (ValidationError, NotFoundError) as exc:
             flash(str(exc), "danger")
@@ -128,7 +135,7 @@ def new_conversation():
 def find_parent():
     actor = current_actor()
     if actor.role not in (UserRole.ADMIN, UserRole.TEACHER):
-        flash("Acces reserve aux enseignants", "danger")
+        flash("Accès réservé aux enseignants", "danger")
         return redirect(url_for("dashboard.home"))
     if request.method == "POST":
         parent_id = request.form.get("parent_id", type=int)
@@ -137,7 +144,7 @@ def find_parent():
                 channel = get_use_cases().open_direct_conversation.execute(
                     actor, other_user_id=parent_id
                 )
-                flash("Conversation creee", "success")
+                flash("Conversation créée", "success")
                 return redirect(url_for(CHANNEL_DETAIL, channel_id=channel.id))
             except (ValidationError, NotFoundError) as exc:
                 flash(str(exc), "danger")
@@ -170,7 +177,7 @@ def templates():
             get_use_cases().create_message_template.execute(
                 actor, label=label, content=content
             )
-            flash("Modele cree", "success")
+            flash("Modèle créé", "success")
             return redirect(url_for("messages.templates"))
         except ValidationError as exc:
             flash(str(exc), "danger")
@@ -186,7 +193,7 @@ def delete_template(template_id: int):
         get_use_cases().delete_message_template.execute(
             current_actor(), template_id
         )
-        flash("Modele supprime", "success")
+        flash("Modèle supprimé", "success")
     except AuthorizationError as exc:
         flash(str(exc), "danger")
     return redirect(url_for("messages.templates"))
@@ -201,7 +208,7 @@ def edit_template(template_id: int):
         (t for t in my_templates if t.id == template_id), None
     )
     if template is None:
-        flash("Template not found", "danger")
+        flash("Modèle introuvable", "danger")
         return redirect(url_for("messages.templates"))
 
     if request.method == "POST":
@@ -211,7 +218,7 @@ def edit_template(template_id: int):
             get_use_cases().update_message_template.execute(
                 actor, template_id, label=label, content=content
             )
-            flash("Modele mis a jour", "success")
+            flash("Modèle mis à jour", "success")
             return redirect(url_for("messages.templates"))
         except ValidationError as exc:
             flash(str(exc), "danger")
@@ -240,7 +247,7 @@ def channel_detail(channel_id: int):
                 get_use_cases().add_channel_members.execute(
                     actor, channel_id=channel_id, members=member_ids
                 )
-                flash("Membres ajoutes", "success")
+                flash("Membres ajoutés", "success")
             except (ValidationError, AuthorizationError, NotFoundError) as exc:
                 flash(str(exc), "danger")
 
@@ -255,7 +262,7 @@ def channel_detail(channel_id: int):
                     message_id=message_id or 0,
                     pinned=pinned,
                 )
-                flash("Message epingle" if pinned else "Message desepingle", "success")
+                flash("Message épinglé" if pinned else "Message désépinglé", "success")
             except (ValidationError, AuthorizationError, NotFoundError) as exc:
                 flash(str(exc), "danger")
 
@@ -266,9 +273,9 @@ def channel_detail(channel_id: int):
                     actor, channel_id
                 )
                 flash(
-                    "Notifications activees"
+                    "Notifications activées"
                     if enabled
-                    else "Notifications desactivees",
+                    else "Notifications désactivées",
                     "success",
                 )
             except (NotFoundError, AuthorizationError) as exc:

@@ -37,7 +37,7 @@ def test_admin_members_page_requires_admin(client, app):
     login(client, teacher_id)
     response = client.get("/admin/members", follow_redirects=True)
     assert response.status_code == 200
-    assert b"Acces reserve a l" in response.data
+    assert b"Acc\xc3\xa8s r\xc3\xa9serv\xc3\xa9 \xc3\xa0" in response.data
 
 
 def test_admin_role_change_requires_admin(client, app):
@@ -77,7 +77,7 @@ def test_admin_members_page_links_to_create_user(client, app):
     response = client.get("/admin/members")
     assert response.status_code == 200
     assert b"/auth/users/new" in response.data
-    assert b"Creer un utilisateur" in response.data
+    assert b"Cr\xc3\xa9er un utilisateur" in response.data
 
 
 def test_admin_role_change_success(client, app):
@@ -91,7 +91,7 @@ def test_admin_role_change_success(client, app):
         follow_redirects=True,
     )
     assert response.status_code == 200
-    assert b"Role mis a jour" in response.data
+    assert b"R\xc3\xb4le mis \xc3\xa0 jour" in response.data
     with app.app_context():
         user = SQLAlchemyUserRepository().find_by_id(parent_id)
         assert user.role.value == "TEACHER"
@@ -107,7 +107,7 @@ def test_admin_role_change_rejects_self_demotion(client, app):
         follow_redirects=True,
     )
     assert response.status_code == 200
-    assert b"own role" in response.data
+    assert b"votre propre r\xc3\xb4le" in response.data
     with app.app_context():
         user = SQLAlchemyUserRepository().find_by_id(admin_id)
         assert user.role.value == "ADMIN"
@@ -122,7 +122,7 @@ def test_admin_toggle_active_success_blocks_login(client, app):
         f"/admin/members/{teacher_id}/toggle-active", follow_redirects=True
     )
     assert response.status_code == 200
-    assert b"Compte desactive" in response.data
+    assert b"Compte d\xc3\xa9sactiv\xc3\xa9" in response.data
     with app.app_context():
         user = SQLAlchemyUserRepository().find_by_id(teacher_id)
         assert user.is_active is False
@@ -144,7 +144,7 @@ def test_admin_toggle_active_rejects_self(client, app):
         f"/admin/members/{admin_id}/toggle-active", follow_redirects=True
     )
     assert response.status_code == 200
-    assert b"own account" in response.data
+    assert b"votre propre compte" in response.data
 
 
 # ---------------------------------------------------------------------------
@@ -178,7 +178,7 @@ def test_admin_delete_announcement_removes_pdf(client, app):
         f"/admin/announcements/{announcement_id}/delete", follow_redirects=True
     )
     assert response.status_code == 200
-    assert b"Annonce supprimee" in response.data
+    assert b"Annonce supprim\xc3\xa9e" in response.data
     assert not os.path.exists(os.path.join(uploads, "aaa111_cours.pdf"))
 
 
@@ -194,7 +194,7 @@ def test_admin_delete_announcement_requires_admin(client, app):
         f"/admin/announcements/{announcement_id}/delete", follow_redirects=True
     )
     assert response.status_code == 200
-    assert b"Acces reserve a l" in response.data
+    assert b"Acc\xc3\xa8s r\xc3\xa9serv\xc3\xa9 \xc3\xa0" in response.data
 
 
 # ---------------------------------------------------------------------------
@@ -227,7 +227,7 @@ def test_admin_delete_channel_cascades(client, app):
         f"/admin/channels/{channel_id}/delete", follow_redirects=True
     )
     assert response.status_code == 200
-    assert b"Canal supprime" in response.data
+    assert b"Canal supprim\xc3\xa9" in response.data
 
 
 # ---------------------------------------------------------------------------
@@ -274,7 +274,7 @@ def test_admin_stats_page_requires_admin(client, app):
     login(client, teacher_id)
     response = client.get("/admin/stats", follow_redirects=True)
     assert response.status_code == 200
-    assert b"Acces reserve a l" in response.data
+    assert b"Acc\xc3\xa8s r\xc3\xa9serv\xc3\xa9 \xc3\xa0" in response.data
 
 
 def test_admin_stats_page_renders_charts(client, app):

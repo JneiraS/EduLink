@@ -27,7 +27,7 @@ if (socket) {
         const channelId = payload.channel_id;
 
         const item = document.createElement("li");
-        item.className = "timeline-item";
+        item.className = "timeline-item timeline-item--new";
 
         const dot = document.createElement("span");
         dot.className = "timeline-dot timeline-dot--message";
@@ -102,7 +102,7 @@ function initMemberPicker() {
 
         const updateSummary = () => {
             const selected = boxes.filter((box) => box.checked);
-            countEl.textContent = `${selected.length} selectionne${selected.length !== 1 ? "s" : ""}`;
+            countEl.textContent = `${selected.length} sélectionné${selected.length !== 1 ? "s" : ""}`;
             summary.replaceChildren();
             selected.forEach((box) => {
                 const option = box.closest(".member-option");
@@ -229,10 +229,11 @@ function initThemeToggle() {
 
     const applyThemeUi = (theme) => {
         const isDark = theme === "dark";
-        const title = isDark ? "Theme clair" : "Theme sombre";
+        const title = isDark ? "Thème clair" : "Thème sombre";
         const iconClass = isDark ? "bi-sun" : "bi-moon-stars";
         themeButton.setAttribute("title", title);
         themeButton.setAttribute("aria-label", `Basculer vers le ${title.toLowerCase()}`);
+        themeButton.setAttribute("aria-pressed", isDark ? "true" : "false");
         themeButton.innerHTML = `<i class="bi ${iconClass}" aria-hidden="true"></i>`;
 
         if (themeColorMeta) {
@@ -241,9 +242,21 @@ function initThemeToggle() {
     };
 
     const setTheme = (theme) => {
+        // Suppress transitions during theme switch
+        const style = document.createElement("style");
+        style.innerHTML = `*,*::before,*::after{transition:none !important}`;
+        document.head.appendChild(style);
+
         root.setAttribute("data-theme", theme);
         localStorage.setItem("edulink-theme", theme);
         applyThemeUi(theme);
+        
+        // Force reflow
+        void document.documentElement.offsetWidth;
+        
+        // Remove style
+        document.head.removeChild(style);
+
         document.dispatchEvent(new CustomEvent("edulink:themechange", { detail: theme }));
     };
 
@@ -409,7 +422,7 @@ function initFileZone() {
                 strong.textContent = name;
             }
             if (hint) {
-                hint.textContent = "Pret a etre publie.";
+                hint.textContent = "Prêt à être publié.";
             }
         } else if (strong && hint) {
             strong.textContent = "Deposer un PDF";
@@ -473,9 +486,9 @@ function initAiSummary() {
             const data = await response.json();
             output.textContent = response.ok
                 ? data.summary
-                : (data.error || "Le resume a echoue.");
+                : (data.error || "Le résumé a échoué.");
         } catch (error) {
-            output.textContent = "Le resume a echoue.";
+            output.textContent = "Le résumé a échoué.";
         } finally {
             spinner.hidden = true;
             btn.disabled = false;
@@ -544,17 +557,111 @@ function initAiRephrase() {
             });
             const data = await response.json();
             if (!response.ok) {
-                output.textContent = data.error || "La reformulation a echoue.";
+                output.textContent = data.error || "La reformulation a échoué.";
             } else {
                 suggestion = data.suggestion || "";
                 output.textContent = suggestion;
                 actions.hidden = false;
             }
         } catch (error) {
-            output.textContent = "La reformulation a echoue.";
+            output.textContent = "La reformulation a échoué.";
         } finally {
             spinner.hidden = true;
             btn.disabled = false;
+        }
+    });
+}
+
+function initCalendarViewSwitch() {
+    const listView = document.getElementById("calendar-view-list");
+    const gridView = document.getElementById("calendar-view-grid");
+    const buttons = document.querySelectorAll("[data-calendar-view]");
+    if (!listView || !gridView || !buttons.length) {
+        return;
+    }
+
+    buttons.forEach((button) => {
+        button.addEventListener("click", () => {
+            const mode = button.dataset.calendarView;
+            const showGrid = mode === "grid";
+            listView.classList.toggle("d-none", showGrid);
+            gridView.classList.toggle("d-none", !showGrid);
+            buttons.forEach((btn) => btn.classList.remove("active"));
+            button.classList.add("active");
+        });
+    });
+}
+
+function initCalendarAutoSubmit() {
+    document.querySelectorAll("select[data-calendar-autosubmit]").forEach((select) => {
+        select.addEventListener("change", () => {
+            select.form?.submit();
+        });
+    });
+}
+
+function initCalendarPrint() {
+    const printButton = document.getElementById("print-calendar-btn");
+    if (printButton) {
+        printButton.addEventListener("click", () => window.print());
+    }
+}
+
+function initPasswordToggle() {
+    document.querySelectorAll("[data-password-toggle]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+            const group = btn.closest(".input-group");
+            const input = group
+                ? group.querySelector("input[type='password'], input[type='text']")
+                : null;
+            if (!input) {
+                return;
+            }
+            const show = input.type === "password";
+            input.type = show ? "text" : "password";
+            const icon = btn.querySelector("i");
+            if (icon) {
+                icon.className = show ? "bi bi-eye-slash" : "bi bi-eye";
+            }
+            btn.setAttribute(
+                "aria-label",
+                show ? "Masquer le mot de passe" : "Afficher le mot de passe"
+            );
+        });
+    });
+}
+
+function initChatDraft() {
+    const form = document.querySelector("form.composer[data-channel-id]");
+    if (!form) {
+        return;
+    }
+    const textarea = form.querySelector("textarea#content");
+    if (!textarea) {
+        return;
+    }
+    const storageKey = `edulink-draft-${form.dataset.channelId}`;
+    try {
+        const saved = sessionStorage.getItem(storageKey);
+        if (saved) {
+            textarea.value = saved;
+            textarea.dispatchEvent(new Event("input", { bubbles: true }));
+        }
+    } catch (error) {
+        return;
+    }
+    textarea.addEventListener("input", () => {
+        try {
+            sessionStorage.setItem(storageKey, textarea.value);
+        } catch (error) {
+            /* storage unavailable: persistence is optional */
+        }
+    });
+    form.addEventListener("submit", () => {
+        try {
+            sessionStorage.removeItem(storageKey);
+        } catch (error) {
+            /* storage unavailable */
         }
     });
 }
@@ -573,6 +680,10 @@ initChatScroll();
 
 initFileZone();
 
+initPasswordToggle();
+
+initChatDraft();
+
 initMemberPicker();
 
 initAudiencePicker();
@@ -584,6 +695,12 @@ initCopyButtons();
 initAiSummary();
 
 initAiRephrase();
+
+initCalendarViewSwitch();
+
+initCalendarAutoSubmit();
+
+initCalendarPrint();
 
 if (isAuthenticated) {
     initPushNotifications().catch((error) => {
@@ -619,14 +736,14 @@ async function initPushNotifications() {
     const data = await response.json();
     const publicKey = data.publicKey;
     if (!publicKey) {
-        showStatus("Push non configure", "btn-outline-warning", "bi-bell-slash", true);
+        showStatus("Push non configuré", "btn-outline-warning", "bi-bell-slash", true);
         return;
     }
 
     const registration = await navigator.serviceWorker.register("/service-worker.js");
     const existingSubscription = await registration.pushManager.getSubscription();
     if (existingSubscription) {
-        showStatus("Push mobile active", "btn-success", "bi-bell-fill", true);
+        showStatus("Push mobile activé", "btn-success", "bi-bell-fill", true);
         return;
     }
 
@@ -634,7 +751,7 @@ async function initPushNotifications() {
     enableButton.addEventListener("click", async () => {
         const permission = await Notification.requestPermission();
         if (permission !== "granted") {
-            showStatus("Permission refusee", "btn-outline-danger", "bi-bell-slash", true);
+            showStatus("Permission refusée", "btn-outline-danger", "bi-bell-slash", true);
             return;
         }
 
@@ -654,6 +771,6 @@ async function initPushNotifications() {
             body: JSON.stringify(subscription),
         });
 
-        showStatus("Push mobile active", "btn-success", "bi-bell-fill", true);
+        showStatus("Push mobile activé", "btn-success", "bi-bell-fill", true);
     });
 }
