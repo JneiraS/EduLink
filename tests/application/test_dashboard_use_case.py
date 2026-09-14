@@ -1,7 +1,8 @@
-from datetime import datetime
+from datetime import date, datetime
 
 from app.application.use_cases.dashboard_use_case import GetDashboard
 from app.domain.entities.announcement import Announcement
+from app.domain.entities.calendar_event import CalendarEvent, EventCategory, EventType
 from app.domain.entities.channel import Channel
 from app.domain.entities.child import Child
 from app.domain.entities.message import Message
@@ -92,6 +93,14 @@ class InMemoryUsers:
         return list(self.users)
 
 
+class InMemoryCalendar:
+    def __init__(self, events=None):
+        self.events = events or []
+
+    def list_events(self):
+        return list(self.events)
+
+
 def _user(uid, role):
     return User(
         id=uid,
@@ -149,6 +158,25 @@ def _child(cid, parent_id):
     )
 
 
+def _calendar_event(
+    eid,
+    title,
+    type_value,
+    start,
+    end=None,
+):
+    return CalendarEvent(
+        id=eid,
+        title=title,
+        type=EventType(type_value),
+        start_date=start,
+        end_date=end,
+        category=EventCategory.ACADEMIC,
+        class_name="Tous les niveaux",
+        priority="normal",
+    )
+
+
 def _make_dashboard(
     announcements=None,
     notifications=None,
@@ -156,6 +184,7 @@ def _make_dashboard(
     messages=None,
     children=None,
     users=None,
+    events=None,
 ):
     members = {c.id: [1] for c in (channels or [])}
     return GetDashboard(
@@ -165,6 +194,7 @@ def _make_dashboard(
         messages=InMemoryMessages(messages),
         children=InMemoryChildren(children),
         users=InMemoryUsers(users),
+        events=InMemoryCalendar(events),
     )
 
 
@@ -261,3 +291,103 @@ def test_admin_gets_platform_stats_and_recent_users():
     assert data["channel_count"] == 1
     assert data["announcement_count"] == 1
     assert data["recent_users"] == [admin, teacher, parent]
+
+
+def test_calendar_summary_includes_next_deadline_with_days():
+    dashboard = _make_dashboard(
+        events=[
+            _calendar_event(
+                1, "Rendu fiches", "deadline", datetime(2026, 9, 20, 18, 0)
+            ),
+            _calendar_event(
+                2, "Conseil de classe", "event", datetime(2026, 9, 25, 18, 0)
+            ),
+        ]
+    )
+    data = dashboard.execute(
+        _user(1, UserRole.TEACHER), today=date(2026, 9, 13)
+    )
+    calendar = data["calendar"]
+    assert calendar["next_deadline"].title == "Rendu fiches"
+    assert calendar["days_to_deadline"] == 7
+
+
+def test_calendar_summary_reports_zero_days_for_today_deadline():
+    dashboard = _make_dashboard(
+        events=[
+            _calendar_event(
+                1, "Dernier jour", "deadline", datetime(2026, 9, 13, 12, 0)
+            )
+        ]
+    )
+    data = dashboard.execute(
+        _user(1, UserRole.TEACHER), today=date(2026, 9, 13)
+    )
+    assert data["calendar"]["days_to_deadline"] == 0
+
+
+def test_calendar_summary_ignores_past_deadline():
+    dashboard = _make_dashboard(
+        events=[
+            _calendar_event(
+                1, "Ancienne date", "deadline", datetime(2026, 9, 2, 12, 0)
+            )
+        ]
+    )
+    data = dashboard.execute(
+        _user(1, UserRole.TEACHER), today=date(2026, 9, 13)
+    )
+    assert data["calendar"]["next_deadline"] is None
+    assert data["calendar"]["days_to_deadline"] is None
+
+
+def test_calendar_summary_includes_next_holiday():
+    dashboard = _make_dashboard(
+        events=[
+            _calendar_event(
+                1,
+                "Vacances de la Toussaint",
+                "holiday",
+                datetime(2026, 10, 19),
+                datetime(2026, 11, 2),
+            )
+        ]
+    )
+    data = dashboard.execute(
+        _user(1, UserRole.PARENT), today=date(2026, 9, 13)
+    )
+    assert data["calendar"]["next_holiday"].title == "Vacances de la Toussaint"
+
+
+def test_calendar_summary_counts_events_of_current_month_and_year():
+    dashboard = _make_dashboard(
+        events=[
+            _calendar_event(
+                1, "Ce mois", "event", datetime(2026, 9, 5, 10, 0)
+            ),
+            _calendar_event(
+                2, "Ce mois encore", "event", datetime(2026, 9, 25, 10, 0)
+            ),
+            _calendar_event(
+                3, "Mois precedent", "event", datetime(2026, 8, 25, 10, 0)
+            ),
+            _calendar_event(
+                4, "Autre annee", "event", datetime(2027, 9, 25, 10, 0)
+            ),
+        ]
+    )
+    data = dashboard.execute(
+        _user(1, UserRole.TEACHER), today=date(2026, 9, 13)
+    )
+    assert data["calendar"]["month_count"] == 2
+
+
+def test_calendar_summary_empty_when_no_events():
+    data = _make_dashboard().execute(
+        _user(1, UserRole.TEACHER), today=date(2026, 9, 13)
+    )
+    calendar = data["calendar"]
+    assert calendar["next_deadline"] is None
+    assert calendar["days_to_deadline"] is None
+    assert calendar["next_holiday"] is None
+    assert calendar["month_count"] == 0

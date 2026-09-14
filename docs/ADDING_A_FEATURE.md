@@ -405,9 +405,12 @@ dernier message), panneau **« Mes enfants »** (parent), vue d'ensemble platefo
 3. **Adapters** — `message_repository.py`, `notification_repository.py`,
    `announcement_repository.py` implémentent les méthodes (tests dans
    `tests/infrastructure/test_dashboard_repositories.py`).
-4. **Use case** — `GetDashboard` reçoit 6 repos et renvoie un dict complet ;
+4. **Use case** — `GetDashboard` reçoit les repos et renvoie un dict complet ;
    les clés rôle-spécifiques (`children`, `user_counts`…) ne sont ajoutées que
-   pour le rôle concerné.
+   pour le rôle concerné. Il accepte un `today` injecté
+   (`execute(actor, today=None)`, défaut `date.today()`) et expose un résumé
+   calendrier (`_calendar_summary(today)` → clé `calendar`) basé sur
+   `CalendarRepositoryPort` (voir fil rouge n°8).
 5. **Câblage** — `GetDashboard` instancié dans `create_app()` avec tous les
    repos ; la route passe le nouveau contexte au template.
 6. **Template + CSS** — `home.html` : `.stat-grid` / `.stat-card--brand|warn|ok`
@@ -528,6 +531,16 @@ Feature « calendrier & échéances scolaires » — nouvelle table + nouvelle p
    pour un `PARENT`, création par `TEACHER`/`ADMIN` (persistance DB),
    suppression par l'admin, refus de suppression pour un `PARENT`
    (`AuthorizationError` flashée), dropdown de classes alimenté.
+10. **Intégration dashboard** — `GetDashboard` reçoit `events` (7ᵉ repo, même
+    `calendar_repo`) et calcule un **résumé** `calendar` : prochaine échéance
+    + jours restants, prochaines vacances, événements du mois courant. La
+    comparaison se fait **dans le use case** contre un `today` **injecté**
+    (`dashboard_routes.py` passe `date.today()`), jamais dans la route — et
+    permet des tests déterministes (`execute(actor, today=date(...))`). La
+    carte `dashboard/home.html` (pleine largeur, après les stat cards)
+    réutilise les blocs `bg-surface` de `calendar/index.html` ; tests rajoutés
+    dans `tests/application/test_dashboard_use_case.py` et
+    `tests/interfaces/test_dashboard_routes.py`.
 
 **Leçons** : (1) une feature « lecture seule + écriture réservée » garde
 l'écriture **dans le use case** (`AuthorizationError`) alors que le template ne
@@ -536,7 +549,8 @@ agrégats d'affichage est une fonction simple mais reste une **lecture** :
 `ListCalendarEvents` exécute les filtres en base et **valide** les valeurs de
 filtre, la route ne fait que du rendu ; (3) CSP sans `'unsafe-inline'` → tout
 interactif passe par des `data-*` hooks branchés dans `app.js` (même
-`window.print`).
+`window.print`) ; (4) **les fenêtres/agrégats du dashboard ne doivent jamais
+dépendre du jour système dans les tests** — injectez `today` au use case.
 
 ---
 

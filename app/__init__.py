@@ -282,6 +282,7 @@ def create_app(testing: bool = False):
             messages=messages_repo,
             children=children_repo,
             users=users_repo,
+            events=calendar_repo,
         ),
         get_admin_stats=GetAdminStats(
             users=users_repo,

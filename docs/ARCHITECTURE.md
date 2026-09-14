@@ -31,7 +31,7 @@ sécurité — ne pas revenir en arrière).
 | Fonctionnalité | Blueprint (`interfaces/web/routes/`) | Use case (`application/use_cases/`) | Adapter principal (`infrastructure/`) |
 |---|---|---|---|
 | Login / logout / création de comptes | `auth_routes.py` | `LoginUser`, `RegisterUser` | `user_repository.py`, `auth/password_hasher.py` |
-| Dashboard adapté au rôle | `dashboard_routes.py` | `GetDashboard` | `announcement_repository.py`, `notification_repository.py`, `channel_repository.py`, `message_repository.py`, `children_repository.py`, `user_repository.py` |
+| Dashboard adapté au rôle | `dashboard_routes.py` | `GetDashboard` | `announcement_repository.py`, `notification_repository.py`, `channel_repository.py`, `message_repository.py`, `children_repository.py`, `user_repository.py`, `calendar_repository.py` |
 | Annonces (liste, création ciblée, PDF) | `announcements_routes.py` | `CreateAnnouncement` (audience = « Tous » ou canaux de l'auteur), `ListAnnouncements` (visibilité scopée par appartenance), `GetAnnouncementPdf` | `announcement_repository.py` (`paginate`, `find_by_pdf_filename`), `channel_repository.py` |
 | Accusé de réception des annonces (X/Y) | `announcements_routes.py` | `ConfirmAnnouncementRead`, `GetAnnouncementReadStatus` | `announcement_repository.py` |
 | Canaux de messagerie (liste/création) | `messages_routes.py` | `CreateChannel`, `AddChannelMembers`, `ListUserChannels` | `channel_repository.py` |
@@ -396,6 +396,18 @@ Point d'entrée : `run.py` → `create_app()` + `socketio.run(...)` (host/port v
   calquées sur `color-mix`) sont déclarées une fois, pour les deux thèmes.
   Pas de `data-bs-theme` Bootstrap : toute la page suit donc automatiquement
   le thème clair/sombre de l'application.
+- **Dashboard** : `GetDashboard` (7ᵉ repo : `CalendarRepositoryPort`) ajoute une
+  clé `calendar` à ses données via `_calendar_summary(today)` — prochaine
+  échéance (`type == "deadline"`, non passée) + `days_to_deadline`, prochaines
+  vacances (`type == "holiday"`, non passées) et compteur des événements **du
+  mois et de l'année courants**. Pas de réutilisation de `ListCalendarEvents`
+  (filtres de l'écran) : le résumé s'appuie sur `events.list_events()` (trié
+  `start_date` asc) et la comparaison date se fait dans le use case contre un
+  `today` **injecté** (`execute(actor, today=None)`, la route passe
+  `date.today()`) favorisant des tests déterministes. La carte
+  `dashboard/home.html` est pleine largeur, juste après les stat cards, et
+  réutilise les blocs `bg-surface` de `calendar/index.html` (résumé seul +
+  lien « Voir le calendrier », empty-state si aucun événement).
 
 ### Sécurité
 

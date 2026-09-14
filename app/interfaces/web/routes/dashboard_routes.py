@@ -38,9 +38,9 @@ _FR_MONTHS = (
 def home():
     actor = current_actor()
     use_cases = get_use_cases()
-    data = use_cases.get_dashboard.execute(actor)
 
     today = date.today()
+    data = use_cases.get_dashboard.execute(actor, today=today)
 
     date_label = (
         f"{_FR_DAYS[today.weekday()]} {today.day} {_FR_MONTHS[today.month - 1]}"
@@ -56,6 +56,7 @@ def home():
     channel_count = read_value(data, "channel_count", None)
     announcement_count = read_value(data, "announcement_count", None)
     recent_users = as_list(read_value(data, "recent_users", []))
+    calendar_info = read_value(data, "calendar", None)
 
     return render_template(
         "dashboard/home.html",
@@ -70,4 +71,5 @@ def home():
         channel_count=channel_count,
         announcement_count=announcement_count,
         recent_users=recent_users,
+        calendar_info=calendar_info,
     )
