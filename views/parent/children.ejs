@@ -1,0 +1,47 @@
+<%- include('../partials/header') %>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><i class="bi bi-people-fill me-2"></i>Mes enfants</h1>
+</div>
+
+<div class="card mb-4 shadow-sm">
+    <div class="card-body">
+        <% if (children && children.length > 0) { %>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead>
+                        <tr>
+                            <th>Enfant</th>
+                            <th>Classe</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% children.forEach(function(child) { %>
+                        <tr>
+                            <td>
+                                <span class="avatar avatar-sm me-2"><%= child.full_name ? child.full_name[0].toUpperCase() : 'E' %></span>
+                                <strong><%= child.full_name %></strong>
+                            </td>
+                            <td><span class="badge text-bg-light border"><%= child.class_name %></span></td>
+                            <td class="text-end">
+                                <a href="/parent/children/<%= child.id %>/channels" class="btn btn-sm btn-primary">
+                                    <i class="bi bi-chat-dots me-1"></i> Voir les canaux
+                                </a>
+                            </td>
+                        </tr>
+                        <% }); %>
+                    </tbody>
+                </table>
+            </div>
+        <% } else { %>
+            <div class="text-center py-5 text-muted">
+                <i class="bi bi-people fs-1"></i>
+                <p class="mt-2">Aucun enfant rattaché à votre compte.</p>
+                <p class="small">Contactez l'administration de l'établissement pour associer vos enfants.</p>
+            </div>
+        <% } %>
+    </div>
+</div>
+
+<%- include('../partials/footer') %>

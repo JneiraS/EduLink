@@ -1,0 +1,17 @@
+{
+    "name": "EduLink",
+    "short_name": "EduLink",
+    "description": "Plateforme de communication scolaire",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#f6f4ee",
+    "theme_color": "#4f46e5",
+    "icons": [
+        {
+            "src": "/static/img/icon.svg",
+            "sizes": "any",
+            "type": "image/svg+xml",
+            "purpose": "any"
+        }
+    ]
+}

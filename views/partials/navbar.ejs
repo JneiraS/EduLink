@@ -1,0 +1,215 @@
+<nav class="navbar navbar-expand-lg">
+    <div class="container">
+        <a class="brand-mark" href="/" aria-label="EduLink - Accueil">
+            <span class="brand-glyph" aria-hidden="true"><i class="bi bi-link-45deg"></i></span>
+            <span class="brand-wordmark">EduLink<span class="brand-dot">.</span></span>
+        </a>
+
+        <% if (current_user) { %>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+            data-bs-target="#navbarNav" aria-controls="navbarNav"
+            aria-expanded="false" aria-label="Basculer la navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <div class="navbar-actions">
+                <% const ep = current_endpoint || ''; %>
+                <a class="nav-pill <%= ep === 'dashboard' || ep === '' ? 'active' : '' %>"
+                    href="/dashboard" title="Tableau de bord">
+                    <i class="bi bi-speedometer2" aria-hidden="true"></i>
+                    <span class="nav-action-label">Accueil</span>
+                </a>
+                <a class="nav-pill <%= ep.startsWith('announcements') ? 'active' : '' %>"
+                    href="/announcements" title="Annonces">
+                    <i class="bi bi-megaphone" aria-hidden="true"></i>
+                    <span class="nav-action-label">Annonces</span>
+                </a>
+                <a class="nav-pill <%= ep.startsWith('messages') && ep !== 'messages.find_parent' ? 'active' : '' %>"
+                    href="/messages" title="Messagerie">
+                    <i class="bi bi-chat-dots" aria-hidden="true"></i>
+                    <span class="nav-action-label">Messagerie</span>
+                </a>
+                <a class="nav-pill <%= ep.startsWith('calendar') ? 'active' : '' %>"
+                    href="/calendar" title="Calendrier scolaire & Échéances">
+                    <i class="bi bi-calendar-event" aria-hidden="true"></i>
+                    <span class="nav-action-label">Calendrier</span>
+                </a>
+
+                <% if (current_user.role === 'ADMIN') { %>
+                <div class="dropdown">
+                    <button class="nav-pill dropdown-toggle <%= ep.startsWith('admin') ? 'active' : '' %>"
+                        type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Administration">
+                        <i class="bi bi-shield-check" aria-hidden="true"></i>
+                        <span class="nav-action-label">Administration</span>
+                    </button>
+                    <ul class="dropdown-menu shadow-sm">
+                        <li>
+                            <a class="dropdown-item <%= ep === 'admin.members' ? 'active' : '' %>"
+                                href="/admin/members">
+                                <i class="bi bi-people me-2" aria-hidden="true"></i>
+                                Gestion des membres
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item <%= ep === 'admin.children' ? 'active' : '' %>"
+                                href="/admin/children">
+                                <i class="bi bi-mortarboard me-2" aria-hidden="true"></i>
+                                Gestion des enfants
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item <%= ep === 'admin.announcements' ? 'active' : '' %>"
+                                href="/admin/announcements">
+                                <i class="bi bi-megaphone me-2" aria-hidden="true"></i>
+                                Gestion des annonces
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item <%= ep === 'admin.channels' ? 'active' : '' %>"
+                                href="/admin/channels">
+                                <i class="bi bi-hash me-2" aria-hidden="true"></i>
+                                Gestion des canaux
+                            </a>
+                        </li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <a class="dropdown-item <%= ep === 'admin.stats' ? 'active' : '' %>"
+                                href="/admin/stats">
+                                <i class="bi bi-bar-chart-fill me-2 text-primary" aria-hidden="true"></i>
+                                Statistiques globales
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+                <% } else if (current_user.role === 'TEACHER') { %>
+                <a class="nav-pill <%= ep === 'messages.find_parent' ? 'active' : '' %>"
+                    href="/messages/find-parent" title="Trouver un parent">
+                    <i class="bi bi-search" aria-hidden="true"></i>
+                    <span class="nav-action-label">Annuaire Parents</span>
+                </a>
+                <% } else if (current_user.role === 'PARENT') { %>
+                <a class="nav-pill <%= ep.startsWith('parent') ? 'active' : '' %>"
+                    href="/parent/children" title="Mes enfants">
+                    <i class="bi bi-people-fill" aria-hidden="true"></i>
+                    <span class="nav-action-label">Mes enfants</span>
+                </a>
+                <% } %>
+
+                <!-- Role switcher dropdown for smooth interactive evaluation -->
+                <div class="dropdown">
+                    <button class="nav-pill nav-pill--role dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Changer de profil (Démo)">
+                        <span class="role-indicator role-indicator--<%= current_user.role.toLowerCase() %>"></span>
+                        <span class="nav-action-label">
+                            <%= current_user.role === 'ADMIN' ? 'Admin' : current_user.role === 'TEACHER' ? 'Professeur' : 'Parent' %>
+                        </span>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end shadow-sm role-dropdown-menu">
+                        <li class="dropdown-header text-uppercase fw-bold" style="font-size: 0.7rem; letter-spacing: 0.05em;">Changer de profil (Démo)</li>
+                        <li>
+                            <a class="dropdown-item d-flex align-items-center gap-2 <%= current_user.role === 'ADMIN' ? 'active' : '' %>" href="/auth/switch-role/ADMIN">
+                                <span class="role-badge-dot role-badge-dot--admin"></span>
+                                <div>
+                                    <div class="fw-semibold">Admin EduLink</div>
+                                    <small class="text-muted d-block" style="font-size: 0.75rem;">Administrateur</small>
+                                </div>
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item d-flex align-items-center gap-2 <%= current_user.role === 'TEACHER' ? 'active' : '' %>" href="/auth/switch-role/TEACHER">
+                                <span class="role-badge-dot role-badge-dot--teacher"></span>
+                                <div>
+                                    <div class="fw-semibold">Claire Dupont</div>
+                                    <small class="text-muted d-block" style="font-size: 0.75rem;">Enseignante (CM2-A)</small>
+                                </div>
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item d-flex align-items-center gap-2 <%= current_user.role === 'PARENT' ? 'active' : '' %>" href="/auth/switch-role/PARENT">
+                                <span class="role-badge-dot role-badge-dot--parent"></span>
+                                <div>
+                                    <div class="fw-semibold">Marc Martin</div>
+                                    <small class="text-muted d-block" style="font-size: 0.75rem;">Parent (Lucas & Emma)</small>
+                                </div>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Notifications Dropdown -->
+                <div class="dropdown">
+                    <button class="btn btn-light icon-btn position-relative" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Notifications">
+                        <i class="bi bi-bell" aria-hidden="true"></i>
+                        <% if (unread_count > 0) { %>
+                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.65rem;">
+                            <%= unread_count %>
+                            <span class="visually-hidden">notifications non lues</span>
+                        </span>
+                        <% } %>
+                    </button>
+                    <div class="dropdown-menu dropdown-menu-end shadow-sm p-0 notification-dropdown" style="min-width: 320px; max-width: 380px;">
+                        <div class="d-flex justify-content-between align-items-center p-3 border-bottom">
+                            <span class="fw-bold fs-6">Notifications</span>
+                            <% if (unread_count > 0) { %>
+                            <form method="post" action="/notifications/mark-read" class="m-0">
+                                <input type="hidden" name="csrf_token" value="<%= csrf_token %>">
+                                <button type="submit" class="btn btn-link btn-sm p-0 text-decoration-none" style="font-size: 0.78rem;">Tout marquer comme lu</button>
+                            </form>
+                            <% } %>
+                        </div>
+                        <div class="notification-list p-2" style="max-height: 280px; overflow-y: auto;">
+                            <% if (unread_notifications && unread_notifications.length > 0) { %>
+                                <% unread_notifications.forEach(function(n) { %>
+                                <div class="notification-item p-2 mb-1 rounded <%= n.is_read ? '' : 'bg-light-subtle fw-semibold' %>">
+                                    <div class="d-flex align-items-start gap-2">
+                                        <i class="bi <%= n.channel_id ? 'bi-chat-dots text-primary' : 'bi-megaphone text-warning' %> mt-1"></i>
+                                        <div class="flex-grow-1 min-w-0">
+                                            <% if (n.channel_id) { %>
+                                            <a href="/messages/channels/<%= n.channel_id %>" class="text-decoration-none text-dark d-block text-truncate" style="font-size: 0.85rem;"><%= n.content %></a>
+                                            <% } else { %>
+                                            <div class="text-truncate" style="font-size: 0.85rem;"><%= n.content %></div>
+                                            <% } %>
+                                            <small class="text-muted" style="font-size: 0.72rem;"><%= new Date(n.created_at).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) %></small>
+                                        </div>
+                                    </div>
+                                </div>
+                                <% }); %>
+                            <% } else { %>
+                                <div class="text-center py-4 text-muted small">
+                                    <i class="bi bi-bell-slash fs-4 d-block mb-1"></i>
+                                    Aucune notification
+                                </div>
+                            <% } %>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="btn btn-light icon-btn theme-toggle-btn" id="theme-toggle-btn" type="button"
+                    aria-label="Basculer vers le thème sombre" title="Thème sombre">
+                    <i class="bi bi-moon-stars" aria-hidden="true"></i>
+                </button>
+
+                <% 
+                   const nameParts = (current_user.full_name || '').split(' ');
+                   const initials = (nameParts[0] ? nameParts[0][0] : '') + (nameParts[1] ? nameParts[1][0] : '');
+                %>
+                <span class="user-chip" title="<%= current_user.full_name %> (<%= current_user.email %>)">
+                    <span class="avatar avatar--<%= current_user.role.toLowerCase() %>" aria-hidden="true"><%= initials.toUpperCase() %></span>
+                    <span class="user-chip-meta d-none d-md-inline-block">
+                        <span class="user-chip-name"><%= current_user.full_name %></span>
+                        <span class="user-chip-role"><%= current_user.role %></span>
+                    </span>
+                </span>
+
+                <form method="post" action="/auth/logout" class="d-inline">
+                    <input type="hidden" name="csrf_token" value="<%= csrf_token %>">
+                    <button class="btn btn-outline-light icon-btn nav-logout-btn" type="submit"
+                        aria-label="Déconnexion" title="Déconnexion">
+                        <i class="bi bi-box-arrow-right" aria-hidden="true"></i>
+                    </button>
+                </form>
+            </div>
+        </div>
+        <% } %>
+    </div>
+</nav>

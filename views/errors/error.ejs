@@ -1,0 +1,24 @@
+<%- include('../partials/header') %>
+
+<div class="row justify-content-center">
+    <div class="col-lg-6">
+        <div class="card shadow-sm">
+            <div class="card-body py-5 text-center">
+                <div class="empty-state">
+                    <span class="empty-icon text-warning fs-1" aria-hidden="true">
+                        <i class="bi bi-<%= statusCode === 403 ? 'shield-lock' : (statusCode === 404 ? 'question-circle' : 'exclamation-triangle') %>"></i>
+                    </span>
+                    <h1 class="empty-title h4 mt-3"><%= title || 'Une erreur est survenue' %></h1>
+                    <p class="empty-hint text-muted"><%= message || 'La page demandée n\'est pas accessible.' %></p>
+                </div>
+                <div class="mt-4">
+                    <a class="btn btn-primary" href="/dashboard">
+                        <i class="bi bi-arrow-left me-2" aria-hidden="true"></i>Retour au tableau de bord
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<%- include('../partials/footer') %>

@@ -1,0 +1,430 @@
+<%- include('../partials/header') %>
+
+<!-- Hero Greeting Card -->
+<div class="card hero-welcome-card shadow-sm mb-4 border-0">
+  <div class="card-body p-4">
+    <div class="row align-items-center g-3">
+      <div class="col-lg-7">
+        <div class="d-flex align-items-center gap-3 mb-2">
+          <% 
+             const nameParts = (current_user.full_name || '').split(' ');
+             const initials = (nameParts[0] ? nameParts[0][0] : '') + (nameParts[1] ? nameParts[1][0] : '');
+          %>
+          <span class="avatar avatar--<%= current_user.role.toLowerCase() %>" style="width: 48px; height: 48px; font-size: 1.1rem;" aria-hidden="true"><%= initials.toUpperCase() %></span>
+          <div>
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+              <h1 class="h4 fw-bold mb-0 text-body">Bonjour, <%= current_user.full_name %></h1>
+              <span class="badge badge-role badge-role--<%= current_user.role.toLowerCase() %> px-2 py-1">
+                <span class="role-indicator role-indicator--<%= current_user.role.toLowerCase() %> me-1"></span>
+                <%= current_user.role === 'ADMIN' ? 'Administrateur' : current_user.role === 'TEACHER' ? 'Enseignant' : 'Parent d’élève' %>
+              </span>
+            </div>
+            <p class="text-muted mb-0 small mt-1">
+              <%= role_message %>
+            </p>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-5">
+        <div class="d-flex justify-content-lg-end gap-2 flex-wrap">
+          <a class="btn btn-primary btn-sm d-inline-flex align-items-center gap-1 shadow-sm" href="/messages/new">
+            <i class="bi bi-chat-plus"></i> Nouveau message
+          </a>
+          <a class="btn btn-outline-primary btn-sm d-inline-flex align-items-center gap-1" href="/calendar">
+            <i class="bi bi-calendar-event"></i> Calendrier
+          </a>
+          <% if (current_user.role === 'ADMIN' || current_user.role === 'TEACHER') { %>
+          <a class="btn btn-outline-secondary btn-sm d-inline-flex align-items-center gap-1" href="/announcements/new">
+            <i class="bi bi-plus-circle"></i> Créer une annonce
+          </a>
+          <% } %>
+          <% if (current_user.role === 'ADMIN') { %>
+          <a class="btn btn-outline-secondary btn-sm d-inline-flex align-items-center gap-1" href="/admin/stats">
+            <i class="bi bi-bar-chart"></i> Statistiques
+          </a>
+          <% } else if (current_user.role === 'TEACHER') { %>
+          <a class="btn btn-outline-secondary btn-sm d-inline-flex align-items-center gap-1" href="/messages/find-parent">
+            <i class="bi bi-search"></i> Trouver un parent
+          </a>
+          <% } else if (current_user.role === 'PARENT') { %>
+          <a class="btn btn-outline-secondary btn-sm d-inline-flex align-items-center gap-1" href="/parent/children">
+            <i class="bi bi-people"></i> Mes enfants
+          </a>
+          <% } %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- KPI Stat Cards (4-column layout) -->
+<div class="row g-3 mb-4">
+  <div class="col-sm-6 col-xl-3">
+    <div class="card stat-card border-0 shadow-sm h-100 p-3">
+      <div class="d-flex align-items-center justify-content-between">
+        <div>
+          <span class="text-muted small fw-medium text-uppercase d-block" style="letter-spacing: 0.05em; font-size: 0.72rem;">Notifications</span>
+          <div class="h3 fw-bold mb-0 mt-1 text-body"><%= (stats && stats.unread_notifications) || 0 %></div>
+          <small class="text-muted" style="font-size: 0.75rem;"><%= ((stats && stats.unread_notifications) || 0) > 0 ? 'Non lues à traiter' : 'Tout est à jour' %></small>
+        </div>
+        <div class="d-flex align-items-center justify-content-center rounded-3 bg-warning-subtle text-warning" style="width: 44px; height: 44px; font-size: 1.25rem;">
+          <i class="bi bi-bell"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-sm-6 col-xl-3">
+    <div class="card stat-card border-0 shadow-sm h-100 p-3">
+      <div class="d-flex align-items-center justify-content-between">
+        <div>
+          <span class="text-muted small fw-medium text-uppercase d-block" style="letter-spacing: 0.05em; font-size: 0.72rem;">Conversations</span>
+          <div class="h3 fw-bold mb-0 mt-1 text-body"><%= (stats && stats.conversations_count) || 0 %></div>
+          <small class="text-muted" style="font-size: 0.75rem;">Canaux et échanges directs</small>
+        </div>
+        <div class="d-flex align-items-center justify-content-center rounded-3 bg-primary-subtle text-primary" style="width: 44px; height: 44px; font-size: 1.25rem;">
+          <i class="bi bi-chat-dots"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-sm-6 col-xl-3">
+    <div class="card stat-card border-0 shadow-sm h-100 p-3">
+      <div class="d-flex align-items-center justify-content-between">
+        <div>
+          <span class="text-muted small fw-medium text-uppercase d-block" style="letter-spacing: 0.05em; font-size: 0.72rem;">Annonces scolaires</span>
+          <div class="h3 fw-bold mb-0 mt-1 text-body"><%= (stats && stats.unread_announcements) || 0 %></div>
+          <small class="text-muted" style="font-size: 0.75rem;"><%= ((stats && stats.unread_announcements) || 0) > 0 ? 'Non lues par vous' : 'Toutes consultées' %></small>
+        </div>
+        <div class="d-flex align-items-center justify-content-center rounded-3 bg-success-subtle text-success" style="width: 44px; height: 44px; font-size: 1.25rem;">
+          <i class="bi bi-megaphone"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-sm-6 col-xl-3">
+    <a href="/calendar" class="card stat-card border-0 shadow-sm h-100 p-3 text-decoration-none bg-surface">
+      <div class="d-flex align-items-center justify-content-between">
+        <div>
+          <% 
+             const deadlinesCount = (upcoming_events && upcoming_events.filter(e => e.type === 'deadline').length) || 0;
+          %>
+          <span class="text-muted small fw-medium text-uppercase d-block" style="letter-spacing: 0.05em; font-size: 0.72rem;">Échéances & Agenda</span>
+          <div class="h3 fw-bold mb-0 mt-1 text-danger"><%= deadlinesCount %></div>
+          <small class="text-muted" style="font-size: 0.75rem;"><%= deadlinesCount > 0 ? 'Dates limites en cours' : 'Aucune urgence' %></small>
+        </div>
+        <div class="d-flex align-items-center justify-content-center rounded-3 bg-danger-subtle text-danger" style="width: 44px; height: 44px; font-size: 1.25rem;">
+          <i class="bi bi-calendar-check"></i>
+        </div>
+      </div>
+    </a>
+  </div>
+</div>
+
+<!-- Admin summary metrics if Admin -->
+<% if (current_user.role === 'ADMIN' && user_counts) { %>
+<div class="card shadow-sm border-0 mb-4">
+  <div class="card-body p-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <div>
+        <h2 class="h6 fw-bold mb-0 text-body">Synthèse de l'établissement</h2>
+        <small class="text-muted">Vue globale des effectifs et des canaux scolaires</small>
+      </div>
+      <a class="btn btn-sm btn-outline-primary" href="/admin/stats">
+        <i class="bi bi-bar-chart me-1"></i>Détails analytiques
+      </a>
+    </div>
+    <div class="row g-3 text-center">
+      <div class="col-6 col-md-3">
+        <div class="p-3 rounded-3 bg-light-subtle border">
+          <div class="h4 fw-bold text-primary mb-1"><%= user_counts.ADMIN || 0 %></div>
+          <div class="small text-muted fw-semibold">Administrateurs</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="p-3 rounded-3 bg-light-subtle border">
+          <div class="h4 fw-bold text-success mb-1"><%= user_counts.TEACHER || 0 %></div>
+          <div class="small text-muted fw-semibold">Enseignants</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="p-3 rounded-3 bg-light-subtle border">
+          <div class="h4 fw-bold text-info mb-1"><%= user_counts.PARENT || 0 %></div>
+          <div class="small text-muted fw-semibold">Parents inscrits</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="p-3 rounded-3 bg-light-subtle border">
+          <div class="h4 fw-bold text-dark mb-1"><%= channel_count || 0 %></div>
+          <div class="small text-muted fw-semibold">Canaux actifs</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<% } %>
+
+<!-- Parent: Children section -->
+<% if (current_user.role === 'PARENT') { %>
+<div class="card shadow-sm border-0 mb-4">
+  <div class="card-body p-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <div>
+        <h2 class="h6 fw-bold mb-0 text-body">Mes enfants</h2>
+        <small class="text-muted">Accédez directement aux informations et canaux de classe</small>
+      </div>
+      <a class="btn btn-sm btn-outline-primary" href="/parent/children">
+        <i class="bi bi-box-arrow-up-right me-1" aria-hidden="true"></i>Tout voir
+      </a>
+    </div>
+    <% if (children && children.length > 0) { %>
+    <div class="row g-3">
+      <% children.forEach(function(child) { %>
+      <div class="col-md-6">
+        <a class="child-card text-decoration-none d-flex align-items-center p-3 rounded-3 border bg-light-subtle" href="/parent/children/<%= child.id %>/channels">
+          <span class="avatar avatar--parent me-3 flex-shrink-0" style="width: 42px; height: 42px; font-size: 1rem;"><%= child.full_name ? child.full_name[0].toUpperCase() : 'E' %></span>
+          <div class="min-w-0 flex-grow-1">
+            <div class="fw-bold text-dark text-truncate"><%= child.full_name %></div>
+            <span class="badge bg-secondary-subtle text-secondary-emphasis mt-1"><%= child.class_name %></span>
+          </div>
+          <i class="bi bi-chevron-right text-muted ms-2" aria-hidden="true"></i>
+        </a>
+      </div>
+      <% }); %>
+    </div>
+    <% } else { %>
+    <div class="text-center py-4 text-muted">
+      <i class="bi bi-person-plus fs-3 d-block mb-1"></i>
+      <div class="fw-semibold">Aucun enfant associé</div>
+      <small>Vos enfants apparaîtront ici dès que l'administration aura créé leur profil.</small>
+    </div>
+    <% } %>
+  </div>
+</div>
+<% } %>
+
+<!-- School Calendar & Upcoming Deadlines Widget -->
+<div class="card shadow-sm border-0 mb-4 calendar-widget">
+  <div class="card-body p-4">
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+      <div>
+        <div class="d-flex align-items-center gap-2">
+          <span class="d-inline-flex align-items-center justify-content-center rounded-circle bg-danger-subtle text-danger" style="width: 32px; height: 32px; font-size: 1rem;">
+            <i class="bi bi-calendar-check"></i>
+          </span>
+          <h2 class="h6 fw-bold mb-0 text-body">Calendrier scolaire & Échéances importantes</h2>
+          <span class="badge bg-secondary-subtle text-secondary-emphasis" style="font-size: 0.72rem;"><%= upcoming_events ? upcoming_events.length : 0 %> dates</span>
+        </div>
+        <small class="text-muted">Dates limites administratives, réunions et temps forts de l'établissement</small>
+      </div>
+
+      <div class="d-flex align-items-center gap-2 flex-wrap">
+        <!-- Quick Filter Buttons -->
+        <div class="btn-group btn-group-sm" role="group" id="widget-filter-group">
+          <button type="button" class="btn btn-outline-secondary active" onclick="filterWidgetEvents('all', this)">Tous</button>
+          <button type="button" class="btn btn-outline-secondary" onclick="filterWidgetEvents('deadline', this)">
+            <span class="text-danger me-1">⚠️</span>Échéances
+          </button>
+          <button type="button" class="btn btn-outline-secondary" onclick="filterWidgetEvents('event', this)">Événements</button>
+        </div>
+
+        <a class="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1 shadow-sm" href="/calendar">
+          <span>Tout le calendrier</span> <i class="bi bi-arrow-right"></i>
+        </a>
+      </div>
+    </div>
+
+    <!-- Events List / Cards in Widget -->
+    <% if (upcoming_events && upcoming_events.length > 0) { %>
+    <div class="row g-3" id="widget-events-container">
+      <% 
+         const now = new Date('2026-09-13T07:41:00');
+         upcoming_events.slice(0, 4).forEach(function(evt) {
+             const d = new Date(evt.start_date);
+             const isDeadline = evt.type === 'deadline';
+             const isHoliday = evt.type === 'holiday';
+             const diffDays = Math.ceil((d - now) / (1000 * 60 * 60 * 24));
+      %>
+      <div class="col-md-6 widget-event-item" data-type="<%= evt.type %>">
+        <div class="p-3 rounded-3 border <%= isDeadline ? 'border-warning-subtle bg-warning-subtle-light' : isHoliday ? 'border-success-subtle bg-success-subtle-light' : 'bg-surface' %> h-100 event-card-item">
+          <div class="d-flex align-items-start gap-3">
+            <div class="calendar-date-badge <%= isDeadline ? 'calendar-date-badge--deadline' : isHoliday ? 'calendar-date-badge--holiday' : 'calendar-date-badge--event' %> flex-shrink-0 text-center">
+              <span class="calendar-date-month text-uppercase"><%= d.toLocaleDateString('fr-FR', { month: 'short' }) %></span>
+              <span class="calendar-date-day"><%= d.getDate() %></span>
+              <span class="calendar-date-weekday"><%= d.toLocaleDateString('fr-FR', { weekday: 'short' }) %></span>
+            </div>
+            <div class="flex-grow-1 min-w-0">
+              <div class="d-flex justify-content-between align-items-baseline gap-1 mb-1">
+                <% if (isDeadline) { %>
+                <span class="badge bg-danger-subtle text-danger border border-danger-subtle" style="font-size: 0.68rem;">
+                  <i class="bi bi-clock-fill me-1"></i>Échéance limite
+                </span>
+                <% } else if (isHoliday) { %>
+                <span class="badge bg-success-subtle text-success border border-success-subtle" style="font-size: 0.68rem;">
+                  <i class="bi bi-sun-fill me-1"></i>Vacances
+                </span>
+                <% } else { %>
+                <span class="badge bg-primary-subtle text-primary border border-primary-subtle" style="font-size: 0.68rem;">
+                  <i class="bi bi-calendar-event me-1"></i><%= evt.category === 'meeting' ? 'Réunion' : evt.category === 'outing' ? 'Sortie' : 'Événement' %>
+                </span>
+                <% } %>
+
+                <% if (isDeadline && diffDays >= 0) { %>
+                <span class="badge <%= diffDays <= 3 ? 'bg-danger text-white' : 'bg-warning-subtle text-warning-emphasis' %>" style="font-size: 0.68rem;">
+                  <%= diffDays === 0 ? 'Aujourd’hui' : `Dans ${diffDays} j` %>
+                </span>
+                <% } %>
+              </div>
+              <a href="/calendar" class="fw-bold text-dark text-decoration-none d-block text-truncate mb-1" style="font-size: 0.88rem;" title="<%= evt.title %>">
+                <%= evt.title %>
+              </a>
+              <div class="d-flex align-items-center gap-2 text-muted small" style="font-size: 0.75rem;">
+                <span class="text-truncate"><i class="bi bi-geo-alt me-1 text-primary"></i><%= evt.location || evt.class_name %></span>
+                <% if (evt.end_date) { %>
+                <span>• Jusqu'au <%= new Date(evt.end_date).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' }) %></span>
+                <% } else if (d.getHours() > 0 || d.getMinutes() > 0) { %>
+                <span>• <%= d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) %></span>
+                <% } %>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <% }); %>
+    </div>
+    <% } else { %>
+    <div class="text-center py-4 text-muted">
+      <i class="bi bi-calendar-check fs-2 d-block mb-1"></i>
+      <div class="fw-semibold">Aucun événement prévu prochainement</div>
+    </div>
+    <% } %>
+  </div>
+</div>
+
+<script>
+  function filterWidgetEvents(type, btn) {
+    const container = document.getElementById('widget-events-container');
+    if (!container) return;
+    const items = container.querySelectorAll('.widget-event-item');
+    items.forEach(function(item) {
+      if (type === 'all' || item.getAttribute('data-type') === type) {
+        item.classList.remove('d-none');
+      } else {
+        item.classList.add('d-none');
+      }
+    });
+
+    const group = document.getElementById('widget-filter-group');
+    if (group) {
+      const buttons = group.querySelectorAll('button');
+      buttons.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    }
+  }
+</script>
+
+<!-- Main Split: Conversations & Activity Feed -->
+<div class="row g-4">
+  <!-- Left column: Conversations -->
+  <div class="col-lg-7">
+    <div class="card shadow-sm border-0 h-100">
+      <div class="card-body p-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <div>
+            <h2 class="h6 fw-bold mb-0 text-body">Mes conversations récentes</h2>
+            <small class="text-muted">Accès direct à vos échanges</small>
+          </div>
+          <a class="btn btn-sm btn-outline-primary" href="/messages">
+            <i class="bi bi-chat-dots me-1"></i>Messagerie
+          </a>
+        </div>
+        <% if (conversations && conversations.length > 0) { %>
+        <div class="list-group list-group-flush border-0">
+          <% conversations.slice(0, 5).forEach(function(item) { %>
+          <a class="list-group-item list-group-item-action px-2 py-3 border-bottom d-flex align-items-center gap-3 rounded-2" href="/messages/channels/<%= item.channel.id %>">
+            <div class="d-flex align-items-center justify-content-center rounded-circle <%= item.channel.kind === 'direct' ? 'bg-primary-subtle text-primary' : 'bg-secondary-subtle text-secondary' %> flex-shrink-0" style="width: 40px; height: 40px; font-size: 1.1rem;">
+              <i class="bi <%= item.channel.kind === 'direct' ? 'bi-person' : 'bi-hash' %>"></i>
+            </div>
+            <div class="flex-grow-1 min-w-0">
+              <div class="d-flex justify-content-between align-items-baseline mb-1">
+                <span class="fw-bold text-dark text-truncate" style="font-size: 0.9rem;"><%= item.channel.name %></span>
+                <% if (item.last_message && item.last_message.created_at) { %>
+                <small class="text-muted ms-2 flex-shrink-0" style="font-size: 0.75rem;">
+                  <%= new Date(item.last_message.created_at).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' }) %>
+                </small>
+                <% } %>
+              </div>
+              <div class="text-muted small text-truncate" style="font-size: 0.8rem;">
+                <% if (item.last_message) { %>
+                  <%= item.last_message.content %>
+                <% } else { %>
+                  <span class="fst-italic">Aucun message pour le moment</span>
+                <% } %>
+              </div>
+            </div>
+          </a>
+          <% }); %>
+        </div>
+        <% } else { %>
+        <div class="text-center py-5 text-muted">
+          <i class="bi bi-chat-dots fs-3 d-block mb-2"></i>
+          <div class="fw-semibold">Aucune conversation</div>
+          <small>Cliquez sur "Nouveau message" pour entamer un échange.</small>
+        </div>
+        <% } %>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right column: Activity / Announcements Feed -->
+  <div class="col-lg-5">
+    <div class="card shadow-sm border-0 h-100">
+      <div class="card-body p-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <div>
+            <h2 class="h6 fw-bold mb-0 text-body">Dernières annonces</h2>
+            <small class="text-muted">Notes et circulaires de l'établissement</small>
+          </div>
+          <a class="btn btn-sm btn-outline-primary" href="/announcements">
+            <i class="bi bi-megaphone me-1"></i>Toutes
+          </a>
+        </div>
+        <% if (latest_announcements && latest_announcements.length > 0) { %>
+        <div class="d-flex flex-column gap-2">
+          <% latest_announcements.slice(0, 4).forEach(function(item) { %>
+          <div class="p-3 rounded-3 border announcement-card <%= item.is_read ? 'announcement-card--read' : '' %> bg-light-subtle">
+            <div class="d-flex justify-content-between align-items-start gap-2 mb-1">
+              <a href="/announcements" class="fw-semibold text-decoration-none text-dark d-block text-truncate" style="font-size: 0.88rem;">
+                <%= item.announcement.title %>
+              </a>
+              <% if (!item.is_read) { %>
+              <span class="badge bg-danger-subtle text-danger flex-shrink-0" style="font-size: 0.7rem;">À lire</span>
+              <% } else { %>
+              <span class="badge bg-success-subtle text-success flex-shrink-0" style="font-size: 0.7rem;">Lu</span>
+              <% } %>
+            </div>
+            <div class="text-muted small text-truncate mb-2" style="font-size: 0.78rem;">
+              <%= item.announcement.content %>
+            </div>
+            <div class="d-flex justify-content-between align-items-center small text-muted" style="font-size: 0.72rem;">
+              <span><i class="bi bi-person me-1"></i><%= item.announcement.author_name || 'Direction' %></span>
+              <span><%= new Date(item.announcement.created_at).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' }) %></span>
+            </div>
+          </div>
+          <% }); %>
+        </div>
+        <% } else { %>
+        <div class="text-center py-5 text-muted">
+          <i class="bi bi-megaphone fs-3 d-block mb-2"></i>
+          <div class="fw-semibold">Aucune annonce</div>
+          <small>Les publications scolaires apparaîtront ici.</small>
+        </div>
+        <% } %>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- include('../partials/footer') %>
