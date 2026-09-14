@@ -178,9 +178,11 @@ une violation d'architecture.
 
 - **`routes/`** : blueprints Flask (`auth_bp`, `dashboard_bp`, `admin_bp`,
   `announcements_bp`, `messages_bp`, `notifications_bp`, `push_bp`,
-  `parent_bp`, `ai_bp`, `calendar_bp`). Les endpoints JSON de `ai_routes.py` renvoient les
+  `parent_bp`, `ai_bp`, `calendar_bp`, `health_bp`). Les endpoints JSON de `ai_routes.py` renvoient les
   erreurs métier en JSON (`{"error": ...}` + code 400/403/404/503) au lieu du
-  flash+redirect, car ils sont consommés par `fetch`.
+  flash+redirect, car ils sont consommés par `fetch`. Le `health_bp` expose
+  `GET /health` → `{"status":"ok"}` (sonde de vie utilisée par le
+  HEALTHCHECK du conteneur Docker).
 - **`routes/utils.py`** : les **seuls** accès autorisés aux dépendances :
   - `get_use_cases()` → `app.extensions["use_cases"]`
   - `get_services()` → `app.extensions["services"]` (uniquement pour la

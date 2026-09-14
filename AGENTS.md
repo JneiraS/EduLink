@@ -23,9 +23,19 @@ alembic downgrade -1
 
 # HTTPS tunnel for mobile web-push testing
 bash scripts/start_tunnel.sh [PORT]   # tries cloudflared -> ngrok -> npx localtunnel
+
+# Docker / deployment (production server = Raspberry Pi, ARM64). See docs/DEPLOYMENT.md.
+docker compose up -d --build          # full stack: PostgreSQL + web (Alembic migrations auto on boot)
+docker compose logs -f web            # follow app logs
+docker compose exec db pg_dump -U edulink edulink > backup.sql
+./scripts/deploy.sh [branch]          # manual production deploy (git pull + rebuild + up)
+scripts/server_setup.sh               # one-time provisioning on a fresh server (run as root)
+GET /health                           # liveness probe used by the Docker HEALTHCHECK
 ```
 
-No linter, formatter, or CI config exists. `pyproject.toml` only configures pytest (`pythonpath = ["."]`) so bare `pytest` works — don't rely on `python -m pytest`.
+No linter or formatter config exists; CI lives in `.github/workflows/ci.yml` (GitHub Actions: `pytest` + Docker image build validation on push/PR to `main`, then auto-deploy over SSH on green pushes to `main` via the secrets `SERVER_HOST`, `SERVER_USER`, `SERVER_SSH_KEY`, `SERVER_PORT`). `pyproject.toml` only configures pytest (`pythonpath = ["."]`) so bare `pytest` works — don't rely on `python -m pytest`.
+
+Runtime deps are listed in `requirements-prod.txt` (used by the Dockerfile); `requirements.txt` is `-r requirements-prod.txt` + test deps (`pytest`, `pytest-flask`) — keep the split and never add a test-only dep to `requirements-prod.txt`.
 
 ## Architecture
 
@@ -64,7 +74,7 @@ Routes must not import `app.infrastructure` models or `app.extensions.db` direct
 
 ## Documentation
 
-Developer docs live in `docs/` and are the onboarding path for new developers: `ARCHITECTURE.md` (how the project works) and `ADDING_A_FEATURE.md` (the step-by-step recipe for adding a feature). They must never drift from the code. Whenever you implement a new feature — new use case, port method, entity, route, template, migration, config/settings change, or test convention — update the relevant `docs/` file(s) in the same change. A feature is not done, and must not be committed, if the docs are stale.
+Developer docs live in `docs/` and are the onboarding path for new developers: `ARCHITECTURE.md` (how the project works), `ADDING_A_FEATURE.md` (the step-by-step recipe for adding a feature), and `DEPLOYMENT.md` (Docker + CI/CD + server provisioning). They must never drift from the code. Whenever you implement a new feature — new use case, port method, entity, route, template, migration, config/settings change, or test convention — update the relevant `docs/` file(s) in the same change. A feature is not done, and must not be committed, if the docs are stale.
 
 ## Testing notes
 

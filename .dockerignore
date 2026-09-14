@@ -1,0 +1,33 @@
+# Git / CI
+.git
+.github
+.opencode
+
+# Env & secrets (never bake into the image)
+.env
+.env.*
+!.env.production.example
+.keys
+
+# Runtime state / user data (created fresh + mounted as volumes)
+instance
+uploads
+*.db
+*.sqlite*
+
+# Python
+.venv
+__pycache__
+*.py[cod]
+*.egg-info
+.pytest_cache
+.coverage
+htmlcov
+
+# Tests & docs (not needed at runtime)
+tests
+docs
+
+# Misc
+.DS_Store
+*.log

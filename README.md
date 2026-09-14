@@ -138,8 +138,30 @@ Le script utilise automatiquement, dans cet ordre:
 pytest
 ```
 
+## Deploiement (Docker + CI/CD)
+
+La documentation complete se trouve dans [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
+
+La pile de production contient PostgreSQL + l'application, deployee
+automatiquement par GitHub Actions sur chaque push vert de `main` (SSH vers le
+serveur Raspberry Pi). En local, la meme pile se lance avec :
+
+```bash
+docker compose up -d --build
+```
+
+Le deploy est ensuite automatique a chaque push sur `main` ; pour un deploy
+manuel de secours depuis le serveur :
+
+```bash
+./scripts/deploy.sh
+```
+
+Notable: la base est PostgreSQL en production (SQLite reste utilise en dev et
+en tests via `DATABASE_URL`).
+
 ## Limites MVP
 
 - Pas encore d'API REST publique
 - Pas de multi-ecoles
-- RBAC avance, audit logs et CI/CD non inclus
+- RBAC avance et audit logs non inclus

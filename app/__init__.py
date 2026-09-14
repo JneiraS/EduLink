@@ -135,6 +135,7 @@ from app.interfaces.web.routes.admin_routes import admin_bp
 from app.interfaces.web.routes.auth_routes import auth_bp
 from app.interfaces.web.routes.calendar_routes import calendar_bp
 from app.interfaces.web.routes.dashboard_routes import dashboard_bp
+from app.interfaces.web.routes.health_routes import health_bp
 from app.interfaces.web.routes.messages_routes import messages_bp
 from app.interfaces.web.routes.notifications_routes import notifications_bp
 from app.interfaces.web.routes.push_routes import push_bp
@@ -182,6 +183,7 @@ def create_app(testing: bool = False):
     app.register_blueprint(notifications_bp)
     app.register_blueprint(push_bp)
     app.register_blueprint(parent_bp)
+    app.register_blueprint(health_bp)
 
     with app.app_context():
         if app.config["TESTING"]:

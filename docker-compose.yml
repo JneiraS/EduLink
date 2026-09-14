@@ -1,0 +1,40 @@
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-edulink}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in the server .env file}
+      POSTGRES_DB: ${POSTGRES_DB:-edulink}
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-edulink} -d ${POSTGRES_DB:-edulink}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  web:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "${EDULINK_PORT:-5050}:5050"
+    # All plain vars (SECRET_KEY, VAPID_*, EDULINK_ADMIN_*, OLLAMA_*, ...)
+    # are read from the server-side .env and injected as-is.
+    env_file:
+      - .env
+    environment:
+      APP_ENV: production
+      DATABASE_URL: postgresql://${POSTGRES_USER:-edulink}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in the server .env file}@db:5432/${POSTGRES_DB:-edulink}
+    volumes:
+      - edulink_instance:/app/instance
+      - edulink_uploads:/app/uploads
+
+volumes:
+  pg_data:
+  edulink_instance:
+  edulink_uploads:
