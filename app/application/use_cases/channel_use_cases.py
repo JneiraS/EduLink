@@ -13,18 +13,18 @@ class CreateChannel:
 
     def execute(self, actor: User, name: str, members: list[int]) -> Channel:
         if actor.role not in {UserRole.ADMIN, UserRole.TEACHER}:
-            raise AuthorizationError("Only admin and teachers can create channels")
+            raise AuthorizationError("Seuls l'administrateur et les enseignants peuvent créer des canaux")
         name = name.strip()
         if not name:
-            raise ValidationError("Channel name is required")
+            raise ValidationError("Le nom du canal est requis")
         if len(name) > 120:
-            raise ValidationError("Channel name must be at most 120 characters")
+            raise ValidationError("Le nom du canal ne doit pas dépasser 120 caractères")
 
         member_ids = [actor.id or 0, *members]
         unique_members = sorted(set(member_ids))
         for member_id in unique_members:
             if not self.users.find_by_id(member_id):
-                raise ValidationError(f"User {member_id} does not exist")
+                raise ValidationError(f"L'utilisateur {member_id} n'existe pas")
 
         return self.channels.create_with_members(
             Channel(id=None, name=name, created_by=actor.id or 0),
@@ -39,25 +39,25 @@ class AddChannelMembers:
 
     def execute(self, actor: User, channel_id: int, members: list[int]) -> None:
         if actor.role not in {UserRole.ADMIN, UserRole.TEACHER}:
-            raise AuthorizationError("Only admin and teachers can add channel members")
+            raise AuthorizationError("Seuls l'administrateur et les enseignants peuvent ajouter des membres")
 
         if not self.channels.find_by_id(channel_id):
-            raise NotFoundError("Channel not found")
+            raise NotFoundError("Canal introuvable")
 
         channel = self.channels.find_by_id(channel_id)
         if channel.kind == "direct":
-            raise ValidationError("Cannot add members to a direct conversation")
+            raise ValidationError("Impossible d'ajouter des membres à une conversation directe")
 
         if not self.channels.is_member(channel_id, actor.id or 0):
-            raise AuthorizationError("User is not member of this channel")
+            raise AuthorizationError("Vous n'êtes pas membre de ce canal")
 
         unique_members = sorted(set(members))
         if not unique_members:
-            raise ValidationError("Select at least one member")
+            raise ValidationError("Sélectionnez au moins un membre")
 
         for member_id in unique_members:
             if not self.users.find_by_id(member_id):
-                raise ValidationError(f"User {member_id} does not exist")
+                raise ValidationError(f"L'utilisateur {member_id} n'existe pas")
             self.channels.add_member(channel_id, member_id)
 
 
@@ -69,9 +69,9 @@ class OpenDirectConversation:
     def execute(self, actor: User, other_user_id: int) -> Channel:
         other = self.users.find_by_id(other_user_id)
         if other is None:
-            raise NotFoundError("User not found")
+            raise NotFoundError("Utilisateur introuvable")
         if other.id == (actor.id or 0):
-            raise ValidationError("Cannot start a conversation with yourself")
+            raise ValidationError("Impossible de démarrer une conversation avec vous-même")
 
         existing = self.channels.find_direct_between(actor.id or 0, other.id or 0)
         if existing is not None:

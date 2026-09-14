@@ -208,6 +208,13 @@ un composant réutilisable : recherche temps réel, regroupement par rôle
 compteur de sélection et chips supprimables. Le comportement vit dans
 `static/js/app.js` (`initMemberPicker`) via des `data-*` hooks — aucune fonction
 JS inline. Sans JS, la liste complète des cases à cocher reste fonctionnelle.
+Les autres hooks JS custom vivent aussi dans `app.js` et restent
+CSP-safe (`data-*`, aucune fonction inline, `csrf-token` du `<meta>` pour le
+fetch) : `initPasswordToggle` (boutons `data-password-toggle` des pages
+login / définition du mot de passe), `initChatDraft` (brouillon de message persisté par canal dans `sessionStorage`
+— clé `edulink-draft-<channel_id>`, restauré au chargement et purgé à
+l'envoi ; l'id de canal vient de `data-channel-id` sur le `form.composer`), `initAiSummary` / `initAiRephrase`
+(liste ci-dessous), `initCalendarViewSwitch`, `initMemberPicker`.
 Le même regroupement par rôle sert de **liste de contacts** pour les
 conversations 1:1 (`messages/new_conversation.html`, radios de sélection
 unique). Le compositeur de message embarque un sélecteur de **modèles**
@@ -303,6 +310,13 @@ Point d'entrée : `run.py` → `create_app()` + `socketio.run(...)` (host/port v
 - Lève des `DomainError` (`AuthorizationError`, `NotFoundError`,
   `ValidationError`, `AuthenticationError`) **dans le use case**.
 - Les routes attrapent ces exceptions et font `flash(str(exc), "danger")`.
+- **Microcopy 100 % français** : tous les messages (flash, `raise`, labels
+  visibles des templates, strings JS) sont en français, accents compris.
+  Seule exception volontaire : `"Invalid credentials"` (anti-énumération de
+  compte, toujours identique). `DomainError`, flash `str(exc)` et rendu de
+  template sont **échappés HTML** — les apostrophes sans escape s'affichent
+  comme `&#39;` ; pour un `assert b"..."` sur un message contenant une
+  apostrophe, tester une sous-chaîne **sans** apostrophe (cf. WS-4).
 - Ne pas lever `flask.abort` pour de la logique métier.
 - Limites de longueur → `ValidationError` **dans le use case**, jamais dans la
   route. Limites actuelles : `full_name` ≤120, email ≤254, password 8–128,
@@ -363,6 +377,13 @@ Point d'entrée : `run.py` → `create_app()` + `socketio.run(...)` (host/port v
 - La page parent `/parent/children/<id>/channels` liste les canaux du parent
   dont le nom correspond à la classe de l'enfant (`list_user_channels` filtré
   par `class_name`). Un enfant d'un autre parent est introuvable → redirect.
+  Les boutons « Voir la conversation » pointent vers `/messages/channels?...`.
+- La page `messages.channels` (liste des conversations) honore
+  `?channel_id=<id>` : si le paramètre est présent **et** que le canal
+  appartient aux canaux de l'utilisateur (`list_user_channels`), elle affiche
+  directement le fil du canal au lieu de la liste ; sinon (id absent, hors
+  membre ou invalide) elle retombe sur la liste. C'est le relais du flux
+  parent enfant/enseignant → canal (WS-1).
 
 ### Calendrier scolaire
 

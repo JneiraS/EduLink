@@ -71,7 +71,7 @@ def confirm_read(announcement_id: int):
         get_use_cases().confirm_announcement_read.execute(
             current_actor(), announcement_id
         )
-        flash("Lecture confirmee", "success")
+        flash("Lecture confirmée", "success")
     except NotFoundError as exc:
         flash(str(exc), "danger")
     page = max(request.args.get("page", 1, type=int), 1)
@@ -116,10 +116,10 @@ def create_announcement():
 
         if upload and upload.filename:
             if not _allowed_file(upload.filename):
-                flash("Seuls les PDF sont autorises", "danger")
+                flash("Seuls les PDF sont autorisés", "danger")
                 return redirect(url_for("announcements.create_announcement"))
             if not _is_pdf_content(upload):
-                flash("Seuls les PDF sont autorises", "danger")
+                flash("Seuls les PDF sont autorisés", "danger")
                 return redirect(url_for("announcements.create_announcement"))
 
             original = secure_filename(upload.filename)
@@ -139,7 +139,7 @@ def create_announcement():
                 os.remove(os.path.join(_uploads_dir(), pdf_filename))
             raise
 
-        flash("Annonce publiee", "success")
+        flash("Annonce publiée", "success")
         return redirect(url_for("announcements.list_announcements"))
 
     return render_template("announcements/create.html", channels=channels)

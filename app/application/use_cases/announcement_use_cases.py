@@ -33,16 +33,16 @@ class CreateAnnouncement:
         target_channel_ids: list[int] | None = None,
     ) -> Announcement:
         if actor.role not in {UserRole.ADMIN, UserRole.TEACHER}:
-            raise AuthorizationError("Only admin and teachers can create announcements")
+            raise AuthorizationError("Seuls l'administrateur et les enseignants peuvent créer des annonces")
         if not title.strip() or not content.strip():
-            raise ValidationError("Title and content are required")
+            raise ValidationError("Le titre et le contenu sont requis")
         title = title.strip()
         content = content.strip()
         if len(title) > MAX_TITLE_LENGTH:
-            raise ValidationError(f"Title must be at most {MAX_TITLE_LENGTH} characters")
+            raise ValidationError(f"Le titre ne doit pas dépasser {MAX_TITLE_LENGTH} caractères")
         if len(content) > MAX_CONTENT_LENGTH:
             raise ValidationError(
-                f"Content must be at most {MAX_CONTENT_LENGTH} characters"
+                f"Le contenu ne doit pas dépasser {MAX_CONTENT_LENGTH} caractères"
             )
 
         target_channel_ids = sorted(set(int(cid) for cid in (target_channel_ids or [])))
@@ -50,12 +50,12 @@ class CreateAnnouncement:
         if target_channel_ids:
             for channel_id in target_channel_ids:
                 if not self.channels.find_by_id(channel_id):
-                    raise NotFoundError(f"Channel {channel_id} not found")
+                    raise NotFoundError(f"Canal {channel_id} introuvable")
                 if actor.role != UserRole.ADMIN and not self.channels.is_member(
                     channel_id, actor.id or 0
                 ):
                     raise AuthorizationError(
-                        "Teachers can only target channels they belong to"
+                        "Les enseignants ne peuvent cibler que les canaux dont ils sont membres"
                     )
             audience: set[int] = set()
             for channel_id in target_channel_ids:
@@ -112,9 +112,9 @@ class ConfirmAnnouncementRead:
     def execute(self, actor: User, announcement_id: int) -> Announcement:
         announcement = self.announcements.find_by_id(announcement_id)
         if announcement is None:
-            raise NotFoundError("Announcement not found")
+            raise NotFoundError("Annonce introuvable")
         if not self._can_view(actor, announcement):
-            raise NotFoundError("Announcement not found")
+            raise NotFoundError("Annonce introuvable")
         self.announcements.mark_read(announcement_id, actor.id or 0)
         return announcement
 
@@ -138,7 +138,7 @@ class GetAnnouncementPdf:
     def execute(self, actor: User, pdf_filename: str) -> Announcement:
         announcement = self.announcements.find_by_pdf_filename(pdf_filename)
         if announcement is None:
-            raise NotFoundError("Announcement not found")
+            raise NotFoundError("Annonce introuvable")
         if announcement.target_channel_ids:
             channel_ids = {
                 channel.id or 0
@@ -147,7 +147,7 @@ class GetAnnouncementPdf:
             if not any(
                 target in channel_ids for target in announcement.target_channel_ids
             ):
-                raise NotFoundError("Announcement not found")
+                raise NotFoundError("Annonce introuvable")
         return announcement
 
 

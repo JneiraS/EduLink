@@ -19,7 +19,7 @@
                 <thead>
                     <tr>
                         <th scope="col">Membre</th>
-                        <th scope="col">Role</th>
+                        <th scope="col">Rôle</th>
                         <th scope="col">Statut</th>
                         <th scope="col" class="text-end">Actions</th>
                     </tr>
@@ -43,12 +43,12 @@
                                 class="d-inline-flex align-items-center gap-2">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <select name="role" class="form-select form-select-sm role-select"
-                                    aria-label="Role de {{ u.full_name }}">
+                                    aria-label="Rôle de {{ u.full_name }}">
                                     {% for r in roles %}
                                     <option value="{{ r.value }}" {% if u.role == r %}selected{% endif %}>{{ r.value }}</option>
                                     {% endfor %}
                                 </select>
-                                <button class="btn btn-sm btn-outline-secondary" type="submit" title="Appliquer le role">
+                                <button class="btn btn-sm btn-outline-secondary" type="submit" title="Appliquer le rôle">
                                     <i class="bi bi-check-lg" aria-hidden="true"></i>
                                 </button>
                             </form>

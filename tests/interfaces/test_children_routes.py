@@ -45,7 +45,7 @@ def test_admin_children_page_requires_admin(client, app):
     login(client, teacher_id)
     resp = client.get("/admin/children", follow_redirects=True)
     assert resp.status_code == 200
-    assert b"Acces reserve" in resp.data
+    assert b"Acc\xc3\xa8s r\xc3\xa9serv\xc3\xa9" in resp.data
 
 
 def test_admin_create_child_success(client, app):
@@ -148,7 +148,7 @@ def test_parent_children_requires_parent(client, app):
     login(client, teacher_id)
     resp = client.get("/parent/children", follow_redirects=True)
     assert resp.status_code == 200
-    assert b"Acces reserve" in resp.data
+    assert b"Acc\xc3\xa8s r\xc3\xa9serv\xc3\xa9" in resp.data
 
 
 def test_parent_child_channels_lists_class_channels(client, app):

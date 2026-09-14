@@ -142,7 +142,7 @@
                     {% endif %}
                 </div>
 
-                <form method="post" class="composer">
+                <form method="post" class="composer" data-channel-id="{{ channel_id }}">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <input type="hidden" name="action" value="send_message">
                     <label class="visually-hidden" for="content">Votre message</label>

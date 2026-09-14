@@ -38,7 +38,7 @@
                 <form method="post" action="{{ url_for('admin.delete_announcement', announcement_id=a.id) }}" class="d-inline">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <button class="btn btn-sm btn-outline-danger" type="submit"
-                        data-confirm="Supprimer cette annonce et sa piece jointe ?">
+                        data-confirm="Supprimer cette annonce et sa pièce jointe ?">
                         <i class="bi bi-trash me-1" aria-hidden="true"></i>Supprimer
                     </button>
                 </form>

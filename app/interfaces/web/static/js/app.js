@@ -422,7 +422,7 @@ function initFileZone() {
                 strong.textContent = name;
             }
             if (hint) {
-                hint.textContent = "Pret a etre publie.";
+                hint.textContent = "Prêt à être publié.";
             }
         } else if (strong && hint) {
             strong.textContent = "Deposer un PDF";
@@ -557,14 +557,14 @@ function initAiRephrase() {
             });
             const data = await response.json();
             if (!response.ok) {
-                output.textContent = data.error || "La reformulation a echoue.";
+                output.textContent = data.error || "La reformulation a échoué.";
             } else {
                 suggestion = data.suggestion || "";
                 output.textContent = suggestion;
                 actions.hidden = false;
             }
         } catch (error) {
-            output.textContent = "La reformulation a echoue.";
+            output.textContent = "La reformulation a échoué.";
         } finally {
             spinner.hidden = true;
             btn.disabled = false;
@@ -607,6 +607,65 @@ function initCalendarPrint() {
     }
 }
 
+function initPasswordToggle() {
+    document.querySelectorAll("[data-password-toggle]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+            const group = btn.closest(".input-group");
+            const input = group
+                ? group.querySelector("input[type='password'], input[type='text']")
+                : null;
+            if (!input) {
+                return;
+            }
+            const show = input.type === "password";
+            input.type = show ? "text" : "password";
+            const icon = btn.querySelector("i");
+            if (icon) {
+                icon.className = show ? "bi bi-eye-slash" : "bi bi-eye";
+            }
+            btn.setAttribute(
+                "aria-label",
+                show ? "Masquer le mot de passe" : "Afficher le mot de passe"
+            );
+        });
+    });
+}
+
+function initChatDraft() {
+    const form = document.querySelector("form.composer[data-channel-id]");
+    if (!form) {
+        return;
+    }
+    const textarea = form.querySelector("textarea#content");
+    if (!textarea) {
+        return;
+    }
+    const storageKey = `edulink-draft-${form.dataset.channelId}`;
+    try {
+        const saved = sessionStorage.getItem(storageKey);
+        if (saved) {
+            textarea.value = saved;
+            textarea.dispatchEvent(new Event("input", { bubbles: true }));
+        }
+    } catch (error) {
+        return;
+    }
+    textarea.addEventListener("input", () => {
+        try {
+            sessionStorage.setItem(storageKey, textarea.value);
+        } catch (error) {
+            /* storage unavailable: persistence is optional */
+        }
+    });
+    form.addEventListener("submit", () => {
+        try {
+            sessionStorage.removeItem(storageKey);
+        } catch (error) {
+            /* storage unavailable */
+        }
+    });
+}
+
 initThemeToggle();
 
 initCharCounters();
@@ -620,6 +679,10 @@ initAutoGrow();
 initChatScroll();
 
 initFileZone();
+
+initPasswordToggle();
+
+initChatDraft();
 
 initMemberPicker();
 
@@ -673,14 +736,14 @@ async function initPushNotifications() {
     const data = await response.json();
     const publicKey = data.publicKey;
     if (!publicKey) {
-        showStatus("Push non configure", "btn-outline-warning", "bi-bell-slash", true);
+        showStatus("Push non configuré", "btn-outline-warning", "bi-bell-slash", true);
         return;
     }
 
     const registration = await navigator.serviceWorker.register("/service-worker.js");
     const existingSubscription = await registration.pushManager.getSubscription();
     if (existingSubscription) {
-        showStatus("Push mobile active", "btn-success", "bi-bell-fill", true);
+        showStatus("Push mobile activé", "btn-success", "bi-bell-fill", true);
         return;
     }
 
@@ -688,7 +751,7 @@ async function initPushNotifications() {
     enableButton.addEventListener("click", async () => {
         const permission = await Notification.requestPermission();
         if (permission !== "granted") {
-            showStatus("Permission refusee", "btn-outline-danger", "bi-bell-slash", true);
+            showStatus("Permission refusée", "btn-outline-danger", "bi-bell-slash", true);
             return;
         }
 
@@ -708,6 +771,6 @@ async function initPushNotifications() {
             body: JSON.stringify(subscription),
         });
 
-        showStatus("Push mobile active", "btn-success", "bi-bell-fill", true);
+        showStatus("Push mobile activé", "btn-success", "bi-bell-fill", true);
     });
 }

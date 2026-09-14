@@ -26,7 +26,7 @@ def test_parent_cannot_create(client, app):
         data={"title": "T", "content": "C"},
         follow_redirects=True,
     )
-    assert b"Only admin and teachers" in response.data
+    assert b"peuvent cr\xc3\xa9er des annonces" in response.data
 
 
 def test_teacher_can_create(client, app):
@@ -38,7 +38,7 @@ def test_teacher_can_create(client, app):
         follow_redirects=True,
     )
     assert response.status_code == 200
-    assert b"Annonce publiee" in response.data
+    assert b"Annonce publi\xc3\xa9e" in response.data
 
 
 def test_create_with_pdf_upload(client, app):
@@ -55,7 +55,7 @@ def test_create_with_pdf_upload(client, app):
         follow_redirects=True,
     )
     assert response.status_code == 200
-    assert b"Annonce publiee" in response.data
+    assert b"Annonce publi\xc3\xa9e" in response.data
 
 
 def test_create_page_shows_author_channels(client, app):
@@ -85,7 +85,7 @@ def test_create_targeted_announcement_notifies_only_members(client, app):
         follow_redirects=True,
     )
     assert response.status_code == 200
-    assert b"Annonce publiee" in response.data
+    assert b"Annonce publi\xc3\xa9e" in response.data
     with app.app_context():
         notified = {n.user_id for n in NotificationModel.query.all()}
     assert notified == {teacher_id, parent_id}
@@ -113,7 +113,7 @@ def test_parent_can_confirm_read(client, app):
     login(client, parent_id)
     response = client.post(f"/announcements/{ann_id}/confirm-read", follow_redirects=True)
     assert response.status_code == 200
-    assert b"Lecture confirmee" in response.data
+    assert b"Lecture confirm\xc3\xa9e" in response.data
     with app.app_context():
         row = AnnouncementReadModel.query.filter_by(
             announcement_id=ann_id, user_id=parent_id
@@ -167,7 +167,7 @@ def test_create_rejects_non_pdf(client, app):
         content_type="multipart/form-data",
         follow_redirects=True,
     )
-    assert b"Seuls les PDF sont autorises" in response.data
+    assert b"Seuls les PDF sont autoris\xc3\xa9s" in response.data
 
 
 def test_create_rejects_html_disguised_as_pdf(client, app):
@@ -183,7 +183,7 @@ def test_create_rejects_html_disguised_as_pdf(client, app):
         content_type="multipart/form-data",
         follow_redirects=True,
     )
-    assert b"Seuls les PDF sont autorises" in response.data
+    assert b"Seuls les PDF sont autoris\xc3\xa9s" in response.data
 
 
 def test_download_missing_pdf_returns_404(client, app):

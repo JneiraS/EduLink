@@ -32,7 +32,7 @@ def test_pin_message_requires_admin_or_teacher(client, app):
         data={"action": "toggle_pin", "message_id": str(msg_id), "pinned": "1"},
         follow_redirects=True,
     )
-    assert b"Only admins and teachers can pin messages" in resp.data
+    assert b"peuvent \xc3\xa9pingler des messages" in resp.data
     with app.app_context():
         from app.extensions import db
 
@@ -71,7 +71,7 @@ def test_channel_detail_search_rejects_non_member(client, app):
     resp = client.get(
         f"/messages/channels/{channel_id}?q=secret", follow_redirects=True
     )
-    assert b"User is not member of this channel" in resp.data
+    assert b"membre de ce canal" in resp.data
 
 
 def test_channel_detail_search_no_results(client, app):
@@ -106,7 +106,7 @@ def test_parent_cannot_create_channel(client, app):
         "/messages/channels", data={"name": "Canal", "members": []}
     )
     assert response.status_code == 200
-    assert b"Only admin and teachers can create channels" in response.data
+    assert b"peuvent cr\xc3\xa9er des canaux" in response.data
 
 
 def test_teacher_can_create_channel(client, app):
@@ -119,7 +119,7 @@ def test_teacher_can_create_channel(client, app):
         follow_redirects=True,
     )
     assert response.status_code == 200
-    assert b"Canal cree" in response.data
+    assert b"Canal cr\xc3\xa9\xc3\xa9" in response.data
 
 
 def test_create_channel_requires_name(client, app):
@@ -128,7 +128,7 @@ def test_create_channel_requires_name(client, app):
     response = client.post(
         "/messages/channels", data={"name": "  ", "members": []}
     )
-    assert b"Channel name is required" in response.data
+    assert b"nom du canal est requis" in response.data
 
 
 def test_member_can_send_message(client, app):
@@ -155,7 +155,7 @@ def test_non_member_cannot_send_message(client, app):
         follow_redirects=True,
     )
     assert response.status_code == 200
-    assert b"User is not member of this channel" in response.data
+    assert b"membre de ce canal" in response.data
 
 
 def test_channel_detail_pagination_load_older(client, app):
@@ -189,7 +189,7 @@ def test_channel_detail_add_members_admin(client, app):
         follow_redirects=True,
     )
     assert response.status_code == 200
-    assert b"Membres ajoutes" in response.data
+    assert b"Membres ajout\xc3\xa9s" in response.data
 
 
 def test_channel_creation_renders_member_picker(client, app):
@@ -201,6 +201,25 @@ def test_channel_creation_renders_member_picker(client, app):
     assert b"data-member-search" in response.data
     assert b"data-selected-count" in response.data
     assert b"data-clear-selection" in response.data
+
+
+def test_channels_page_redirects_to_channel_when_channel_id_given(client, app):
+    admin_id = create_user(app, role="ADMIN", email="cid1@t.local")
+    channel_id = create_channel(app, "Canal", admin_id, [admin_id])
+    login(client, admin_id)
+    resp = client.get(f"/messages/channels?channel_id={channel_id}")
+    assert resp.status_code == 302
+    assert resp.headers["Location"].endswith(f"/messages/channels/{channel_id}")
+
+
+def test_channels_page_ignores_channel_id_outside_membership(client, app):
+    admin_id = create_user(app, role="ADMIN", email="cid2@t.local")
+    other_id = create_user(app, role="PARENT", email="cid3@t.local")
+    channel_id = create_channel(app, "Canal prive", admin_id, [admin_id])
+    login(client, other_id)
+    resp = client.get(f"/messages/channels?channel_id={channel_id}")
+    assert resp.status_code == 200
+    assert b"Canal prive" not in resp.data
 
 
 def test_channel_creation_groups_members_by_role(client, app):
@@ -248,7 +267,7 @@ def test_channel_creation_preserves_name_on_error(client, app):
         "/messages/channels", data={"name": long_name, "members": []}
     )
     assert response.status_code == 200
-    assert b"at most 120 characters" in response.data
+    assert b"120 caract\xc3\xa8res" in response.data
     assert f'value="{long_name}"'.encode() in response.data
 
 
@@ -285,7 +304,7 @@ def test_open_direct_conversation_creates(client, app):
         follow_redirects=True,
     )
     assert response.status_code == 200
-    assert b"Conversation creee" in response.data
+    assert b"Conversation cr\xc3\xa9\xc3\xa9e" in response.data
     with app.app_context():
         direct = ChannelModel.query.filter_by(kind="direct").first()
         assert direct is not None
@@ -308,7 +327,7 @@ def test_open_direct_conversation_requires_member(client, app):
     response = client.post(
         "/messages/new-conversation", data={"member": ""}, follow_redirects=True
     )
-    assert b"Selectionnez un contact" in response.data
+    assert b"S\xc3\xa9lectionnez un contact" in response.data
 
 
 def test_channels_page_lists_direct_and_group_sections(client, app):
@@ -371,7 +390,7 @@ def test_add_members_rejected_for_direct(client, app):
         data={"action": "add_members", "members": [str(teacher_id)]},
         follow_redirects=True,
     )
-    assert b"Cannot add members to a direct conversation" in response.data
+    assert b"ajouter des membres \xc3\xa0 une conversation directe" in response.data
 
 
 def test_create_message_template_route(client, app):
@@ -383,7 +402,7 @@ def test_create_message_template_route(client, app):
         follow_redirects=True,
     )
     assert response.status_code == 200
-    assert b"Modele cree" in response.data
+    assert b"Mod\xc3\xa8le cr\xc3\xa9\xc3\xa9" in response.data
     assert b"Reponse" in response.data
 
 
@@ -395,7 +414,7 @@ def test_create_message_template_requires_label(client, app):
         data={"label": "  ", "content": "Bonjour"},
         follow_redirects=True,
     )
-    assert b"Label is required" in response.data
+    assert b"libell\xc3\xa9 est requis" in response.data
 
 
 def test_delete_message_template_route(client, app):
@@ -409,7 +428,7 @@ def test_delete_message_template_route(client, app):
     response = client.post(
         f"/messages/templates/{template_id}/delete", follow_redirects=True
     )
-    assert b"Modele supprime" in response.data
+    assert b"Mod\xc3\xa8le supprim\xc3\xa9" in response.data
     with app.app_context():
         assert MessageTemplateModel.query.count() == 0
 
@@ -429,7 +448,7 @@ def test_delete_template_rejects_other_owner(client, app):
     response = client.post(
         f"/messages/templates/{template_id}/delete", follow_redirects=True
     )
-    assert b"Only the owner can delete this template" in response.data
+    assert b"Seul le propri\xc3\xa9taire peut supprimer ce mod\xc3\xa8le" in response.data
     with app.app_context():
         assert MessageTemplateModel.query.count() == 1
 
@@ -503,7 +522,7 @@ def test_edit_template_updates(client, app):
         data={"label": "Nouveau", "content": "Mis a jour"},
         follow_redirects=True,
     )
-    assert b"Modele mis a jour" in response.data
+    assert b"Mod\xc3\xa8le mis \xc3\xa0 jour" in response.data
     with app.app_context():
         from app.extensions import db
 
@@ -529,7 +548,7 @@ def test_edit_template_rejects_other_owner(client, app):
         data={"label": "X", "content": "y"},
         follow_redirects=True,
     )
-    assert b"Template not found" in response.data
+    assert b"Mod\xc3\xa8le introuvable" in response.data
     with app.app_context():
         from app.extensions import db
 
@@ -557,7 +576,7 @@ def test_global_notifications_toggle_persists(client, app):
         data={"enabled": "0"},
         follow_redirects=True,
     )
-    assert b"Notifications globales desactivees" in resp.data
+    assert b"Notifications globales d\xc3\xa9sactiv\xc3\xa9es" in resp.data
     with app.app_context():
         from app.extensions import db
         from app.infrastructure.database.models import UserNotificationSettingModel
@@ -574,7 +593,7 @@ def test_channel_notifications_toggle_persists(client, app):
         f"/messages/channels/{channel_id}/notifications",
         follow_redirects=True,
     )
-    assert b"Notifications desactivees" in resp.data
+    assert b"Notifications d\xc3\xa9sactiv\xc3\xa9es" in resp.data
     with app.app_context():
         from app.extensions import db
         from app.infrastructure.database.models import ChannelNotificationSettingModel
@@ -594,7 +613,7 @@ def test_channel_notifications_toggle_requires_membership(client, app):
         f"/messages/channels/{channel_id}/notifications",
         follow_redirects=True,
     )
-    assert b"User is not member of this channel" in resp.data
+    assert b"membre de ce canal" in resp.data
     with app.app_context():
         from app.extensions import db
         from app.infrastructure.database.models import ChannelNotificationSettingModel
@@ -615,7 +634,7 @@ def test_channel_detail_toggle_notifications(client, app):
         data={"action": "toggle_notifications"},
         follow_redirects=True,
     )
-    assert b"Notifications desactivees" in resp.data
+    assert b"Notifications d\xc3\xa9sactiv\xc3\xa9es" in resp.data
     with app.app_context():
         from app.extensions import db
         from app.infrastructure.database.models import ChannelNotificationSettingModel
@@ -640,7 +659,7 @@ def test_find_parent_requires_teacher_or_admin(client, app):
     login(client, parent_id)
     resp = client.get("/messages/find-parent", follow_redirects=True)
     assert resp.status_code == 200
-    assert b"Acces r" in resp.data
+    assert b"Acc\xc3\xa8s r\xc3\xa9serv\xc3\xa9" in resp.data
 
 
 def test_find_parent_renders_search_form(client, app):
@@ -680,4 +699,4 @@ def test_find_parent_post_opens_conversation(client, app):
         follow_redirects=True,
     )
     assert resp.status_code == 200
-    assert b"Conversation creee" in resp.data
+    assert b"Conversation cr\xc3\xa9\xc3\xa9e" in resp.data

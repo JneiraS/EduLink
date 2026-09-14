@@ -25,16 +25,16 @@ class CreateMessageTemplate:
         label = label.strip()
         content = content.strip()
         if not label:
-            raise ValidationError("Label is required")
+            raise ValidationError("Le libellé est requis")
         if len(label) > MAX_LABEL_LENGTH:
             raise ValidationError(
-                f"Label must be at most {MAX_LABEL_LENGTH} characters"
+                f"Le libellé ne doit pas dépasser {MAX_LABEL_LENGTH} caractères"
             )
         if not content:
-            raise ValidationError("Content is required")
+            raise ValidationError("Le contenu est requis")
         if len(content) > MAX_TEMPLATE_CONTENT_LENGTH:
             raise ValidationError(
-                f"Content must be at most {MAX_TEMPLATE_CONTENT_LENGTH} characters"
+                f"Le contenu ne doit pas dépasser {MAX_TEMPLATE_CONTENT_LENGTH} caractères"
             )
         return self.templates.save(
             MessageTemplate(
@@ -55,7 +55,7 @@ class DeleteMessageTemplate:
         if template is None:
             return
         if template.owner_id != (actor.id or 0):
-            raise AuthorizationError("Only the owner can delete this template")
+            raise AuthorizationError("Seul le propriétaire peut supprimer ce modèle")
         self.templates.delete(template_id)
 
 
@@ -69,20 +69,20 @@ class UpdateMessageTemplate:
         label = label.strip()
         content = content.strip()
         if not label:
-            raise ValidationError("Label is required")
+            raise ValidationError("Le libellé est requis")
         if len(label) > MAX_LABEL_LENGTH:
             raise ValidationError(
-                f"Label must be at most {MAX_LABEL_LENGTH} characters"
+                f"Le libellé ne doit pas dépasser {MAX_LABEL_LENGTH} caractères"
             )
         if not content:
-            raise ValidationError("Content is required")
+            raise ValidationError("Le contenu est requis")
         if len(content) > MAX_TEMPLATE_CONTENT_LENGTH:
             raise ValidationError(
-                f"Content must be at most {MAX_TEMPLATE_CONTENT_LENGTH} characters"
+                f"Le contenu ne doit pas dépasser {MAX_TEMPLATE_CONTENT_LENGTH} caractères"
             )
         template = self.templates.find_by_id(template_id)
         if template is None:
-            raise ValidationError("Template not found")
+            raise ValidationError("Modèle introuvable")
         if template.owner_id != (actor.id or 0):
-            raise AuthorizationError("Only the owner can edit this template")
+            raise AuthorizationError("Seul le propriétaire peut modifier ce modèle")
         return self.templates.update(template_id, label, content)

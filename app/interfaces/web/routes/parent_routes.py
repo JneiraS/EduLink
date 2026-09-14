@@ -11,7 +11,7 @@ parent_bp = Blueprint("parent", __name__, url_prefix="/parent")
 def _guard_parent():
     actor = current_actor()
     if actor.role != UserRole.PARENT:
-        flash("Acces reserve aux parents", "danger")
+        flash("Accès réservé aux parents", "danger")
         return redirect(url_for("dashboard.home"))
     return None
 

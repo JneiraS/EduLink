@@ -49,4 +49,4 @@ def test_parent_cannot_see_add_members_panel(app):
         follow_redirects=True,
     )
     assert post_response.status_code == 200
-    assert b"Only admin and teachers can add channel members" in post_response.data
+    assert b"peuvent ajouter des membres" in post_response.data

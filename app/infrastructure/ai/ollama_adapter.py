@@ -43,6 +43,6 @@ class OllamaTextAssistant(TextAssistantPort):
             response.raise_for_status()
         except requests.RequestException as exc:
             raise ServiceUnavailableError(
-                "AI assistant is unavailable"
+                "L'assistant IA est indisponible"
             ) from exc
         return (response.json().get("response") or "").strip()
