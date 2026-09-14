@@ -61,7 +61,7 @@ def test_invite_get_renders_form(client, app):
     user_id, token = _make_invited_user(app)
     response = client.get(f"/auth/invite/{token}")
     assert response.status_code == 200
-    assert b"Definissez votre mot de passe" in response.data
+    assert b"D\xc3\xa9finissez votre mot de passe" in response.data
     assert b"Invited User" in response.data
 
 

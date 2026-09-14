@@ -102,7 +102,7 @@ function initMemberPicker() {
 
         const updateSummary = () => {
             const selected = boxes.filter((box) => box.checked);
-            countEl.textContent = `${selected.length} selectionne${selected.length !== 1 ? "s" : ""}`;
+            countEl.textContent = `${selected.length} sélectionné${selected.length !== 1 ? "s" : ""}`;
             summary.replaceChildren();
             selected.forEach((box) => {
                 const option = box.closest(".member-option");
@@ -229,10 +229,11 @@ function initThemeToggle() {
 
     const applyThemeUi = (theme) => {
         const isDark = theme === "dark";
-        const title = isDark ? "Theme clair" : "Theme sombre";
+        const title = isDark ? "Thème clair" : "Thème sombre";
         const iconClass = isDark ? "bi-sun" : "bi-moon-stars";
         themeButton.setAttribute("title", title);
         themeButton.setAttribute("aria-label", `Basculer vers le ${title.toLowerCase()}`);
+        themeButton.setAttribute("aria-pressed", isDark ? "true" : "false");
         themeButton.innerHTML = `<i class="bi ${iconClass}" aria-hidden="true"></i>`;
 
         if (themeColorMeta) {
@@ -485,9 +486,9 @@ function initAiSummary() {
             const data = await response.json();
             output.textContent = response.ok
                 ? data.summary
-                : (data.error || "Le resume a echoue.");
+                : (data.error || "Le résumé a échoué.");
         } catch (error) {
-            output.textContent = "Le resume a echoue.";
+            output.textContent = "Le résumé a échoué.";
         } finally {
             spinner.hidden = true;
             btn.disabled = false;

@@ -77,7 +77,7 @@ def test_admin_members_page_links_to_create_user(client, app):
     response = client.get("/admin/members")
     assert response.status_code == 200
     assert b"/auth/users/new" in response.data
-    assert b"Creer un utilisateur" in response.data
+    assert b"Cr\xc3\xa9er un utilisateur" in response.data
 
 
 def test_admin_role_change_success(client, app):

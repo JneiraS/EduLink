@@ -13,13 +13,13 @@
                     </div>
                     {% if members %}
                     <form method="post" class="notif-channel-toggle"
-                        title="Activer ou desactiver les notifications de cette conversation">
+                        title="Activer ou désactiver les notifications de cette conversation">
                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <input type="hidden" name="action" value="toggle_notifications">
                         {% if notifications_enabled %}
                         <button type="submit" class="notif-btn notif-btn--on"
-                            data-confirm="Desactiver les notifications de cette conversation ?"
-                            aria-pressed="true" aria-label="Desactiver les notifications">
+                            data-confirm="Désactiver les notifications de cette conversation ?"
+                            aria-pressed="true" aria-label="Désactiver les notifications">
                             <i class="bi bi-bell" aria-hidden="true"></i>
                         </button>
                         {% else %}
@@ -46,12 +46,12 @@
                 <div class="ai-summary-bar">
                     <button type="button" class="btn btn-sm btn-outline-secondary ai-summary-btn"
                         data-ai-summary data-channel-id="{{ channel_id }}">
-                        <i class="bi bi-stars me-1" aria-hidden="true"></i>Resumer la conversation
+                        <i class="bi bi-stars me-1" aria-hidden="true"></i>Résumer la conversation
                     </button>
                     <div class="ai-summary-panel" data-ai-summary-panel hidden>
                         <div class="ai-summary-status" data-ai-summary-spinner hidden>
                             <span class="spinner-border spinner-border-sm me-2" role="status"
-                                aria-hidden="true"></span>Generation du resume...
+                                aria-hidden="true"></span>Génération du résumé...
                         </div>
                         <div class="ai-summary-output" data-ai-summary-output></div>
                     </div>
@@ -62,7 +62,7 @@
                     {% if pinned_messages and not is_direct and not search_mode %}
                     <div class="pinned-section">
                         <div class="pinned-header">
-                            <i class="bi bi-pin-angle-fill me-1" aria-hidden="true"></i>Epingles
+                            <i class="bi bi-pin-angle-fill me-1" aria-hidden="true"></i>Épinglés
                         </div>
                         {% for pm in pinned_messages %}
                         <div class="chat-message chat-message--pinned">
@@ -71,6 +71,9 @@
                                 {{ ((pm_name_parts[0][0] if pm_name_parts else '') ~ (pm_name_parts[1][0] if pm_name_parts|length > 1 else ''))|upper }}
                             </span>
                             <div class="bubble">
+                                {% if pm.sender_name %}
+                                <div class="bubble-sender">{{ pm.sender_name }}</div>
+                                {% endif %}
                                 <div class="bubble-text">{{ pm.content }}</div>
                                 <span class="bubble-time">{{ pm.created_at.strftime('%d/%m/%Y %H:%M') if pm.created_at else
                                     '' }}</span>
@@ -99,23 +102,23 @@
                         <span class="avatar avatar-sm" aria-hidden="true">{{ s_initials|upper }}</span>
                         {% endif %}
                         <div class="bubble">
-                            <!-- {% if not is_mine %}
+                            {% if not is_mine and not is_direct %}
                             <div class="bubble-sender">{{ m.sender_name }}</div>
-                            {% endif %} -->
+                            {% endif %}
                             <div class="bubble-text">{{ m.content }}</div>
                             <span class="bubble-time">{{ m.created_at.strftime('%d/%m/%Y %H:%M') if m.created_at else
                                 '' }}</span>
                         </div>
                         {% if not is_direct and can_manage_members %}
-                        <form method="post" class="pin-form" data-confirm="{% if m.is_pinned %}Desepingler ce message ?{% else %}Epingler ce message ?{% endif %}">
+                        <form method="post" class="pin-form" data-confirm="{% if m.is_pinned %}Désépingler ce message ?{% else %}Épingler ce message ?{% endif %}">
                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                             <input type="hidden" name="action" value="toggle_pin">
                             <input type="hidden" name="message_id" value="{{ m.id }}">
                             <input type="hidden" name="pinned" value="{{ '0' if m.is_pinned else '1' }}">
                             <button type="submit"
                                 class="btn btn-sm {% if m.is_pinned %}btn-warning{% else %}btn-outline-secondary{% endif %}"
-                                title="{% if m.is_pinned %}Desepingler{% else %}Epingler{% endif %}"
-                                aria-label="{% if m.is_pinned %}Desepingler{% else %}Epingler{% endif %}">
+                                title="{% if m.is_pinned %}Désépingler{% else %}Épingler{% endif %}"
+                                aria-label="{% if m.is_pinned %}Désépingler{% else %}Épingler{% endif %}">
                                 <i class="bi bi-pin-angle" aria-hidden="true"></i>
                             </button>
                         </form>
@@ -147,8 +150,8 @@
                         data-maxlength="5000" data-auto-grow placeholder="Votre message..."></textarea>
                     <button type="button" class="btn btn-outline-secondary ai-rephrase-btn"
                         data-ai-rephrase
-                        title="Reformuler le message de facon diplomatique"
-                        aria-label="Reformuler le message de facon diplomatique">
+                        title="Reformuler le message de façon diplomatique"
+                        aria-label="Reformuler le message de façon diplomatique">
                         <i class="bi bi-magic" aria-hidden="true"></i>
                     </button>
                     <button class="btn btn-primary send-btn" type="submit" aria-label="Envoyer">
@@ -176,7 +179,7 @@
                 <div class="template-picker" data-template-picker>
                     <details>
                         <summary class="btn btn-sm btn-outline-secondary">
-                            <i class="bi bi-file-earmark-text me-1" aria-hidden="true"></i>Modeles
+                            <i class="bi bi-file-earmark-text me-1" aria-hidden="true"></i>Modèles
                         </summary>
                         <div class="template-picker-list">
                             {% for template in message_templates %}
@@ -187,7 +190,7 @@
                     </details>
                 </div>
                 {% endif %}
-                <a class="template-manage" href="{{ url_for('messages.templates') }}">Gerer mes modeles</a>
+                <a class="template-manage" href="{{ url_for('messages.templates') }}">Gérer mes modèles</a>
             </div>
         </div>
     </div>
@@ -231,12 +234,12 @@
                                 data-member-search placeholder="Rechercher un membre..."
                                 aria-label="Rechercher un membre" autocomplete="off">
                             <span class="member-picker-count" data-selected-count
-                                aria-live="polite">0 selectionne(s)</span>
+                                aria-live="polite">0 sélectionné(s)</span>
                             <button type="button" class="member-picker-clear" data-clear-selection>Effacer</button>
                         </div>
 
                         <div class="member-picker-empty" data-search-empty hidden>
-                            Aucun membre ne correspond a la recherche.
+                            Aucun membre ne correspond à la recherche.
                         </div>
 
                         <div class="member-picker-groups">
@@ -246,7 +249,7 @@
                                 <legend class="member-group-header">
                                     <label class="member-group-toggle">
                                         <input type="checkbox" class="form-check-input" data-group-toggle
-                                            aria-label="Tout selectionner les {{ group_label|lower }}">
+                                            aria-label="Tout sélectionner les {{ group_label|lower }}">
                                         <span class="member-group-label">{{ group_label }}</span>
                                         <span class="badge text-bg-light" data-group-count>{{ group_users|length }}</span>
                                     </label>
@@ -268,13 +271,13 @@
                         </div>
 
                         <div class="member-picker-summary" data-selected-summary
-                            aria-label="Membres selectionnes"></div>
+                            aria-label="Membres sélectionnés"></div>
                     </div>
 
                     <button class="btn btn-outline-primary mt-3" type="submit">Ajouter</button>
                 </form>
                 {% else %}
-                <p class="text-muted mb-0">Tous les utilisateurs sont deja membres.</p>
+                <p class="text-muted mb-0">Tous les utilisateurs sont déjà membres.</p>
                 {% endif %}
             </div>
         </div>

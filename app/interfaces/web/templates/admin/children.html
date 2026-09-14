@@ -23,7 +23,7 @@
                     <div class="col-12">
                         <label for="parent_id" class="form-label">Parent <span class="text-danger">*</span></label>
                         <select class="form-select" id="parent_id" name="parent_id" required>
-                            <option value="">Selectionner un parent</option>
+                            <option value="">Sélectionner un parent</option>
                             {% for p in parents %}
                                 {% if p.role.value == 'PARENT' %}
                                 <option value="{{ p.id }}">{{ p.full_name }} ({{ p.email }})</option>

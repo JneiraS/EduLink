@@ -378,6 +378,18 @@ Point d'entrée : `run.py` → `create_app()` + `socketio.run(...)` (host/port v
   `EventCategory`) → `ValidationError`. La route construit le menu déroulant
   des classes depuis `ListClassNames` (enfants) **union** des classes présentes
   dans les événements.
+- La grille mensuelle est **data-driven** : la route calcule
+  `grid_year`/`grid_month` (défaut = mois courant, param `?month=YYYY-MM`,
+  borné entre le premier et le dernier mois comportant des événements ou le
+  mois courant), `month_count`, `calendar_weeks` (via `_build_week_rows`,
+  semaines ISO, prédécesseur/successeur dans les cellules vides) et les liens
+  `prev_month`/`next_month` (nuls hors bornes). Les libellés fr (mois, mois
+  abrégés, jours abrégés) sont fournis par les constantes `FRENCH_MONTHS` /
+  `FRENCH_MONTHS_ABBR` / `FRENCH_DAYS_ABBR` — plus rien de codé en dur (ex.
+  « Septembre 2026 »). La modale de création reçoit `default_start` (aujourd'hui
+  à 18:00, `isoformat(timespec="minutes")`) pour pré-remplir le champ date.
+  Aucune logique de grille dans le template : les helpers de la route restent
+  purs et testables (`_shift_month`, `_build_week_rows`…).
 - `CreateCalendarEvent` et `DeleteCalendarEvent` sont réservés à
   `ADMIN`/`TEACHER` (`_require_manage` → `AuthorizationError`). La création
   valide le titre, le type, la cohérence `end_date >= start_date` et les

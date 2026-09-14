@@ -87,8 +87,8 @@ def test_admin_sees_platform_stats_and_recent_signups(app, client):
 
     login(client, admin_id)
     resp = client.get("/")
-    assert b"Plateforme" in resp.data
-    assert b"Inscriptions recentes" in resp.data
+    assert b"plateforme" in resp.data
+    assert b"Inscriptions r\xc3\xa9centes" in resp.data
     assert b"Teacher Two" in resp.data
     assert b"1" in resp.data
 
@@ -98,7 +98,7 @@ def test_dashboard_renders_empty_state_when_no_activity(app, client):
     login(client, user_id)
     resp = client.get("/")
     assert resp.status_code == 200
-    assert b"Aucune activite recente" in resp.data
+    assert b"Aucune activit\xc3\xa9 r\xc3\xa9cente" in resp.data
 
 
 def test_dashboard_shows_calendar_summary_with_upcoming_deadline(app, client):

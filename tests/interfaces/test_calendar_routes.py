@@ -157,3 +157,39 @@ def test_calendar_nav_link_present(app, client):
     login(client, user_id)
     resp = client.get("/calendar/")
     assert b"/calendar/" in resp.data or b"Calendrier" in resp.data
+
+
+def test_calendar_grid_shows_month_label_and_nav(app, client):
+    user_id = create_user(app, role="PARENT", email="cal.grid1@t.local")
+    add_calendar_event(app, "Réunion T1", start_date=datetime(2026, 10, 2, 10, 0))
+    login(client, user_id)
+    resp = client.get("/calendar/")
+    html = resp.data.decode()
+    assert "Septembre 2026" in html
+    assert "?month=2026-10" in html
+    assert "?month=2026-08" not in html
+
+
+def test_calendar_grid_clamps_to_earliest_event_month(app, client):
+    user_id = create_user(app, role="PARENT", email="cal.grid2@t.local")
+    add_calendar_event(app, "Rentrée", start_date=datetime(2026, 10, 1, 8, 0))
+    login(client, user_id)
+    resp = client.get("/calendar/?month=2026-08")
+    html = resp.data.decode()
+    assert "Octobre 2026" in html
+
+
+def test_calendar_grid_empty_state_shows_current_month(app, client):
+    user_id = create_user(app, role="PARENT", email="cal.grid3@t.local")
+    login(client, user_id)
+    resp = client.get("/calendar/")
+    html = resp.data.decode()
+    assert "Aujourd'hui" in html
+
+
+def test_calendar_modal_default_start_is_rendered(app, client):
+    user_id = create_user(app, role="ADMIN", email="cal.modal@t.local")
+    login(client, user_id)
+    resp = client.get("/calendar/")
+    html = resp.data.decode()
+    assert 'value="' in html

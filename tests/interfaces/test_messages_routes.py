@@ -13,7 +13,7 @@ def test_teacher_can_pin_message(client, app):
         follow_redirects=True,
     )
     assert resp.status_code == 200
-    assert b"Epingles" in resp.data
+    assert b"\xc3\x89pingl\xc3\xa9s" in resp.data
     assert b"Reglement important" in resp.data
     with app.app_context():
         from app.extensions import db
@@ -451,7 +451,7 @@ def test_channel_detail_shows_template_entry_without_templates(client, app):
     login(client, admin_id)
     response = client.get(f"/messages/channels/{channel_id}")
     assert response.status_code == 200
-    assert b"Gerer mes modeles" in response.data
+    assert b"G\xc3\xa9rer mes mod\xc3\xa8les" in response.data
 
 
 def test_channels_page_links_to_message_templates(client, app):
@@ -459,7 +459,7 @@ def test_channels_page_links_to_message_templates(client, app):
     login(client, parent_id)
     response = client.get("/messages/channels")
     assert response.status_code == 200
-    assert b"Mes modeles de messages" in response.data
+    assert b"Mes mod\xc3\xa8les de messages" in response.data
 
 
 def test_channels_page_has_top_new_conversation_cta(client, app):
@@ -469,7 +469,7 @@ def test_channels_page_has_top_new_conversation_cta(client, app):
     assert response.status_code == 200
     html = response.data.decode()
     cta = html.find("/messages/new-conversation")
-    first_card = html.find(">Creer un canal<")
+    first_card = html.find(">Créer un canal<")
     assert cta != -1
     assert first_card != -1
     assert cta < first_card
@@ -488,7 +488,7 @@ def test_edit_template_renders_form(client, app):
         template_id = MessageTemplateModel.query.first().id
     response = client.get(f"/messages/templates/{template_id}/edit")
     assert response.status_code == 200
-    assert b"Modifier le modele" in response.data
+    assert b"Modifier le mod\xc3\xa8le" in response.data
     assert b"value=\"Reponse\"" in response.data
 
 

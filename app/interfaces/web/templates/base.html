@@ -35,17 +35,20 @@
             <div class="navbar-actions">
                 {% set endpoint = request.endpoint or '' %}
                 <a class="nav-pill {% if endpoint.startswith('announcements.') %}active{% endif %}"
-                    href="{{ url_for('announcements.list_announcements') }}" title="Annonces">
+                    href="{{ url_for('announcements.list_announcements') }}" title="Annonces"
+                    {% if endpoint.startswith('announcements.') %}aria-current="page"{% endif %}>
                     <i class="bi bi-megaphone" aria-hidden="true"></i>
                     <span class="nav-action-label">Annonces</span>
                 </a>
                 <a class="nav-pill {% if endpoint.startswith('messages.') %}active{% endif %}"
-                    href="{{ url_for('messages.channels') }}" title="Messagerie">
+                    href="{{ url_for('messages.channels') }}" title="Messagerie"
+                    {% if endpoint.startswith('messages.') %}aria-current="page"{% endif %}>
                     <i class="bi bi-chat-dots" aria-hidden="true"></i>
                     <span class="nav-action-label">Messagerie</span>
                 </a>
                 <a class="nav-pill {% if endpoint.startswith('calendar.') %}active{% endif %}"
-                    href="{{ url_for('calendar.index') }}" title="Calendrier scolaire & échéances">
+                    href="{{ url_for('calendar.index') }}" title="Calendrier scolaire & échéances"
+                    {% if endpoint.startswith('calendar.') %}aria-current="page"{% endif %}>
                     <i class="bi bi-calendar-event" aria-hidden="true"></i>
                     <span class="nav-action-label">Calendrier</span>
                 </a>
@@ -53,42 +56,48 @@
                 {% if current_user.role == 'ADMIN' %}
                 <div class="dropdown">
                     <button class="nav-pill dropdown-toggle {% if endpoint.startswith('admin.') %}active{% endif %}"
-                        type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Administration">
+                        type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Administration"
+                        {% if endpoint.startswith('admin.') %}aria-current="page"{% endif %}>
                         <i class="bi bi-gear-fill" aria-hidden="true"></i>
                         <span class="nav-action-label">Administration</span>
                     </button>
                     <ul class="dropdown-menu">
                         <li>
                             <a class="dropdown-item {% if endpoint == 'admin.members' %}active{% endif %}"
-                                href="{{ url_for('admin.members') }}">
+                                href="{{ url_for('admin.members') }}"
+                                {% if endpoint == 'admin.members' %}aria-current="page"{% endif %}>
                                 <i class="bi bi-people" aria-hidden="true"></i>
                                 Membres
                             </a>
                         </li>
                         <li>
                             <a class="dropdown-item {% if endpoint == 'admin.children' %}active{% endif %}"
-                                href="{{ url_for('admin.children') }}">
+                                href="{{ url_for('admin.children') }}"
+                                {% if endpoint == 'admin.children' %}aria-current="page"{% endif %}>
                                 <i class="bi bi-people-fill" aria-hidden="true"></i>
                                 Enfants
                             </a>
                         </li>
                         <li>
                             <a class="dropdown-item {% if endpoint == 'admin.announcements' %}active{% endif %}"
-                                href="{{ url_for('admin.announcements') }}">
+                                href="{{ url_for('admin.announcements') }}"
+                                {% if endpoint == 'admin.announcements' %}aria-current="page"{% endif %}>
                                 <i class="bi bi-megaphone" aria-hidden="true"></i>
                                 Annonces
                             </a>
                         </li>
                         <li>
                             <a class="dropdown-item {% if endpoint == 'admin.channels' %}active{% endif %}"
-                                href="{{ url_for('admin.channels') }}">
+                                href="{{ url_for('admin.channels') }}"
+                                {% if endpoint == 'admin.channels' %}aria-current="page"{% endif %}>
                                 <i class="bi bi-hash" aria-hidden="true"></i>
                                 Canaux
                             </a>
                         </li>
                         <li>
                             <a class="dropdown-item {% if endpoint == 'admin.stats' %}active{% endif %}"
-                                href="{{ url_for('admin.stats') }}">
+                                href="{{ url_for('admin.stats') }}"
+                                {% if endpoint == 'admin.stats' %}aria-current="page"{% endif %}>
                                 <i class="bi bi-bar-chart-fill" aria-hidden="true"></i>
                                 Statistiques
                             </a>
@@ -97,20 +106,22 @@
                 </div>
                 {% elif current_user.role == 'TEACHER' %}
                 <a class="nav-pill {% if endpoint == 'messages.find_parent' %}active{% endif %}"
-                    href="{{ url_for('messages.find_parent') }}" title="Trouver un parent">
+                    href="{{ url_for('messages.find_parent') }}" title="Trouver un parent"
+                    {% if endpoint == 'messages.find_parent' %}aria-current="page"{% endif %}>
                     <i class="bi bi-search" aria-hidden="true"></i>
                     <span class="nav-action-label">Contacts</span>
                 </a>
                 {% elif current_user.role == 'PARENT' %}
                 <a class="nav-pill {% if endpoint.startswith('parent.') %}active{% endif %}"
-                    href="{{ url_for('parent.children') }}" title="Mes enfants">
+                    href="{{ url_for('parent.children') }}" title="Mes enfants"
+                    {% if endpoint.startswith('parent.') %}aria-current="page"{% endif %}>
                     <i class="bi bi-people-fill" aria-hidden="true"></i>
                     <span class="nav-action-label">Mes enfants</span>
                 </a>
                 {% endif %}
 
                 <button class="btn btn-light icon-btn theme-toggle-btn" id="theme-toggle-btn" type="button"
-                    aria-label="Basculer vers le theme sombre" title="Theme sombre">
+                    aria-label="Basculer vers le thème sombre" title="Thème sombre">
                     <i class="bi bi-moon-stars" aria-hidden="true"></i>
                 </button>
 
@@ -132,11 +143,18 @@
                 <form method="post" action="{{ url_for('auth.logout') }}" class="d-inline">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <button class="btn btn-outline-light icon-btn nav-logout-btn" type="submit"
-                        aria-label="Deconnexion" title="Deconnexion">
+                        aria-label="Déconnexion" title="Déconnexion">
                         <i class="bi bi-box-arrow-right" aria-hidden="true"></i>
                     </button>
                 </form>
             </div>
+            </div>
+            {% else %}
+            <div class="navbar-actions navbar-actions--bare">
+                <button class="btn btn-light icon-btn theme-toggle-btn" id="theme-toggle-btn" type="button"
+                    aria-label="Basculer vers le thème sombre" title="Thème sombre">
+                    <i class="bi bi-moon-stars" aria-hidden="true"></i>
+                </button>
             </div>
             {% endif %}
         </div>

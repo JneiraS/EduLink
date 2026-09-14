@@ -6,11 +6,11 @@
         <div class="card shadow-sm">
             <div class="card-body">
                 <span class="kicker">Messagerie</span>
-                <h1 class="page-title mb-4">Modifier le modele</h1>
+                <h1 class="page-title mb-4">Modifier le modèle</h1>
                 <form method="post">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <div class="mb-3">
-                        <label class="form-label" for="label">Nom du modele</label>
+                        <label class="form-label" for="label">Nom du modèle</label>
                         <input class="form-control" id="label" name="label" required maxlength="80"
                             value="{{ template.label }}" placeholder="Ex. Reponse rapide">
                     </div>
@@ -18,7 +18,7 @@
                         <label class="form-label" for="content">Contenu</label>
                         <textarea class="form-control" id="content" name="content" rows="4" required
                             maxlength="5000" data-maxlength="5000"
-                            placeholder="Votre texte reutilisable">{{ template.content }}</textarea>
+                            placeholder="Votre texte réutilisable">{{ template.content }}</textarea>
                         <small class="char-counter" data-counter-for="content" aria-live="polite"></small>
                     </div>
                     <div class="d-flex gap-2">
