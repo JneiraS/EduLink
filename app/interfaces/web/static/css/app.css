@@ -10,68 +10,154 @@
    Design tokens — "Warm editorial"
    ============================================================ */
 :root {
-    --font-display: "Inter", "Helvetica Neue", Arial, ui-sans-serif, system-ui, sans-serif;
+    /* =========================================================
+          TYPOGRAPHY
+          ========================================================= */
+
+    --font-display:
+        "Inter", "Helvetica Neue", Arial, ui-sans-serif, system-ui, sans-serif;
     --font-body: "Inter", "Segoe UI", system-ui, sans-serif;
 
-    --bg-1: #f6f4ee;
-    --bg-2: #ece8dc;
+    /* =========================================================
+          CORE — LIGHT
+          ========================================================= */
+
+    --bg-1: #f7f8f6;
+    --bg-2: #eef1ee;
+
     --surface: #ffffff;
-    --surface-muted: #faf9f4;
-    --surface-strong: #f0eee5;
-    --text: #242735;
-    --text-soft: #636b80;
-    --line: #e4e1d3;
+    --surface-muted: #f8faf9;
+    --surface-strong: #edf2f0;
+
+    --text: #172326;
+    --text-soft: #647277;
+
+    --line: #dfe6e3;
+
     --bs-heading-color: var(--text);
 
-    --brand: #4f46e5;
-    --brand-strong: #4338ca;
-    --brand-soft: #eef0fe;
-    --ok: #1d9b60;
-    --warn: #b7791f;
-    --danger: #d64545;
-    --cyan: #0e7490;
+    /* =========================================================
+          BRAND
+          ========================================================= */
 
-    --aura-1: rgba(79, 70, 229, 0.10);
-    --aura-2: rgba(14, 116, 144, 0.08);
+    /* Main identity */
+    --brand: #287d8c;
+    --brand-light: #58b4c0;
+    --brand-strong: #1d5965;
+    --brand-soft: #e6f3f4;
 
-    --shadow-1: 0 1px 3px rgba(31, 35, 55, 0.08), 0 10px 20px rgba(31, 35, 55, 0.04);
-    --shadow-2: 0 4px 6px rgba(31, 35, 55, 0.07), 0 20px 40px rgba(31, 35, 55, 0.06);
-    --shadow-3: 0 10px 15px rgba(31, 35, 55, 0.1), 0 30px 60px rgba(31, 35, 55, 0.12);
-    --shadow-inset: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+    /* Secondary accent */
+    --accent: #5965d8;
+    --accent-strong: #454fb7;
+    --accent-soft: #eef0ff;
 
-    --nav-bg: rgba(255, 255, 255, 0.82);
-    --nav-border: #e6e3d8;
-    --nav-link: #4a5267;
-    --nav-link-hover-bg: #f0eee5;
-    --nav-brand: #242735;
-    --nav-btn-bg: #f2f0e9;
-    --nav-btn-border: #dfdccd;
-    --nav-btn-color: #464e64;
-    --nav-btn-hover-bg: #e9e6da;
-    --nav-outline-border: #cfcbb9;
-    --nav-outline-color: #5a6280;
-    --nav-outline-hover-bg: #f0eee5;
+    /* =========================================================
+          SEMANTIC
+          ========================================================= */
 
-    --toggler-icon: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='%234a5267' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+    --ok: #18865b;
+    --ok-soft: #e8f6ef;
+
+    --warn: #a86f18;
+    --warn-soft: #fff5df;
+
+    --danger: #c94343;
+    --danger-soft: #fcebea;
+
+    --cyan: #16829a;
+    --cyan-soft: #e6f6f8;
+
+    /* =========================================================
+          ATMOSPHERE
+          ========================================================= */
+
+    --aura-1: rgba(40, 125, 140, 0.1);
+    --aura-2: rgba(89, 101, 216, 0.07);
+
+    /* =========================================================
+          SHADOWS
+          ========================================================= */
+
+    --shadow-1:
+        0 1px 3px rgba(23, 35, 38, 0.06), 0 8px 20px rgba(23, 35, 38, 0.035);
+
+    --shadow-2:
+        0 4px 8px rgba(23, 35, 38, 0.07), 0 18px 40px rgba(23, 35, 38, 0.055);
+
+    --shadow-3:
+        0 10px 18px rgba(23, 35, 38, 0.1), 0 28px 60px rgba(23, 35, 38, 0.1);
+
+    --shadow-inset: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+
+    /* =========================================================
+          NAVIGATION
+          ========================================================= */
+
+    --nav-bg: rgba(255, 255, 255, 0.84);
+    --nav-border: #e0e7e4;
+
+    --nav-link: #526268;
+    --nav-link-hover-bg: #edf3f1;
+
+    --nav-brand: #172326;
+
+    --nav-btn-bg: #f1f5f3;
+    --nav-btn-border: #dce5e1;
+    --nav-btn-color: #425258;
+    --nav-btn-hover-bg: #e7eeeb;
+
+    --nav-outline-border: #c7d5d0;
+    --nav-outline-color: #42616a;
+    --nav-outline-hover-bg: #edf3f1;
+
+    /* =========================================================
+          ICON
+          ========================================================= */
+
+    --toggler-icon: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='%23526268' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+
+    /* =========================================================
+          FORMS
+          ========================================================= */
 
     --input-bg: #ffffff;
     --input-bg-focus: #ffffff;
-    --placeholder: #8b93a6;
+
+    --placeholder: #8a979b;
+
     --check-bg: #ffffff;
-    --badge-bg: #f2f0e9;
-    --badge-border: #e0ddce;
-    --badge-text: #3a3f50;
-    --list-hover-bg: #f1efe8;
-    --alert-bg: #f7f5ee;
+
+    --badge-bg: #eef3f1;
+    --badge-border: #dce5e1;
+    --badge-text: #3f4c51;
+
+    --list-hover-bg: #f0f5f3;
+
+    --alert-bg: #f3f6f4;
+
+    /* =========================================================
+          LINKS / BUTTONS
+          ========================================================= */
 
     --btn-primary-text: #ffffff;
-    --link-color: #4f46e5;
-    --link-hover: #4338ca;
+
+    --link-color: var(--brand);
+    --link-hover: var(--brand-strong);
+
+    /* =========================================================
+          CHAT
+          ========================================================= */
 
     --bubble-other-bg: #ffffff;
+
     --bubble-mine-bg: var(--brand);
     --bubble-mine-text: #ffffff;
-    --avatar-grad: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+
+    --avatar-grad: linear-gradient(135deg, #287d8c 0%, #5965d8 100%);
+
+    /* =========================================================
+          SPACING
+          ========================================================= */
 
     --space-1: 0.25rem;
     --space-2: 0.5rem;
@@ -81,76 +167,163 @@
     --space-6: 2rem;
     --space-7: 3rem;
 
+    /* =========================================================
+          RADII
+          ========================================================= */
+
     --r-sm: 8px;
     --r-md: 14px;
     --r-lg: 22px;
     --r-full: 999px;
 
+    /* =========================================================
+          MOTION
+          ========================================================= */
+
     --dur-fast: 140ms;
     --dur-med: 260ms;
     --dur-slow: 560ms;
+
     --ease: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
+/* =============================================================
+      DARK THEME
+      ============================================================= */
+
 html[data-theme="dark"] {
-    --bg-1: #151724;
-    --bg-2: #10121b;
-    --surface: #1e2131;
-    --surface-muted: #242839;
-    --surface-strong: #1a1d2b;
-    --text: #eceef7;
-    --text-soft: #a8aec8;
-    --line: #343a55;
+    /* ---------------------------------------------------------
+          BACKGROUND
+          --------------------------------------------------------- */
 
-    --brand: #a5b4fc;
-    --brand-strong: #c6d2fe;
-    --brand-soft: #2b3050;
-    --ok: #4ade80;
-    --warn: #f5c518;
-    --danger: #f87171;
-    --cyan: #67e8f9;
+    --bg-1: #101719;
+    --bg-2: #0b1113;
 
-    --aura-1: rgba(122, 140, 255, 0.16);
-    --aura-2: rgba(103, 232, 249, 0.10);
+    --surface: #182124;
+    --surface-muted: #1d292c;
+    --surface-strong: #151e21;
 
-    --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.3), 0 4px 14px rgba(0, 0, 0, 0.25);
-    --shadow-2: 0 8px 26px rgba(0, 0, 0, 0.35);
-    --shadow-3: 0 18px 44px rgba(0, 0, 0, 0.45);
-    --shadow-inset: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    /* ---------------------------------------------------------
+          TEXT
+          --------------------------------------------------------- */
 
-    --nav-bg: rgba(22, 25, 38, 0.82);
-    --nav-border: #343a55;
-    --nav-link: #b9c0d8;
-    --nav-link-hover-bg: #2a2f47;
-    --nav-brand: #eceef7;
-    --nav-btn-bg: #262b40;
-    --nav-btn-border: #3a415f;
-    --nav-btn-color: #dfe3f2;
-    --nav-btn-hover-bg: #2f3550;
-    --nav-outline-border: #454d70;
-    --nav-outline-color: #c2c9e0;
-    --nav-outline-hover-bg: #2a2f47;
+    --text: #e8efed;
+    --text-soft: #9eaeaf;
 
-    --toggler-icon: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='%23eceef7' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+    --line: #2c3a3d;
 
-    --input-bg: #202436;
-    --input-bg-focus: #22263a;
-    --placeholder: #848baa;
-    --check-bg: #262b40;
-    --badge-bg: #2a2f45;
-    --badge-border: #3c435f;
-    --badge-text: #eceef7;
-    --list-hover-bg: #262b40;
-    --alert-bg: #262b3c;
+    /* ---------------------------------------------------------
+          BRAND
+          --------------------------------------------------------- */
 
-    --btn-primary-text: #171a29;
-    --link-color: #a5b4fc;
-    --link-hover: #c6d2fe;
+    --brand: #58b4c0;
+    --brand-strong: #83cbd3;
+    --brand-soft: #19363b;
 
-    --bubble-other-bg: #262b40;
-    --bubble-mine-bg: #4f46e5;
+    --accent: #8b94f0;
+    --accent-strong: #aab1fa;
+    --accent-soft: #292d4b;
+
+    /* ---------------------------------------------------------
+          SEMANTIC
+          --------------------------------------------------------- */
+
+    --ok: #4fd397;
+    --ok-soft: #16382b;
+
+    --warn: #e7b957;
+    --warn-soft: #3b301b;
+
+    --danger: #f17b7b;
+    --danger-soft: #402326;
+
+    --cyan: #62c9dc;
+    --cyan-soft: #16363d;
+
+    /* ---------------------------------------------------------
+          ATMOSPHERE
+          --------------------------------------------------------- */
+
+    --aura-1: rgba(88, 180, 192, 0.14);
+    --aura-2: rgba(139, 148, 240, 0.1);
+
+    /* ---------------------------------------------------------
+          SHADOWS
+          --------------------------------------------------------- */
+
+    --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.3), 0 6px 16px rgba(0, 0, 0, 0.22);
+
+    --shadow-2: 0 8px 26px rgba(0, 0, 0, 0.32);
+
+    --shadow-3: 0 18px 48px rgba(0, 0, 0, 0.44);
+
+    --shadow-inset: inset 0 1px 0 rgba(255, 255, 255, 0.045);
+
+    /* ---------------------------------------------------------
+          NAVIGATION
+          --------------------------------------------------------- */
+
+    --nav-bg: rgba(17, 24, 27, 0.86);
+    --nav-border: #2c3a3d;
+
+    --nav-link: #aebdbc;
+    --nav-link-hover-bg: #202d30;
+
+    --nav-brand: #e8efed;
+
+    --nav-btn-bg: #202c2f;
+    --nav-btn-border: #344448;
+    --nav-btn-color: #d8e1df;
+    --nav-btn-hover-bg: #28373a;
+
+    --nav-outline-border: #405255;
+    --nav-outline-color: #b9cfcc;
+    --nav-outline-hover-bg: #202d30;
+
+    /* ---------------------------------------------------------
+          ICON
+          --------------------------------------------------------- */
+
+    --toggler-icon: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='%23e8efed' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+
+    /* ---------------------------------------------------------
+          FORMS
+          --------------------------------------------------------- */
+
+    --input-bg: #192427;
+    --input-bg-focus: #1d292c;
+
+    --placeholder: #7f9294;
+
+    --check-bg: #202c2f;
+
+    --badge-bg: #243134;
+    --badge-border: #364548;
+    --badge-text: #e3ebe9;
+
+    --list-hover-bg: #202d30;
+
+    --alert-bg: #222e31;
+
+    /* ---------------------------------------------------------
+          LINKS / BUTTONS
+          --------------------------------------------------------- */
+
+    --btn-primary-text: #0e191b;
+
+    --link-color: var(--brand);
+    --link-hover: var(--brand-strong);
+
+    /* ---------------------------------------------------------
+          CHAT
+          --------------------------------------------------------- */
+
+    --bubble-other-bg: #202c2f;
+
+    --bubble-mine-bg: #287d8c;
     --bubble-mine-text: #ffffff;
-    --avatar-grad: linear-gradient(135deg, #6366f1 0%, #a78bfa 100%);
+
+    --avatar-grad: linear-gradient(135deg, #287d8c 0%, #5965d8 100%);
 }
 
 /* ============================================================
@@ -165,7 +338,11 @@ body {
     color: var(--text);
     background-color: var(--bg-1);
     background-image:
-        radial-gradient(1100px 560px at 88% -12%, var(--aura-1), transparent 62%),
+        radial-gradient(
+            1100px 560px at 88% -12%,
+            var(--aura-1),
+            transparent 62%
+        ),
         radial-gradient(900px 520px at -8% 108%, var(--aura-2), transparent 60%);
     background-attachment: fixed;
     min-height: 100vh;
@@ -227,6 +404,11 @@ a:hover {
 .form-text,
 small.text-muted {
     color: var(--text-soft) !important;
+}
+
+/* Bootstrap-compatible utility kept for the templates; it must remain theme-aware. */
+.text-body {
+    color: var(--text) !important;
 }
 
 .container.py-4 {
@@ -645,7 +827,6 @@ html[data-theme="dark"] .admin-nav-link.active {
     background-image: var(--toggler-icon);
 }
 
-
 .navbar .dropdown-menu {
     border: 1px solid var(--line);
     border-radius: var(--r-md);
@@ -1057,10 +1238,16 @@ html[data-theme="dark"] .admin-nav-link.active {
     border-radius: var(--r-full);
     font-weight: 600;
     letter-spacing: 0.01em;
-    transition-property: transform, filter, background-color, border-color, color,
-        box-shadow;
+    transition-property:
+        transform, filter, background-color, border-color, color, box-shadow;
     transition-duration: var(--dur-fast);
     transition-timing-function: var(--ease);
+}
+
+.btn:hover {
+    background-color: var(--brand-light);
+    border-color: whitesmoke;
+    color: var(--btn-hover-text);
 }
 
 .btn:active {
@@ -1086,6 +1273,12 @@ html[data-theme="dark"] .btn-primary:hover {
 .btn-outline-primary {
     border-color: color-mix(in srgb, var(--brand) 60%, var(--line));
     color: var(--brand);
+}
+
+.btn-outline-primary.active {
+    background: var(--brand);
+    color: var(--btn-primary-text);
+    border-color: var(--brand-strong);
 }
 
 .btn-outline-primary:hover {
@@ -1244,7 +1437,9 @@ textarea.form-control:focus {
     font-weight: 600;
     padding: 0.2rem 0.4rem;
     border-radius: var(--r-sm);
-    transition: background-color var(--dur-fast) ease, color var(--dur-fast) ease;
+    transition:
+        background-color var(--dur-fast) ease,
+        color var(--dur-fast) ease;
 }
 
 .member-picker-clear:hover {
@@ -1385,7 +1580,9 @@ textarea.form-control:focus {
     background: var(--surface-muted);
     color: var(--text-soft);
     text-align: center;
-    transition: border-color var(--dur-fast) ease, background-color var(--dur-fast) ease;
+    transition:
+        border-color var(--dur-fast) ease,
+        background-color var(--dur-fast) ease;
     cursor: pointer;
 }
 
@@ -1418,15 +1615,17 @@ textarea.form-control:focus {
     border-top: 1px solid var(--line);
 }
 
-.list-group.list-group-flush>.list-group-item {
+.list-group.list-group-flush > .list-group-item {
     background: transparent;
     border-left: 0;
     border-right: 0;
     padding: 0.85rem 0.2rem;
-    transition: background-color var(--dur-fast) ease, padding-left var(--dur-fast) ease;
+    transition:
+        background-color var(--dur-fast) ease,
+        padding-left var(--dur-fast) ease;
 }
 
-.list-group.list-group-flush>.list-group-item:hover {
+.list-group.list-group-flush > .list-group-item:hover {
     background: transparent;
     padding-left: 0.4rem;
 }
@@ -1488,7 +1687,9 @@ textarea.form-control:focus {
     justify-content: center;
     border-radius: var(--r-full);
     border: 1px solid transparent;
-    transition: background-color var(--dur-fast) ease, color var(--dur-fast) ease,
+    transition:
+        background-color var(--dur-fast) ease,
+        color var(--dur-fast) ease,
         border-color var(--dur-fast) ease;
 }
 
@@ -1725,7 +1926,9 @@ textarea.form-control:focus {
     color: var(--text);
     font-size: 0.85rem;
     padding: 0.3rem 0.75rem;
-    transition: background-color var(--dur-fast) ease, border-color var(--dur-fast) ease;
+    transition:
+        background-color var(--dur-fast) ease,
+        border-color var(--dur-fast) ease;
 }
 
 .template-option:hover {
@@ -2247,7 +2450,8 @@ hr {
         min-height: auto;
     }
 
-    .theme-toggle-btn, .btn.btn-outline-light {
+    .theme-toggle-btn,
+    .btn.btn-outline-light {
         width: 100%;
         border-radius: var(--r-full);
     }
@@ -2313,7 +2517,9 @@ hr {
 }
 
 .event-card-item {
-    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    transition:
+        border-color 0.15s ease,
+        box-shadow 0.15s ease;
 }
 
 .event-card-item:hover {
@@ -2421,7 +2627,11 @@ html[data-theme="dark"] .btn-close {
 }
 
 .calendar-day-cell--empty {
-    background-color: color-mix(in srgb, var(--surface-strong) 75%, var(--surface));
+    background-color: color-mix(
+        in srgb,
+        var(--surface-strong) 75%,
+        var(--surface)
+    );
 }
 
 .calendar-day-number {
@@ -2455,7 +2665,11 @@ html[data-theme="dark"] .bg-secondary-subtle,
 html[data-theme="dark"] .bg-danger-subtle,
 html[data-theme="dark"] .bg-success-subtle,
 html[data-theme="dark"] .bg-warning-subtle {
-    background-color: color-mix(in srgb, var(--surface) 82%, var(--line)) !important;
+    background-color: color-mix(
+        in srgb,
+        var(--surface) 82%,
+        var(--line)
+    ) !important;
 }
 
 html[data-theme="dark"] .border-primary-subtle {
@@ -2463,7 +2677,11 @@ html[data-theme="dark"] .border-primary-subtle {
 }
 
 html[data-theme="dark"] .border-secondary-subtle {
-    border-color: color-mix(in srgb, var(--text-soft) 35%, var(--line)) !important;
+    border-color: color-mix(
+        in srgb,
+        var(--text-soft) 35%,
+        var(--line)
+    ) !important;
 }
 
 html[data-theme="dark"] .border-danger-subtle {
