@@ -1,6 +1,6 @@
 from calendar import monthrange
 from collections import defaultdict
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 
 from flask import Blueprint, flash, redirect, render_template, request, url_for
 from flask_login import login_required
@@ -113,7 +113,11 @@ def index():
 
     events_by_day: dict = defaultdict(list)
     for event in events:
-        events_by_day[(event.start_date.year, event.start_date.month, event.start_date.day)].append(event)
+        current_date = event.start_date.date()
+        end_date = event.end_date.date() if event.end_date else current_date
+        while current_date <= end_date:
+            events_by_day[(current_date.year, current_date.month, current_date.day)].append(event)
+            current_date += timedelta(days=1)
 
     month_count = sum(
         1 for event in events
