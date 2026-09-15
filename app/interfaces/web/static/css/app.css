@@ -22,17 +22,17 @@
           CORE — LIGHT
           ========================================================= */
 
-    --bg-1: #f7f8f6;
-    --bg-2: #eef1ee;
+    --bg-1: #eceff4;
+    --bg-2: #e5e9f0;
 
     --surface: #ffffff;
-    --surface-muted: #f8faf9;
-    --surface-strong: #edf2f0;
+    --surface-muted: #e5e9f0;
+    --surface-strong: #d8dee9;
 
-    --text: #172326;
-    --text-soft: #647277;
+    --text: #2e3440;
+    --text-soft: #4c566a;
 
-    --line: #dfe6e3;
+    --line: #d8dee9;
 
     --bs-heading-color: var(--text);
 
@@ -41,38 +41,38 @@
           ========================================================= */
 
     /* Main identity */
-    --brand: #287d8c;
-    --brand-light: #58b4c0;
-    --brand-strong: #1d5965;
-    --brand-soft: #e6f3f4;
+    --brand: #5e81ac;
+    --brand-light: #81a1c1;
+    --brand-strong: #4c6a91;
+    --brand-soft: #e5e9f0;
 
     /* Secondary accent */
-    --accent: #5965d8;
-    --accent-strong: #454fb7;
-    --accent-soft: #eef0ff;
+    --accent: #b48ead;
+    --accent-strong: #986f91;
+    --accent-soft: #f0e8ef;
 
     /* =========================================================
           SEMANTIC
           ========================================================= */
 
-    --ok: #18865b;
-    --ok-soft: #e8f6ef;
+    --ok: #5f8b4c;
+    --ok-soft: #eaf1e6;
 
-    --warn: #a86f18;
-    --warn-soft: #fff5df;
+    --warn: #a97928;
+    --warn-soft: #f8efd9;
 
-    --danger: #c94343;
-    --danger-soft: #fcebea;
+    --danger: #bf616a;
+    --danger-soft: #f6e5e7;
 
-    --cyan: #16829a;
-    --cyan-soft: #e6f6f8;
+    --cyan: #88c0d0;
+    --cyan-soft: #e5f2f5;
 
     /* =========================================================
           ATMOSPHERE
           ========================================================= */
 
-    --aura-1: rgba(40, 125, 140, 0.1);
-    --aura-2: rgba(89, 101, 216, 0.07);
+    --aura-1: rgba(94, 129, 172, 0.08);
+    --aura-2: rgba(136, 192, 208, 0.07);
 
     /* =========================================================
           SHADOWS
@@ -93,22 +93,22 @@
           NAVIGATION
           ========================================================= */
 
-    --nav-bg: rgba(255, 255, 255, 0.84);
-    --nav-border: #e0e7e4;
+    --nav-bg: rgba(236, 239, 244, 0.96);
+    --nav-border: #d8dee9;
 
-    --nav-link: #526268;
-    --nav-link-hover-bg: #edf3f1;
+    --nav-link: #4c566a;
+    --nav-link-hover-bg: #e5e9f0;
 
-    --nav-brand: #172326;
+    --nav-brand: #2e3440;
 
-    --nav-btn-bg: #f1f5f3;
-    --nav-btn-border: #dce5e1;
-    --nav-btn-color: #425258;
-    --nav-btn-hover-bg: #e7eeeb;
+    --nav-btn-bg: #e5e9f0;
+    --nav-btn-border: #d8dee9;
+    --nav-btn-color: #4c566a;
+    --nav-btn-hover-bg: #d8dee9;
 
-    --nav-outline-border: #c7d5d0;
-    --nav-outline-color: #42616a;
-    --nav-outline-hover-bg: #edf3f1;
+    --nav-outline-border: #b8c4d4;
+    --nav-outline-color: #4c6a91;
+    --nav-outline-hover-bg: #e5e9f0;
 
     /* =========================================================
           ICON
@@ -123,17 +123,17 @@
     --input-bg: #ffffff;
     --input-bg-focus: #ffffff;
 
-    --placeholder: #8a979b;
+    --placeholder: #7b8497;
 
     --check-bg: #ffffff;
 
-    --badge-bg: #eef3f1;
-    --badge-border: #dce5e1;
-    --badge-text: #3f4c51;
+    --badge-bg: #e5e9f0;
+    --badge-border: #d8dee9;
+    --badge-text: #4c566a;
 
-    --list-hover-bg: #f0f5f3;
+    --list-hover-bg: #e5e9f0;
 
-    --alert-bg: #f3f6f4;
+    --alert-bg: #e5e9f0;
 
     /* =========================================================
           LINKS / BUTTONS
@@ -148,12 +148,12 @@
           CHAT
           ========================================================= */
 
-    --bubble-other-bg: #ffffff;
+    --bubble-other-bg: #e5e9f0;
 
     --bubble-mine-bg: var(--brand);
     --bubble-mine-text: #ffffff;
 
-    --avatar-grad: linear-gradient(135deg, #287d8c 0%, #5965d8 100%);
+    --avatar-grad: linear-gradient(135deg, #5e81ac 0%, #81a1c1 100%);
 
     /* =========================================================
           SPACING
@@ -196,49 +196,56 @@ html[data-theme="dark"] {
           BACKGROUND
           --------------------------------------------------------- */
 
-    --bg-1: #101719;
-    --bg-2: #0b1113;
+    --bg-1: #2e3440;
+    --bg-2: #242933;
 
-    --surface: #182124;
-    --surface-muted: #1d292c;
-    --surface-strong: #151e21;
+    --surface: #3b4252;
+    --surface-muted: #434c5e;
+    --surface-strong: #2e3440;
 
     /* ---------------------------------------------------------
           TEXT
           --------------------------------------------------------- */
 
-    --text: #e8efed;
-    --text-soft: #9eaeaf;
+    --text: #eceff4;
+    --text-soft: #d8dee9;
 
-    --line: #2c3a3d;
+    --line: #4c566a;
 
     /* ---------------------------------------------------------
           BRAND
           --------------------------------------------------------- */
 
-    --brand: #58b4c0;
-    --brand-strong: #83cbd3;
-    --brand-soft: #19363b;
+    --brand: #88c0d0;
+    --brand-strong: #8fbcbb;
+    --brand-soft: #434c5e;
 
-    --accent: #8b94f0;
-    --accent-strong: #aab1fa;
-    --accent-soft: #292d4b;
+    --accent: #b48ead;
+    --accent-strong: #c69fbd;
+    --accent-soft: #4c3e4b;
 
     /* ---------------------------------------------------------
           SEMANTIC
           --------------------------------------------------------- */
 
-    --ok: #4fd397;
-    --ok-soft: #16382b;
+    --ok: #a3be8c;
+    --ok-soft: #3d4938;
 
-    --warn: #e7b957;
-    --warn-soft: #3b301b;
+    --warn: #ebcb8b;
+    --warn-soft: #4d432d;
 
-    --danger: #f17b7b;
-    --danger-soft: #402326;
+    --danger: #bf616a;
+    --bs-danger: var(--danger);
+    --bs-danger: var(--danger);
+    --bs-danger-rgb: 191, 97, 106;
 
-    --cyan: #62c9dc;
-    --cyan-soft: #16363d;
+    --bs-danger-bg-subtle: #f9dede;
+    --bs-danger-text-emphasis: var(--danger);
+
+    --danger-soft: #4b3439;
+
+    --cyan: #8fbcbb;
+    --cyan-soft: #354848;
 
     /* ---------------------------------------------------------
           ATMOSPHERE
@@ -263,22 +270,22 @@ html[data-theme="dark"] {
           NAVIGATION
           --------------------------------------------------------- */
 
-    --nav-bg: rgba(17, 24, 27, 0.86);
-    --nav-border: #2c3a3d;
+    --nav-bg: rgba(46, 52, 64, 0.96);
+    --nav-border: #4c566a;
 
-    --nav-link: #aebdbc;
-    --nav-link-hover-bg: #202d30;
+    --nav-link: #d8dee9;
+    --nav-link-hover-bg: #434c5e;
 
-    --nav-brand: #e8efed;
+    --nav-brand: #eceff4;
 
-    --nav-btn-bg: #202c2f;
-    --nav-btn-border: #344448;
-    --nav-btn-color: #d8e1df;
-    --nav-btn-hover-bg: #28373a;
+    --nav-btn-bg: #434c5e;
+    --nav-btn-border: #4c566a;
+    --nav-btn-color: #eceff4;
+    --nav-btn-hover-bg: #4c566a;
 
-    --nav-outline-border: #405255;
-    --nav-outline-color: #b9cfcc;
-    --nav-outline-hover-bg: #202d30;
+    --nav-outline-border: #616e82;
+    --nav-outline-color: #d8dee9;
+    --nav-outline-hover-bg: #434c5e;
 
     /* ---------------------------------------------------------
           ICON
@@ -290,20 +297,20 @@ html[data-theme="dark"] {
           FORMS
           --------------------------------------------------------- */
 
-    --input-bg: #192427;
-    --input-bg-focus: #1d292c;
+    --input-bg: #3b4252;
+    --input-bg-focus: #434c5e;
 
-    --placeholder: #7f9294;
+    --placeholder: #b8c4d4;
 
-    --check-bg: #202c2f;
+    --check-bg: #434c5e;
 
-    --badge-bg: #243134;
-    --badge-border: #364548;
-    --badge-text: #e3ebe9;
+    --badge-bg: #434c5e;
+    --badge-border: #616e82;
+    --badge-text: #eceff4;
 
-    --list-hover-bg: #202d30;
+    --list-hover-bg: #434c5e;
 
-    --alert-bg: #222e31;
+    --alert-bg: #434c5e;
 
     /* ---------------------------------------------------------
           LINKS / BUTTONS
@@ -318,12 +325,12 @@ html[data-theme="dark"] {
           CHAT
           --------------------------------------------------------- */
 
-    --bubble-other-bg: #202c2f;
+    --bubble-other-bg: #434c5e;
 
-    --bubble-mine-bg: #287d8c;
+    --bubble-mine-bg: #5e81ac;
     --bubble-mine-text: #ffffff;
 
-    --avatar-grad: linear-gradient(135deg, #287d8c 0%, #5965d8 100%);
+    --avatar-grad: linear-gradient(135deg, #5e81ac 0%, #81a1c1 100%);
 }
 
 /* ============================================================
@@ -741,7 +748,7 @@ small.text-muted {
 }
 
 html[data-theme="dark"] .nav-pill.active {
-    color: #171a29;
+    color: var(--brand-strong);
 }
 
 .nav-pill .nav-action-label {
@@ -786,7 +793,7 @@ html[data-theme="dark"] .nav-pill.active {
 }
 
 html[data-theme="dark"] .admin-nav-link.active {
-    color: #171a29;
+    color: var(--brand-strong);
 }
 
 .navbar .btn.btn-light {
@@ -1245,9 +1252,7 @@ html[data-theme="dark"] .admin-nav-link.active {
 }
 
 .btn:hover {
-    background-color: var(--brand-light);
-    border-color: whitesmoke;
-    color: var(--btn-hover-text);
+    border-color: var(--brand);
 }
 
 .btn:active {
@@ -2667,7 +2672,7 @@ html[data-theme="dark"] .bg-success-subtle,
 html[data-theme="dark"] .bg-warning-subtle {
     background-color: color-mix(
         in srgb,
-        var(--surface) 82%,
+        var(--surface) 80%,
         var(--line)
     ) !important;
 }
