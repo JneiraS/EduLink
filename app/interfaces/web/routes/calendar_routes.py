@@ -40,13 +40,14 @@ def _month_key(value: date) -> tuple[int, int]:
     return value.year, value.month
 
 
-def _month_bounds(events, today: date) -> tuple[tuple[int, int], tuple[int, int]]:
+def _month_bounds(events, today: date, future_months: int = 3) -> tuple[tuple[int, int], tuple[int, int]]:
     months = {_month_key(event.start_date) for event in events}
     first = last = _month_key(today)
     if months:
         first = min(months)
         last = max(months)
-    return min(first, _month_key(today)), max(last, _month_key(today))
+    future_limit = _shift_month(today.year, today.month, future_months)
+    return min(first, _month_key(today)), max(last, future_limit)
 
 
 def _parse_month(value: str | None) -> tuple[int, int] | None:
@@ -125,8 +126,9 @@ def index():
     prev_month = f"{prev_month[0]:04d}-{prev_month[1]:02d}" if prev_month else None
     next_month = f"{next_month[0]:04d}-{next_month[1]:02d}" if next_month else None
 
+    grid_events = [e for e in events if (e.start_date.year, e.start_date.month) == (grid_year, grid_month)]
     next_deadline = next(
-        (event for event in events if event.type.value == "deadline"), None
+        (event for event in grid_events if event.type.value == "deadline"), None
     )
     days_to_deadline = None
     if next_deadline is not None:
@@ -136,7 +138,7 @@ def index():
 
     grid_month_label = f"{FRENCH_MONTHS[grid_month - 1]} {grid_year}"
     next_holiday = next(
-        (event for event in events if event.type.value == "holiday"), None
+        (event for event in grid_events if event.type.value == "holiday"), None
     )
 
     return render_template(
