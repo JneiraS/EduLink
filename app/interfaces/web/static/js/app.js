@@ -580,14 +580,27 @@ function initCalendarViewSwitch() {
         return;
     }
 
+    const STORAGE_KEY = "calendar-view";
+    const savedView = (() => {
+        try { return localStorage.getItem(STORAGE_KEY); } catch { return null; }
+    })() || "list";
+
+    const applyView = (mode) => {
+        const showGrid = mode === "grid";
+        listView.classList.toggle("d-none", showGrid);
+        gridView.classList.toggle("d-none", !showGrid);
+        buttons.forEach((btn) => {
+            btn.classList.toggle("active", btn.dataset.calendarView === mode);
+        });
+    };
+
+    applyView(savedView);
+
     buttons.forEach((button) => {
         button.addEventListener("click", () => {
             const mode = button.dataset.calendarView;
-            const showGrid = mode === "grid";
-            listView.classList.toggle("d-none", showGrid);
-            gridView.classList.toggle("d-none", !showGrid);
-            buttons.forEach((btn) => btn.classList.remove("active"));
-            button.classList.add("active");
+            applyView(mode);
+            try { localStorage.setItem(STORAGE_KEY, mode); } catch {}
         });
     });
 }
